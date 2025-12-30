@@ -10,52 +10,49 @@ import Validator.Regex.Regex
 
 -- room, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
+def Regex.Room.derive (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
+  leave r (Vec.map (enter r) Φ)
+
 namespace Regex.Room
 
-def derive {σ: Type}
-  (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
-  let symbols: Vec σ (Symbol.num r) := Enter.enter r
-  let pred_results: Vec Bool (Symbol.num r) := Vec.map symbols Φ
-  Leave.leave r pred_results
-
 def derive_pretty {σ: Type} (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
-  Leave.leave r (Vec.map (Enter.enter r) Φ)
+  leave r (Vec.map (enter r) Φ)
 
 def derive_distrib {σ: Type}
   (ps: {n: Nat} -> Vec σ n -> Vec Bool n) (r: Regex σ): Regex σ :=
-  let symbols: Vec σ (Symbol.num r) := Enter.enter r
+  let symbols: Vec σ (Symbol.num r) := enter r
   let pred_results: Vec Bool (Symbol.num r) := ps symbols
-  Leave.leave r pred_results
+  leave r pred_results
 
 def derive_unapplied {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (r: Regex σ) (a: α): Regex σ :=
-  let symbols: Vec σ (Symbol.num r) := Enter.enter r
+  let symbols: Vec σ (Symbol.num r) := enter r
   let pred_results: Vec Bool (Symbol.num r) := Vec.map symbols (flip Φ a)
-  Leave.leave r pred_results
+  leave r pred_results
 
 def derives {σ: Type}
   (Φ: σ -> Bool) (rs: Vec (Regex σ) l): Vec (Regex σ) l :=
-  let symbols: Vec σ (Symbol.nums rs) := Enter.enters rs
+  let symbols: Vec σ (Symbol.nums rs) := enters rs
   let pred_results: Vec Bool (Symbol.nums rs) := Vec.map symbols Φ
-  Leave.leaves rs pred_results
+  leaves rs pred_results
 
 def derives_unapplied {σ: Type} {α: Type}
   (Φ: σ -> α -> Bool) (rs: Vec (Regex σ) l) (a: α): Vec (Regex σ) l :=
-  let symbols: Vec σ (Symbol.nums rs) := Enter.enters rs
+  let symbols: Vec σ (Symbol.nums rs) := enters rs
   let pred_results: Vec Bool (Symbol.nums rs) := Vec.map symbols (flip Φ a)
-  let res: Vec (Regex σ) l := Leave.leaves rs pred_results
+  let res: Vec (Regex σ) l := leaves rs pred_results
   res
 
 def derives_distrib {σ: Type}
   (ps: {n: Nat} -> Vec σ n -> Vec Bool n) (rs: Vec (Regex σ) l): Vec (Regex σ) l :=
-  let symbols: Vec σ (Symbol.nums rs) := Enter.enters rs
+  let symbols: Vec σ (Symbol.nums rs) := enters rs
   let pred_results: Vec Bool (Symbol.nums rs) := ps symbols
-  Leave.leaves rs pred_results
+  leaves rs pred_results
 
 def derives_unapplied_distrib {σ: Type} {α: Type}
   (ps: {n: Nat} -> Vec σ n -> α -> Vec Bool n) (rs: Vec (Regex σ) l) (a: α): Vec (Regex σ) l :=
-  let symbols: Vec σ (Symbol.nums rs) := Enter.enters rs
+  let symbols: Vec σ (Symbol.nums rs) := enters rs
   let pred_results: Vec Bool (Symbol.nums rs) := ps symbols a
-  Leave.leaves rs pred_results
+  leaves rs pred_results
 
 theorem derives_unapplied_is_derives
   {σ: Type} {α: Type} (p: σ -> α -> Bool) (rs: Vec (Regex σ) l) (a: α):
@@ -66,13 +63,13 @@ theorem derives_is_map_derive
   {σ: Type} (Φ: σ -> Bool) (rs: Vec (Regex σ) l):
   Room.derives Φ rs = Vec.map rs (fun r => Room.derive Φ r) := by
   unfold Room.derives
-  unfold Enter.enters
-  unfold Leave.leaves
+  unfold enters
+  unfold leaves
   simp only
   unfold Regex.Point.derives
   unfold Room.derive
-  unfold Enter.enter
-  unfold Leave.leave
+  unfold enter
+  unfold leave
   nth_rewrite 3 [<- Vec.map_map]
   apply (congrArg (fun xs => Vec.map xs Regex.Point.derive))
   rw [<- Vec.zip_map]
@@ -85,13 +82,13 @@ theorem derives_unapplied_is_map
   {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (rs: Vec (Regex σ) l) (a: α):
   Room.derives_unapplied Φ rs a = Vec.map rs (fun r => Room.derive_unapplied Φ r a) := by
   unfold Room.derives_unapplied
-  unfold Enter.enters
-  unfold Leave.leaves
+  unfold enters
+  unfold leaves
   simp only
   unfold Regex.Point.derives
   unfold Room.derive_unapplied
-  unfold Enter.enter
-  unfold Leave.leave
+  unfold enter
+  unfold leave
   unfold flip
   nth_rewrite 2 [<- Vec.map_map]
   apply (congrArg (fun xs => Vec.map xs Regex.Point.derive))
@@ -106,8 +103,8 @@ theorem derive_is_Partial_derive
   (r: Regex σ):
   Room.derive Φ r = Regex.Partial.derive Φ r := by
   unfold Room.derive
-  unfold Enter.enter
-  unfold Leave.leave
+  unfold enter
+  unfold leave
   simp only
   simp only [<- Vec.zip_map]
   rw [<- Symbol.extractFrom_replaceFrom_is_fmap]
@@ -162,8 +159,8 @@ theorem derives_unapplied_is_Regex_map_derive
   rw [derives_unapplied_is_map]
   unfold Room.derive_unapplied
   unfold flip
-  unfold Enter.enter
-  unfold Leave.leave
+  unfold enter
+  unfold leave
   unfold Regex.map_derive
   congr
   funext r
@@ -177,14 +174,14 @@ theorem derives_is_derives_unapplied_distrib
   Room.derives_unapplied (fun s a => (ps #vec[s] a).head) rs a = Room.derives_unapplied_distrib ps rs a := by
   unfold Room.derives_unapplied
   simp only
-  unfold Leave.leaves
-  unfold Enter.enters
+  unfold leaves
+  unfold enters
   unfold flip
   simp only
   rw [<- h]
   unfold Room.derives_unapplied_distrib
-  unfold Leave.leaves
-  unfold Enter.enters
+  unfold leaves
+  unfold enters
   simp only
 
 theorem derives_unapplied_distrib_is_derives_distrib

@@ -25,12 +25,12 @@ namespace Parser
 def deriveEnter [DecidableEq φ] [ValidateM m (Hedge.Grammar.Symbol n φ) α]
   (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
   (xs: Hedge.Grammar.Rules n φ l): m (Hedge.Grammar.Rules n φ (Regex.Symbol.nums xs)) := do
-  let enters <- Regex.Enter.DeriveEnter.deriveEnter xs
+  let enters <- Regex.DeriveEnter.deriveEnter xs
   let token <- Parser.token
   return Hedge.Grammar.evalifs G Φ enters token
 
 def deriveLeaveM [DecidableEq φ] [ValidateM m (Hedge.Grammar.Symbol n φ) α] (xs: Hedge.Grammar.Rules n φ l) (cs: Hedge.Grammar.Rules n φ (Regex.Symbol.nums xs)): m (Hedge.Grammar.Rules n φ l) :=
-  Regex.Leave.DeriveLeaveM.deriveLeaveM xs (Vec.map cs Hedge.Grammar.Rule.null)
+  Regex.DeriveLeaveM.deriveLeaveM xs (Vec.map cs Hedge.Grammar.Rule.null)
 
 def deriveValue [DecidableEq φ] [ValidateM m (Hedge.Grammar.Symbol n φ) α]
   (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)

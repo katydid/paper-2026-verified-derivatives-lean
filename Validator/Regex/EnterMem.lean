@@ -52,12 +52,12 @@ def deriveEnter
   match get? memoized xs with
   | Option.none =>
     Debug.debug "cache miss"
-    let newvalue := Enter.enters xs
+    let newvalue := enters xs
     EnterMem.setEnter (insert memoized xs newvalue)
     return newvalue
   | Option.some value =>
     Debug.debug "cache hit"
     return value
 
-instance [DecidableEq σ] [Hashable σ] [Monad m] [Debug m] [EnterMem m σ] : Enter.DeriveEnter m σ where
+instance [DecidableEq σ] [Hashable σ] [Monad m] [Debug m] [EnterMem m σ] : DeriveEnter m σ where
   deriveEnter {l: Nat} (xs: Vec (Regex σ) l): m (Vec σ (Symbol.nums xs)) := deriveEnter xs

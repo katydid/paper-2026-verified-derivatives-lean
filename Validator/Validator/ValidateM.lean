@@ -17,7 +17,7 @@ class ValidateM (m: Type -> Type u) (σ: Type) (α: Type) extends
   Debug m,
   MonadExcept String m,
   Parser m α,
-  Regex.Enter.DeriveEnter m σ,
-  Regex.Leave.DeriveLeaveM m σ
+  Regex.DeriveEnter m σ,
+  Regex.DeriveLeaveM m σ
 
 namespace ValidateM

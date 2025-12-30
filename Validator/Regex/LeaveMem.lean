@@ -63,5 +63,5 @@ def deriveLeaveM
     Debug.debug "cache hit"
     return value
 
-instance [DecidableEq σ] [Hashable σ] [Monad m] [Debug m] [MonadExcept String m] [LeaveMem m σ] : Leave.DeriveLeaveM m σ where
+instance [DecidableEq σ] [Hashable σ] [Monad m] [Debug m] [MonadExcept String m] [LeaveMem m σ] : DeriveLeaveM m σ where
   deriveLeaveM {l: Nat} (xs: Vec (Regex σ) l) (ns: Vec Bool (Symbol.nums xs)): m (Vec (Regex σ) l) := deriveLeaveM xs ns

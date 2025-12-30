@@ -4,7 +4,7 @@ import Validator.Regex.Point
 import Validator.Regex.Regex
 import Validator.Regex.Replace
 
-namespace Regex.Leave
+namespace Regex
 
 def leave
   (r: Regex σ)

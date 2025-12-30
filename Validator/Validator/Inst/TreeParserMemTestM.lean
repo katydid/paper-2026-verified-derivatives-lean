@@ -66,7 +66,7 @@ instance [DecidableEq φ] [Hashable φ]: EnterMem (Impl n φ α) (Hedge.Grammar.
       set (State.mk s.parser enter s.leave s.logs)
 
 -- This should just follow from the instance declared in EnterMem, but we spell it out just in case.
-instance [DecidableEq φ] [Hashable φ]: Regex.Enter.DeriveEnter (Impl n φ α) (Hedge.Grammar.Symbol n φ) where
+instance [DecidableEq φ] [Hashable φ]: Regex.DeriveEnter (Impl n φ α) (Hedge.Grammar.Symbol n φ) where
   deriveEnter {l: Nat} (xs: Hedge.Grammar.Rules n φ l): Impl n φ α (Hedge.Grammar.Symbols n φ (Regex.Symbol.nums xs)) := do
     let memoized <- EnterMem.getEnter
     match Regex.EnterMem.get? memoized xs with
@@ -86,7 +86,7 @@ instance [DecidableEq φ] [Hashable φ]: LeaveMem (Impl n φ α) (Hedge.Grammar.
       set (State.mk s.parser s.enter leave s.logs)
 
 -- This should just follow from the instance declared in LeaveMem, but we spell it out just in case.
-instance [DecidableEq φ] [Hashable φ]: Regex.Leave.DeriveLeaveM (Impl n φ α) (Hedge.Grammar.Symbol n φ) where
+instance [DecidableEq φ] [Hashable φ]: Regex.DeriveLeaveM (Impl n φ α) (Hedge.Grammar.Symbol n φ) where
   deriveLeaveM {l: Nat} (xs: Hedge.Grammar.Rules n φ l) (ns: Vec Bool (Regex.Symbol.nums xs)): Impl n φ α (Hedge.Grammar.Rules n φ l) := do
     let memoized <- LeaveMem.getLeave
     match Regex.LeaveMem.get? memoized ⟨xs, ns⟩ with

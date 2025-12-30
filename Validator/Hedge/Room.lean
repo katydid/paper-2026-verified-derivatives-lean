@@ -9,19 +9,19 @@ import Validator.Hedge.Grammar
 import Validator.Hedge.IfExpr
 import Validator.Hedge.Language
 
-namespace Hedge.Grammar.Room
+namespace Hedge
 
-def derive {α: Type}
-  (G: Grammar n φ) (Φ: φ -> α -> Bool)
-  (r: Grammar.Rule n φ) (x: Node α): Grammar.Rule n φ :=
-  Regex.Room.derive (fun (symbol: Grammar.Symbol n φ) =>
-    match x with
-    | Node.mk label children =>
-      let ifExpr: Grammar.Symbol n φ := symbol
-      let childr: Grammar.Rule n φ := Grammar.evalif G Φ ifExpr label
-      let dchildr: Grammar.Rule n φ := List.foldl (derive G Φ) childr children
-      Grammar.Rule.null dchildr
+def Grammar.Room.derive
+  (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Rule n φ) (node: Node α): Rule n φ :=
+  Regex.Room.derive (fun (s: Symbol n φ) =>
+    let ⟨label, children⟩ := node
+    let childr: Rule n φ := evalif G Φ s label
+    Rule.null (List.foldl (derive G Φ) childr children)
   ) r
+
+end Hedge
+
+namespace Hedge.Grammar.Room
 
 theorem unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ -> α -> Bool) (x: Node α):

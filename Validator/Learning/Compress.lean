@@ -28,7 +28,7 @@ def derive [DecidableEq φ]
   else
     match t with
     | Hedge.Node.mk label children =>
-      let ifexprs: Hedge.Grammar.Symbols n φ (Regex.Symbol.nums xs) := Regex.Enter.enters xs
+      let ifexprs: Hedge.Grammar.Symbols n φ (Regex.Symbol.nums xs) := Regex.enters xs
       let childxs: Hedge.Grammar.Rules n φ (Regex.Symbol.nums xs) := Hedge.Grammar.evalifs G Φ ifexprs label
       -- cchildxs = compressed expressions to evaluate on children.
       let ⟨n, cchildxs, indices⟩ := Regex.Compress.compress childxs

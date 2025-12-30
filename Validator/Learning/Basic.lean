@@ -25,7 +25,7 @@ def derive {α: Type}
   then xs
   else
     -- enters is one of our two new memoizable functions.
-    let ifExprs: Hedge.Grammar.Symbols n φ (Regex.Symbol.nums xs) := Regex.Enter.enters xs
+    let ifExprs: Hedge.Grammar.Symbols n φ (Regex.Symbol.nums xs) := Regex.enters xs
     match t with
     | Hedge.Node.mk label children =>
       -- childxs = expressions to evaluate on children.

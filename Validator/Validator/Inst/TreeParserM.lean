@@ -20,10 +20,10 @@ instance
   skip := Parser.skip
   token := Parser.token
 
-instance : Regex.Enter.DeriveEnter (Impl α) (Hedge.Grammar.Symbol n φ) where
-  deriveEnter xs := return Regex.Enter.enters xs
+instance : Regex.DeriveEnter (Impl α) (Hedge.Grammar.Symbol n φ) where
+  deriveEnter xs := return Regex.enters xs
 
-instance : Regex.Leave.DeriveLeaveM (Impl α) (Hedge.Grammar.Symbol n φ) where
+instance : Regex.DeriveLeaveM (Impl α) (Hedge.Grammar.Symbol n φ) where
   deriveLeaveM xs ns := Regex.LeaveSmart.deriveLeaveM xs ns
 
 instance [DecidableEq φ] [DecidableEq α]: ValidateM (Impl α) (Hedge.Grammar.Symbol n φ) α where
