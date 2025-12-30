@@ -220,21 +220,21 @@ theorem derive_commutesb_iff {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool)
     rw [ih2]
   | concat r1 r2 ih1 ih2 =>
     rw [derive_concat]
-    rw [Grammar.denote_concat_n]
+    rw [Grammar.denote_concat]
     rw [Grammar.denote_or]
-    rw [Grammar.denote_concat_n]
+    rw [Grammar.denote_concat]
     rw [Grammar.denote_onlyif]
-    rw [Language.derive_concat_n]
+    rw [Language.derive_concat]
     rw [<- ih1]
     rw [<- ih2]
     congr
     apply Grammar.null_commutes
   | star r1 ih1 =>
     rw [derive_star]
-    rw [Grammar.denote_star_n]
-    rw [Grammar.denote_concat_n]
-    rw [Grammar.denote_star_n]
-    rw [Language.derive_star_n]
+    rw [Grammar.denote_star]
+    rw [Grammar.denote_concat]
+    rw [Grammar.denote_star]
+    rw [Language.derive_star]
     rw [ih1]
   termination_by x
   decreasing_by

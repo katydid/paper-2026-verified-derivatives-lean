@@ -53,18 +53,18 @@ def and {α: Type} (P : Langs α) (Q : Langs α) : Langs α :=
   fun xs => P xs /\ Q xs
 
 -- alternative definition of concat
-def concat_n {α: Type} (P : Langs α) (Q : Langs α) : Langs α :=
+def concat {α: Type} (P : Langs α) (Q : Langs α) : Langs α :=
   fun (xs : List α) =>
     ∃ n: Fin (xs.length + 1), P (List.take n xs) /\ Q (List.drop n xs)
 
 -- alternative definition of star
-def star_n {α: Type} (R: Langs α) (xs: List α): Prop :=
+def star {α: Type} (R: Langs α) (xs: List α): Prop :=
   match xs with
   | [] => True
   | (x'::xs') =>
     ∃ (n: Fin xs.length),
       R (List.take (n + 1) (x'::xs')) /\
-      (star_n R (List.drop (n + 1) (x'::xs')))
+      (star R (List.drop (n + 1) (x'::xs')))
   termination_by xs.length
   decreasing_by
     obtain ⟨n, hn⟩ := n
@@ -82,14 +82,14 @@ example: Langs α := emptystr
 example: Langs α := (or emptystr universal)
 example: Langs α := (and emptystr universal)
 example: Langs α := emptyset
-example: Langs α := (star_n emptyset)
+example: Langs α := (star emptyset)
 example: Langs Char := char 'a'
 example: Langs Char := char 'b'
 example: Langs Char := (or (char 'a') emptyset)
 example: Langs Char := (and (char 'a') (char 'b'))
 example: Langs Nat := (and (char 1) (char 2))
 example: Langs Nat := (onlyif True (char 2))
-example: Langs Nat := (concat_n (char 1) (char 2))
+example: Langs Nat := (concat (char 1) (char 2))
 example: Langs Nat := (pred (fun x => x = 1))
 
 def null {α: Type} (R: Langs α): Prop :=
@@ -245,8 +245,8 @@ theorem null_and {α: Type} {P Q: Langs α}:
   null (and P Q) = ((null P) /\ (null Q)) :=
   rfl
 
-theorem null_iff_concat_n {α: Type} {P Q: Langs α}:
-  null (concat_n P Q) <-> ((null P) /\ (null Q)) := by
+theorem null_iff_concat {α: Type} {P Q: Langs α}:
+  null (concat P Q) <-> ((null P) /\ (null Q)) := by
   refine Iff.intro ?toFun ?invFun
   case toFun =>
     intro ⟨⟨n, hn⟩, hp, hq⟩
@@ -257,27 +257,27 @@ theorem null_iff_concat_n {α: Type} {P Q: Langs α}:
     exact And.intro hp hq
   case invFun =>
     intro ⟨hp, hq⟩
-    unfold concat_n
+    unfold concat
     simp only [null, List.length_nil, Nat.reduceAdd, Fin.val_eq_zero, List.take_nil, List.drop_nil,
       exists_const]
     exact And.intro hp hq
 
-theorem null_concat_n {α: Type} {P Q: Langs α}:
-  null (concat_n P Q) = ((null P) /\ (null Q)) := by
-  rw [null_iff_concat_n]
+theorem null_concat {α: Type} {P Q: Langs α}:
+  null (concat P Q) = ((null P) /\ (null Q)) := by
+  rw [null_iff_concat]
 
-theorem null_iff_star_n {α: Type} {R: Langs α}:
-  null (star_n R) <-> True :=
+theorem null_iff_star {α: Type} {R: Langs α}:
+  null (star R) <-> True :=
   Iff.intro
     (fun _ => True.intro)
     (fun _ => by
       unfold null
-      simp only [star_n]
+      simp only [star]
     )
 
-theorem null_star_n {α: Type} {R: Langs α}:
-  null (star_n R) = True := by
-  rw [null_iff_star_n]
+theorem null_star {α: Type} {R: Langs α}:
+  null (star R) = True := by
+  rw [null_iff_star]
 
 theorem null_not {α: Type} {R: Langs α}:
   null (not R) = null (Not ∘ R) :=
@@ -388,34 +388,34 @@ theorem derive_onlyif {α: Type} {a: α} {s: Prop} {P: Langs α}:
   (derive (onlyif s P) a) = (onlyif s (derive P a)) :=
   rfl
 
-theorem derive_iff_star_n {α: Type} {x: α} {R: Langs α} {xs: List α}:
-  (derive (star_n R) x) xs <-> (concat_n (derive R x) (star_n R)) xs := by
+theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
+  (derive (star R) x) xs <-> (concat (derive R x) (star R)) xs := by
   refine Iff.intro ?toFun ?invFun
   case toFun =>
     intro h
     unfold derive at h
     unfold derives at h
     simp only [cons_append, nil_append] at h
-    simp only [star_n] at h
-    unfold concat_n
+    simp only [star] at h
+    unfold concat
     obtain ⟨n, h⟩ := h
     simp only [List.length_cons, List.take_succ_cons, List.drop_succ_cons] at h
     exists n
   case invFun =>
     intro h
-    unfold concat_n at h
+    unfold concat at h
     obtain ⟨n, h⟩ := h
     simp only [derive, derives, cons_append, nil_append] at h
     unfold derive
     unfold derives
     simp only [cons_append, nil_append]
-    simp only [star_n]
+    simp only [star]
     exists n
 
-theorem derive_star_n {α: Type} {x: α} {R: Langs α}:
-  (derive (star_n R) x) = (concat_n (derive R x) (star_n R)) := by
+theorem derive_star {α: Type} {x: α} {R: Langs α}:
+  (derive (star R) x) = (concat (derive R x) (star R)) := by
   funext
-  rw [derive_iff_star_n]
+  rw [derive_iff_star]
 
 theorem derive_not {α: Type} {x: α} {R: Langs α}:
   (derive (not R) x) = Not ∘ (derive R x) :=
@@ -426,14 +426,14 @@ theorem derive_iff_not {α: Type} {x: α} {R: Langs α} {xs: List α}:
   rw [derive_not]
   rfl
 
-theorem derive_iff_concat_n {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
-  (derive (concat_n P Q) x) xs <->
-    (or (concat_n (derive P x) Q) (onlyif (null P) (derive Q x))) xs := by
+theorem derive_iff_concat {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
+  (derive (concat P Q) x) xs <->
+    (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) xs := by
   apply Iff.intro
   case mp =>
     intro h
     obtain ⟨n, hp, hq⟩ := h
-    simp only [Language.or, Language.concat_n, derive, derives, null, onlyif]
+    simp only [Language.or, Language.concat, derive, derives, null, onlyif]
     simp only [cons_append, nil_append, List.length_cons] at n
     obtain ⟨n, hn⟩ := n
     simp_all only
@@ -446,7 +446,7 @@ theorem derive_iff_concat_n {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
       simp_all
       exists Fin.mk n (by omega)
   case mpr =>
-    simp only [Language.or, Language.concat_n, derive, derives, null, onlyif]
+    simp only [Language.or, Language.concat, derive, derives, null, onlyif]
     intro h
     cases h with
     | inl h =>
@@ -457,11 +457,11 @@ theorem derive_iff_concat_n {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
       obtain ⟨hp, hq⟩ := h
       exists Fin.mk 0 (by omega)
 
-theorem derive_concat_n {α: Type} {x: α} {P Q: Langs α}:
-  (derive (concat_n P Q) x) =
-    (or (concat_n (derive P x) Q) (onlyif (null P) (derive Q x))) := by
+theorem derive_concat {α: Type} {x: α} {P Q: Langs α}:
+  (derive (concat P Q) x) =
+    (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) := by
   funext
-  rw [derive_iff_concat_n]
+  rw [derive_iff_concat]
 
 theorem simp_or_emptyset_l_is_r (r: Langs α):
   or emptyset r = r := by

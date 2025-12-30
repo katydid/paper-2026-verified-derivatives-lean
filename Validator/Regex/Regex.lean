@@ -28,8 +28,8 @@ def denote {α: Type} {σ: Type} (Φ : σ -> α -> Prop) (r: Regex σ): (xs: Lis
   | emptystr => Language.emptystr
   | symbol s => Language.symbol Φ s
   | or p q => Language.or (denote Φ p) (denote Φ q)
-  | concat p q => Language.concat_n (denote Φ p) (denote Φ q)
-  | star p => Language.star_n (denote Φ p)
+  | concat p q => Language.concat (denote Φ p) (denote Φ q)
+  | star p => Language.star (denote Φ p)
 
 def null {σ: Type}: (r: Regex σ) -> Bool
   | emptyset => false | emptystr => true | symbol _ => false | star _ => true
@@ -118,8 +118,8 @@ theorem derive_star {α: Type} {σ: Type} (Φ: σ -> α -> Bool) (r1: Regex σ) 
 -- * Regex.denote Φ Regex.emptystr = Language.emptystr
 -- * Regex.denote Φ (Regex.symbol s) = Φ s
 -- * Regex.denote Φ (Regex.or p q) = Language.or (Regex.denote Φ p) (Regex.denote Φ q)
--- * Regex.denote Φ (Regex.concat p q) = Language.concat_n (Regex.denote Φ p) (Regex.denote Φ q)
--- * Regex.denote Φ (Regex.star r) = Language.star_n (Regex.denote Φ r)
+-- * Regex.denote Φ (Regex.concat p q) = Language.concat (Regex.denote Φ p) (Regex.denote Φ q)
+-- * Regex.denote Φ (Regex.star r) = Language.star (Regex.denote Φ r)
 
 theorem denote_emptyset {α: Type} {σ: Type} (Φ: σ -> α -> Prop):
   denote Φ emptyset = Language.emptyset := by
@@ -138,17 +138,17 @@ theorem denote_or {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (p q: Regex σ):
   funext
   simp only [denote, Language.or]
 
-theorem denote_concat_n {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (p q: Regex σ):
-  denote Φ (concat p q) = Language.concat_n (denote Φ p) (denote Φ q) := by
+theorem denote_concat {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (p q: Regex σ):
+  denote Φ (concat p q) = Language.concat (denote Φ p) (denote Φ q) := by
   funext
   simp only [denote]
 
-theorem denote_star_n' {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (r: Regex σ) (xs: List α):
-  denote Φ (star r) xs <-> Language.star_n (denote Φ r) xs := by
+theorem denote_star' {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (r: Regex σ) (xs: List α):
+  denote Φ (star r) xs <-> Language.star (denote Φ r) xs := by
   simp only [denote]
 
-theorem denote_star_n {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (r: Regex σ):
-  denote Φ (star r) = Language.star_n (denote Φ r) := by
+theorem denote_star {α: Type} {σ: Type} (Φ: σ -> α -> Prop) (r: Regex σ):
+  denote Φ (star r) = Language.star (denote Φ r) := by
   simp only [denote]
 
 -- Commutes proofs
@@ -180,14 +180,14 @@ theorem null_commutes {σ: Type} {α: Type} (Φ: σ -> α -> Prop) (r: Regex σ)
     rw [Bool.or_eq_true]
   | concat p q ihp ihq =>
     unfold denote
-    rw [Language.null_concat_n]
+    rw [Language.null_concat]
     unfold null
     rw [<- ihp]
     rw [<- ihq]
     rw [Bool.and_eq_true]
   | star r ih =>
     unfold denote
-    rw [Language.null_star_n]
+    rw [Language.null_star]
     unfold null
     simp only
 
@@ -215,19 +215,19 @@ theorem derive_commutes {σ: Type} {α: Type} (Φ: σ -> α -> Prop) [DecidableR
     rw [ihq]
   | concat p q ihp ihq =>
     simp only [denote, derive]
-    rw [Language.derive_concat_n]
+    rw [Language.derive_concat]
     rw [<- ihp]
     rw [<- ihq]
     rw [denote_onlyif]
-    congrm (Language.or (Language.concat_n (denote Φ (derive (fun s a => Φ s a) p x)) (denote Φ q)) ?_)
+    congrm (Language.or (Language.concat (denote Φ (derive (fun s a => Φ s a) p x)) (denote Φ q)) ?_)
     rw [null_commutes]
   | star r ih =>
     simp only [denote, derive]
-    rw [Language.derive_star_n]
+    rw [Language.derive_star]
     guard_target =
-      Language.concat_n (denote Φ (derive (fun s a => Φ s a) r x)) (Language.star_n (denote Φ r))
-      = Language.concat_n (Language.derive (denote Φ r) x) (Language.star_n (denote Φ r))
-    congrm ((Language.concat_n ?_ (Language.star_n (denote Φ r))))
+      Language.concat (denote Φ (derive (fun s a => Φ s a) r x)) (Language.star (denote Φ r))
+      = Language.concat (Language.derive (denote Φ r) x) (Language.star (denote Φ r))
+    congrm ((Language.concat ?_ (Language.star (denote Φ r))))
     guard_target = denote Φ (derive (fun s a => Φ s a) r x) = Language.derive (denote Φ r) x
     exact ih
 

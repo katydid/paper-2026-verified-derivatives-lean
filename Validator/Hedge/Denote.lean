@@ -111,7 +111,7 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
     simp only [List.cons.sizeOf_spec, gt_iff_lt]
     omega
 
--- Language.or, Language.concat_n and Language.star_n are unfolded to help with the termination proof.
+-- Language.or, Language.concat and Language.star are unfolded to help with the termination proof.
 -- Φ needs to be the last parameter, so that simp only works on this function when the parameter r is provided.
 def Rule.denote'
   {α: Type} {n: Nat} {φ: Type}
@@ -225,15 +225,15 @@ theorem denote_or {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α ->
   funext
   simp only [Rule.denote', Language.or]
 
-theorem denote_concat_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (p q: Rule n φ):
-  Rule.denote G Φ (Regex.concat p q) = Language.concat_n (Rule.denote G Φ p) (Rule.denote G Φ q) := by
+theorem denote_concat {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (p q: Rule n φ):
+  Rule.denote G Φ (Regex.concat p q) = Language.concat (Rule.denote G Φ p) (Rule.denote G Φ q) := by
   unfold Rule.denote
   funext
   simp only [Rule.denote']
-  unfold Language.concat_n
+  unfold Language.concat
   rfl
 
-theorem unfold_denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
+theorem unfold_denote_star {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
   Rule.denote' G (Regex.star r) (fun p x' => Φ p x') xs
   = (match xs with
     | [] => True
@@ -251,11 +251,11 @@ theorem unfold_denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: 
     | nil =>
       simp only [Rule.denote']
 
-theorem denote_star_n_iff' {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
-  Rule.denote' G (Regex.star r) (fun p x' => Φ p x') xs <-> Language.star_n (Rule.denote' G r (fun p x' => Φ p x')) xs := by
+theorem denote_star_iff' {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
+  Rule.denote' G (Regex.star r) (fun p x' => Φ p x') xs <-> Language.star (Rule.denote' G r (fun p x' => Φ p x')) xs := by
   rw [<- eq_iff_iff]
-  unfold Language.star_n
-  rw [unfold_denote_star_n]
+  unfold Language.star
+  rw [unfold_denote_star]
   cases xs with
   | nil =>
     rfl
@@ -266,21 +266,21 @@ theorem denote_star_n_iff' {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ
     rw [<- eq_iff_iff]
     congr
     simp only [List.length_cons, List.drop_succ_cons, eq_iff_iff]
-    rw [<- denote_star_n_iff']
+    rw [<- denote_star_iff']
   termination_by xs.length
   decreasing_by
     obtain ⟨n, hn⟩ := n
     apply List.list_length_drop_lt_cons
 
-theorem denote_star_n_iff {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
-  Rule.denote G Φ (Regex.star r) xs <-> Language.star_n (Rule.denote G Φ r) xs := by
+theorem denote_star_iff {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
+  Rule.denote G Φ (Regex.star r) xs <-> Language.star (Rule.denote G Φ r) xs := by
   unfold Rule.denote
-  rw [denote_star_n_iff']
+  rw [denote_star_iff']
 
-theorem denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ):
-  Rule.denote G Φ (Regex.star r) = Language.star_n (Rule.denote G Φ r) := by
+theorem denote_star {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ):
+  Rule.denote G Φ (Regex.star r) = Language.star (Rule.denote G Φ r) := by
   funext
-  rw [denote_star_n_iff]
+  rw [denote_star_iff]
 
 theorem null_commutes {α: Type}
   (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (x: Rule n φ):
@@ -312,16 +312,16 @@ theorem null_commutes {α: Type}
     unfold Regex.null
     rw [Bool.or_eq_true]
   | concat p q ihp ihq =>
-    rw [denote_concat_n]
-    rw [Language.null_concat_n]
+    rw [denote_concat]
+    rw [Language.null_concat]
     unfold Regex.null
     rw [<- ihp]
     rw [<- ihq]
     unfold Regex.null
     rw [Bool.and_eq_true]
   | star r ih =>
-    rw [denote_star_n]
-    rw [Language.null_star_n]
+    rw [denote_star]
+    rw [Language.null_star]
     unfold Regex.null
     simp only
 
@@ -339,9 +339,9 @@ theorem denote_nil_is_null (Φ: φ -> α -> Prop) [DecidableRel Φ]:
   | or r1 r2 =>
     simp only [denote_or, Language.or, Language.null]
   | concat r1 r2 =>
-    simp only [denote_concat_n, Language.null]
+    simp only [denote_concat, Language.null]
   | star r1 =>
-    simp only [denote_star_n, Language.null]
+    simp only [denote_star, Language.null]
 
 def denote (G: Grammar n φ) (Φ: φ -> α -> Prop) (xs: Hedge α): Prop :=
   Rule.denote G Φ G.start xs
