@@ -13,51 +13,51 @@ namespace Hedge.Grammar.Room
 
 def derive {α: Type}
   (G: Grammar n φ) (Φ: φ -> α -> Bool)
-  (r: Hedge.Grammar.Rule n φ) (x: Hedge.Node α): Hedge.Grammar.Rule n φ :=
-  Regex.Room.derive (fun (symbol: Hedge.Grammar.Symbol n φ) =>
+  (r: Grammar.Rule n φ) (x: Node α): Grammar.Rule n φ :=
+  Regex.Room.derive (fun (symbol: Grammar.Symbol n φ) =>
     match x with
-    | Hedge.Node.mk label children =>
-      let ifExpr: Hedge.Grammar.Symbol n φ := symbol
-      let childr: Hedge.Grammar.Rule n φ := Hedge.Grammar.evalif G Φ ifExpr label
-      let dchildr: Hedge.Grammar.Rule n φ := List.foldl (derive G Φ) childr children
-      Hedge.Grammar.Rule.null dchildr
+    | Node.mk label children =>
+      let ifExpr: Grammar.Symbol n φ := symbol
+      let childr: Grammar.Rule n φ := Grammar.evalif G Φ ifExpr label
+      let dchildr: Grammar.Rule n φ := List.foldl (derive G Φ) childr children
+      Grammar.Rule.null dchildr
   ) r
 
 theorem unapply_hedge_param_and_flip
-  (G: Grammar n φ) (Φ: φ -> α -> Bool) (x: Hedge.Node α):
-  (fun (symbol: Hedge.Grammar.Symbol n φ) =>
+  (G: Grammar n φ) (Φ: φ -> α -> Bool) (x: Node α):
+  (fun (symbol: Grammar.Symbol n φ) =>
     match x with
-    | Hedge.Node.mk label children =>
-      let ifExpr: Hedge.Grammar.Symbol n φ := symbol
-      let childr: Hedge.Grammar.Rule n φ := Hedge.Grammar.evalif G Φ ifExpr label
-      let dchildr: Hedge.Grammar.Rule n φ := List.foldl (derive G Φ) childr children
-      Hedge.Grammar.Rule.null dchildr
+    | Node.mk label children =>
+      let ifExpr: Grammar.Symbol n φ := symbol
+      let childr: Grammar.Rule n φ := Grammar.evalif G Φ ifExpr label
+      let dchildr: Grammar.Rule n φ := List.foldl (derive G Φ) childr children
+      Grammar.Rule.null dchildr
   )
   =
-  (flip fun (symbol: Hedge.Grammar.Symbol n φ) (x': Hedge.Node α) =>
+  (flip fun (symbol: Grammar.Symbol n φ) (x': Node α) =>
     match x' with
-    | Hedge.Node.mk label children =>
-      let ifExpr: Hedge.Grammar.Symbol n φ := symbol
-      let childr: Hedge.Grammar.Rule n φ := Hedge.Grammar.evalif G Φ ifExpr label
-      let dchildr: Hedge.Grammar.Rule n φ := List.foldl (derive G Φ) childr children
-      Hedge.Grammar.Rule.null dchildr
+    | Node.mk label children =>
+      let ifExpr: Grammar.Symbol n φ := symbol
+      let childr: Grammar.Rule n φ := Grammar.evalif G Φ ifExpr label
+      let dchildr: Grammar.Rule n φ := List.foldl (derive G Φ) childr children
+      Grammar.Rule.null dchildr
   ) x := by
   rfl
 
-theorem derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ Regex.emptyset a = Regex.emptyset := by
+theorem derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+  Grammar.Room.derive G Φ Regex.emptyset a = Regex.emptyset := by
   unfold derive
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_emptyset]
 
-theorem derive_emptystr {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ Regex.emptystr a = Regex.emptyset := by
+theorem derive_emptystr {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+  Grammar.Room.derive G Φ Regex.emptystr a = Regex.emptyset := by
   unfold derive
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_emptystr]
 
-theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ (Regex.symbol s) a
+theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.symbol s) a
     = Regex.onlyif (
         ( match a with
           | Node.mk label children =>
@@ -68,30 +68,30 @@ theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: He
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_symbol]
 
-theorem derive_or {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Rule n φ) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ (Regex.or r1 r2) a
-  = Regex.or (Hedge.Grammar.Room.derive G Φ r1 a) (Hedge.Grammar.Room.derive G Φ r2 a) := by
+theorem derive_or {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Rule n φ) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.or r1 r2) a
+  = Regex.or (Grammar.Room.derive G Φ r1 a) (Grammar.Room.derive G Φ r2 a) := by
   unfold derive
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_or]
 
-theorem derive_concat {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Rule n φ) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ (Regex.concat r1 r2) a
+theorem derive_concat {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Rule n φ) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.concat r1 r2) a
     = Regex.or
-      (Regex.concat (Hedge.Grammar.Room.derive G Φ r1 a) r2)
-      (Regex.onlyif (Regex.null r1) (Hedge.Grammar.Room.derive G Φ r2 a)) := by
+      (Regex.concat (Grammar.Room.derive G Φ r1 a) r2)
+      (Regex.onlyif (Regex.null r1) (Grammar.Room.derive G Φ r2 a)) := by
   unfold derive
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_concat]
 
-theorem derive_star {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1: Rule n φ) (a: Hedge.Node α):
-  Hedge.Grammar.Room.derive G Φ (Regex.star r1) a
-  = Regex.concat (Hedge.Grammar.Room.derive G Φ r1 a) (Regex.star r1) := by
+theorem derive_star {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1: Rule n φ) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.star r1) a
+  = Regex.concat (Grammar.Room.derive G Φ r1 a) (Regex.star r1) := by
   unfold derive
   rw [unapply_hedge_param_and_flip]
   rw [Regex.Room.derive_star]
 
-theorem and_start {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (label: α) (children: Hedge α):
+theorem and_start {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (label: α) (children: Hedge α):
   ((List.foldl (derive G Φ) (if Φ p label = true then G.lookup ref else Regex.emptyset) children).null = true)
   = ((Φ p label = true) /\ ((List.foldl (derive G Φ) (G.lookup ref) children).null = true)) := by
   generalize (Φ p label) = pred
@@ -110,7 +110,7 @@ theorem and_start {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (lab
       rw [derive_emptyset]
       rw [ih]
 
-theorem derive_denote_symbol_is_onlyif {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (label: α) (children: Hedge α):
+theorem derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (label: α) (children: Hedge α):
   Language.derive
     (Rule.denote G (fun s a => Φ s a = true)
       (Regex.symbol (pred, ref))
@@ -122,21 +122,21 @@ theorem derive_denote_symbol_is_onlyif {α: Type} (G: Hedge.Grammar n φ) (Φ: �
     Language.emptystr
   := by
   funext xs
-  rw [Hedge.Grammar.denote_symbol]
+  rw [Grammar.denote_symbol]
   rw [Language.derive_iff_tree]
   simp only [Bool.decide_eq_true]
 
 theorem derive_commutes_symbol {α: Type}
-  (G: Hedge.Grammar n φ)
+  (G: Grammar n φ)
   (Φ: φ -> α -> Bool)
   (pred: φ)
   (ref: Ref n)
-  (x4: Hedge.Node α)
+  (x4: Node α)
   (xs: Hedge α)
   (ihr:
-    ∀ (r: Hedge.Grammar.Rule n φ) (x3: Hedge.Node.DescendantOf x4) (xs: Hedge α),
-        Hedge.Grammar.Rule.denote G (fun p a => Φ p a) (Hedge.Grammar.Room.derive G Φ r x3.val) xs
-    <-> Language.derive (Hedge.Grammar.Rule.denote G (fun p a => Φ p a) r) x3.val xs
+    ∀ (r: Grammar.Rule n φ) (x3: Node.DescendantOf x4) (xs: Hedge α),
+        Grammar.Rule.denote G (fun p a => Φ p a) (Grammar.Room.derive G Φ r x3.val) xs
+    <-> Language.derive (Grammar.Rule.denote G (fun p a => Φ p a) r) x3.val xs
   )
   :
   Rule.denote G (fun s a => Φ s a = true) (derive G Φ (Regex.symbol (pred, ref)) x4) xs =
@@ -148,9 +148,9 @@ theorem derive_commutes_symbol {α: Type}
 
   rw [derive_symbol]
   simp only
-  rw [Hedge.Grammar.denote_onlyif]
+  rw [Grammar.denote_onlyif]
 
-  rw [Hedge.Grammar.denote_emptystr]
+  rw [Grammar.denote_emptystr]
   congr
 
   simp only [evalif]
@@ -161,7 +161,7 @@ theorem derive_commutes_symbol {α: Type}
   induction children generalizing r with
   | nil =>
     simp only [List.foldl_nil]
-    rw [Hedge.Grammar.denote_nil_is_null]
+    rw [Grammar.denote_nil_is_null]
   | cons x2 xs ihxs =>
     simp only [List.foldl]
     rw [ihxs]
@@ -188,64 +188,64 @@ theorem revert_param (f g: α -> β):
   subst a
   simp_all only
 
-theorem derive_commutesb_iff {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (r: Hedge.Grammar.Rule n φ) (x: Hedge.Node α) (xs: Hedge α):
-  Hedge.Grammar.Rule.denote G (fun s a => Φ s a) (Hedge.Grammar.Room.derive G Φ r x) xs
-  <-> Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x xs := by
+theorem derive_commutesb_iff {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Grammar.Rule n φ) (x: Node α) (xs: Hedge α):
+  Grammar.Rule.denote G (fun s a => Φ s a) (Grammar.Room.derive G Φ r x) xs
+  <-> Language.derive (Grammar.Rule.denote G (fun s a => Φ s a) r) x xs := by
   rw [<- eq_iff_iff]
   apply revert_param
   induction r with
   | emptyset =>
     rw [derive_emptyset]
-    rw [Hedge.Grammar.denote_emptyset]
+    rw [Grammar.denote_emptyset]
     rw [Language.derive_emptyset]
   | emptystr =>
     rw [derive_emptystr]
-    rw [Hedge.Grammar.denote_emptystr]
-    rw [Hedge.Grammar.denote_emptyset]
+    rw [Grammar.denote_emptystr]
+    rw [Grammar.denote_emptyset]
     rw [Language.derive_emptystr]
   | symbol s =>
     funext xs
     cases s with
     | mk pred ref =>
     let ihr :=
-      fun (r: Hedge.Grammar.Rule n φ) (x7: Hedge.Node.DescendantOf x) (xs: Hedge α) =>
+      fun (r: Grammar.Rule n φ) (x7: Node.DescendantOf x) (xs: Hedge α) =>
         derive_commutesb_iff G Φ r x7 xs
     rw [derive_commutes_symbol (ihr := ihr) (x4 := x)]
   | or r1 r2 ih1 ih2 =>
     rw [derive_or]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_or]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_or]
     rw [Language.derive_or]
     rw [ih1]
     rw [ih2]
   | concat r1 r2 ih1 ih2 =>
     rw [derive_concat]
-    rw [Hedge.Grammar.denote_concat_n]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_concat_n]
-    rw [Hedge.Grammar.denote_onlyif]
+    rw [Grammar.denote_concat_n]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_concat_n]
+    rw [Grammar.denote_onlyif]
     rw [Language.derive_concat_n]
     rw [<- ih1]
     rw [<- ih2]
     congr
-    apply Hedge.Grammar.null_commutes
+    apply Grammar.null_commutes
   | star r1 ih1 =>
     rw [derive_star]
-    rw [Hedge.Grammar.denote_star_n]
-    rw [Hedge.Grammar.denote_concat_n]
-    rw [Hedge.Grammar.denote_star_n]
+    rw [Grammar.denote_star_n]
+    rw [Grammar.denote_concat_n]
+    rw [Grammar.denote_star_n]
     rw [Language.derive_star_n]
     rw [ih1]
   termination_by x
   decreasing_by
-    apply Hedge.Node.DescendantOf.sizeOf
+    apply Node.DescendantOf.sizeOf
 
 theorem derive_commutesb {α: Type}
-  (G: Hedge.Grammar n φ)
+  (G: Grammar n φ)
   (Φ: φ -> α -> Bool)
-  (r: Hedge.Grammar.Rule n φ)
-  (x: Hedge.Node α):
-  Hedge.Grammar.Rule.denote G (fun s a => Φ s a) (Hedge.Grammar.Room.derive G Φ r x)
-  = Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x := by
+  (r: Grammar.Rule n φ)
+  (x: Node α):
+  Grammar.Rule.denote G (fun s a => Φ s a) (Grammar.Room.derive G Φ r x)
+  = Language.derive (Grammar.Rule.denote G (fun s a => Φ s a) r) x := by
   funext xs
   rw [derive_commutesb_iff]

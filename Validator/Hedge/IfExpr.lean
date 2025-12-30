@@ -4,16 +4,15 @@ import Validator.Regex.Regex
 import Validator.Hedge.Grammar
 import Validator.Hedge.Types
 
-namespace Hedge.Grammar
+namespace Hedge
 
-def evalif {α: Type}
-  (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
-  (ifExpr: Symbol n φ) (t: α): Rule n φ :=
-  match ifExpr with
-  | (cnd, thn) =>
-    if Φ cnd t
-    then G.lookup thn
-    else Regex.emptyset
+def Grammar.evalif (G: Grammar n φ) (Φ: φ -> α -> Bool)
+  : (s: Symbol n φ) -> (a: α) -> Rule n φ
+  | (cnd, thn), a => if Φ cnd a then G.lookup thn else Regex.emptyset
+
+end Hedge
+
+namespace Hedge.Grammar
 
 def evalifs {α: Type} {n: Nat}
   (G: Grammar n φ) (Φ: φ -> α -> Bool)
