@@ -63,13 +63,13 @@ theorem extract_replaceFrom_is_id (r: Regex σ) (acc: Vec σ l):
     have hh1 :
       r1 =
         (replace
-          (RegexID.add_or (RegexID.add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.cast_or (extract r2 (extract r1 acc).2).2)
+          (RegexID.cast_assoc (RegexID.add (Symbol.num r2) (extract r1 acc).1))
+          (Vec.cast_assoc (extract r2 (extract r1 acc).2).2)
           hr
         ) := by
       clear ih2
-      rw [RegexID.add_or]
-      rw [Vec.cast_or]
+      rw [RegexID.cast_assoc]
+      rw [Vec.cast_assoc]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
       rw [<- replace_take]
@@ -83,8 +83,8 @@ theorem extract_replaceFrom_is_id (r: Regex σ) (acc: Vec σ l):
     clear hh1
     clear ih1
     congr
-    rw [RegexID.add_or]
-    rw [Vec.cast_or]
+    rw [RegexID.cast_assoc]
+    rw [Vec.cast_assoc]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]
   | concat r1 r2 ih1 ih2 =>
@@ -94,13 +94,13 @@ theorem extract_replaceFrom_is_id (r: Regex σ) (acc: Vec σ l):
     have hh1 :
       r1 =
         (replace
-          (RegexID.add_concat (RegexID.add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.cast_concat (extract r2 (extract r1 acc).2).2)
+          (RegexID.cast_assoc (RegexID.add (Symbol.num r2) (extract r1 acc).1))
+          (Vec.cast_assoc (extract r2 (extract r1 acc).2).2)
           hr
         ) := by
       clear ih2
-      rw [RegexID.add_concat]
-      rw [Vec.cast_concat]
+      rw [RegexID.cast_assoc]
+      rw [Vec.cast_assoc]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
       rw [<- replace_take]
@@ -114,8 +114,8 @@ theorem extract_replaceFrom_is_id (r: Regex σ) (acc: Vec σ l):
     clear hh1
     clear ih1
     congr
-    rw [RegexID.add_concat]
-    rw [Vec.cast_concat]
+    rw [RegexID.cast_assoc]
+    rw [Vec.cast_assoc]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]
   | star r1 ih1 =>
@@ -161,13 +161,13 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vec α l) (f: α -> β):
     have hh1 :
       Regex.map r1 f =
         (replace
-          (RegexID.add_or (RegexID.add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.map (Vec.cast_or (extract r2 (extract r1 acc).2).2) f)
+          (RegexID.cast_assoc (RegexID.add (Symbol.num r2) (extract r1 acc).1))
+          (Vec.map (Vec.cast_assoc (extract r2 (extract r1 acc).2).2) f)
           hr
         ) := by
       clear ih2
-      rw [RegexID.add_or]
-      rw [Vec.cast_or]
+      rw [RegexID.cast_assoc]
+      rw [Vec.cast_assoc]
       rw [Vec.map_cast]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
@@ -183,8 +183,8 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vec α l) (f: α -> β):
     clear hh1
     clear ih1
     congr
-    rw [RegexID.add_or]
-    rw [Vec.cast_or]
+    rw [RegexID.cast_assoc]
+    rw [Vec.cast_assoc]
     rw [Vec.map_cast]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]
@@ -196,13 +196,13 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vec α l) (f: α -> β):
     have hh1 :
       Regex.map r1 f =
         (replace
-          (RegexID.add_concat (RegexID.add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.map (Vec.cast_concat (extract r2 (extract r1 acc).2).2) f)
+          (RegexID.cast_assoc (RegexID.add (Symbol.num r2) (extract r1 acc).1))
+          (Vec.map (Vec.cast_assoc (extract r2 (extract r1 acc).2).2) f)
           hr
         ) := by
       clear ih2
-      rw [RegexID.add_concat]
-      rw [Vec.cast_concat]
+      rw [RegexID.cast_assoc]
+      rw [Vec.cast_assoc]
       rw [Vec.map_cast]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
@@ -218,8 +218,8 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vec α l) (f: α -> β):
     clear hh1
     clear ih1
     congr
-    rw [RegexID.add_concat]
-    rw [Vec.cast_concat]
+    rw [RegexID.cast_assoc]
+    rw [Vec.cast_assoc]
     rw [Vec.map_cast]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]

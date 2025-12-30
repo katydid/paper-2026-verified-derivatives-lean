@@ -28,16 +28,16 @@ def RegexID.casts_rw (rs: Vec (RegexID n) l) (h: n = m): Vec (RegexID m) l := by
 def RegexID.castsLE (rs: Vec (RegexID n) l) (h: n ≤ m): Vec (RegexID m) l :=
   Vec.map rs (fun r => RegexID.castLE r h)
 
-abbrev RegexID.add_assoc (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + (Symbol.num r1 + Symbol.num r2)) :=
+abbrev RegexID.cast_assoc (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + (Symbol.num r1 + Symbol.num r2)) :=
   have h : (n + Symbol.num r1 + Symbol.num r2) = n + (Symbol.num r1 + Symbol.num r2) := by
     rw [<- Nat.add_assoc]
   RegexID.cast r h
 
-def RegexID.add_or (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.or r1 r2)) :=
-  RegexID.add_assoc r
+def RegexID.cast_or (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.or r1 r2)) :=
+  RegexID.cast_assoc r
 
-def RegexID.add_concat (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.concat r1 r2)) :=
-  RegexID.add_assoc r
+def RegexID.cast_concat (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.concat r1 r2)) :=
+  RegexID.cast_assoc r
 
 theorem RegexID.cast_rfl (r: RegexID n): RegexID.cast r rfl = r := by
   rfl

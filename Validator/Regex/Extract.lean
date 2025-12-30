@@ -2,31 +2,37 @@ import Validator.Regex.Num
 import Validator.Regex.Regex
 import Validator.Regex.RegexID
 
-namespace Regex.Symbol
+namespace Regex
 
-def extract (r: Regex σ) (acc: Vec σ n): RegexID (n + Symbol.num r) × Vec σ (n + Symbol.num r) :=
+theorem Symbol.lt_add_symbol:
+  n < n + num (symbol s) := by
+  simp only [num]
+  omega
+
+def Symbol.extract (r: Regex σ) (acc: Vec σ n): RegexID (n + num r) × Vec σ (n + num r) :=
   match r with
-  | Regex.emptyset => (Regex.emptyset, acc)
-  | Regex.emptystr => (Regex.emptystr, acc)
-  | Regex.symbol s => (Regex.symbol (Fin.mk n (by
-      simp only [Symbol.num]
-      omega
-    )), Vec.snoc acc s)
-  | Regex.or r1 r2 =>
+  | emptyset => (emptyset, acc)
+  | emptystr => (emptystr, acc)
+  | symbol s => (symbol (Fin.mk n lt_add_symbol), Vec.snoc acc s)
+  | or r1 r2 =>
     let (er1, acc1) := extract r1 acc
     let (er2, acc2) := extract r2 acc1
-    (Regex.or (RegexID.add_or (RegexID.add (Symbol.num r2) er1)) (RegexID.add_or er2), Vec.cast_or acc2)
-  | Regex.concat r1 r2 =>
+    (or (RegexID.cast_assoc (RegexID.add (num r2) er1)) (RegexID.cast_assoc er2), Vec.cast_assoc acc2)
+  | concat r1 r2 =>
     let (er1, acc1) := extract r1 acc
     let (er2, acc2) := extract r2 acc1
-    (Regex.concat (RegexID.add_concat (RegexID.add (Symbol.num r2) er1)) (RegexID.add_concat er2), Vec.cast_concat acc2)
-  | Regex.star r1 =>
+    (concat (RegexID.cast_assoc (RegexID.add (num r2) er1)) (RegexID.cast_assoc er2), Vec.cast_assoc acc2)
+  | star r1 =>
     let (er1, acc1) := extract r1 acc
-    (Regex.star er1, acc1)
+    (star er1, acc1)
 
-def extractFrom (r: Regex σ): RegexID (Symbol.num r) × Vec σ (Symbol.num r) :=
+def Symbol.extractFrom (r: Regex σ): RegexID (num r) × Vec σ (num r) :=
   match extract r Vec.nil with
   | (r', xs) => (RegexID.cast r' (by omega), Vec.cast xs (by omega))
+
+end Regex
+
+namespace Regex.Symbol
 
 def extracts (xs: Vec (Regex σ) nregex) (acc: Vec σ nacc):
   (Vec (RegexID (nacc + Symbol.nums xs)) nregex) × (Vec σ (nacc + Symbol.nums xs)) :=
@@ -65,9 +71,9 @@ theorem extract_append_toList (acc: Vec σ n) (r: Regex σ):
     rw [Vec.snoc_append]
   | or r1 r2 ih1 ih2 =>
     simp only [extract]
-    rw [Vec.cast_or]
+    rw [Vec.cast_assoc]
     generalize_proofs h1 h2 h3
-    rw [Vec.cast_or]
+    rw [Vec.cast_assoc]
     generalize_proofs h4
     rw [Vec.toList_append]
     rw [Vec.cast_toList]
@@ -81,9 +87,9 @@ theorem extract_append_toList (acc: Vec σ n) (r: Regex σ):
     ac_rfl
   | concat r1 r2 ih1 ih2 =>
     simp only [extract]
-    rw [Vec.cast_concat]
+    rw [Vec.cast_assoc]
     generalize_proofs h1 h2 h3
-    rw [Vec.cast_concat]
+    rw [Vec.cast_assoc]
     generalize_proofs h4
     rw [Vec.toList_append]
     rw [Vec.cast_toList]
@@ -241,7 +247,7 @@ theorem extract_is_fmap_2 (r: Regex α) (acc: Vec α n) (f: α -> β):
     have ih2' := ih2 (by rw [Symbol.num_map])
     clear ih2
     simp only [extract]
-    simp only [Vec.cast_or]
+    simp only [Vec.cast_assoc]
     rw [ih1']
     have hh: n + Symbol.num r1 + Symbol.num (r2.map f) = n + Symbol.num (r1.map f) + Symbol.num (r2.map f) := by
       repeat rw [Symbol.num_map]
@@ -265,7 +271,7 @@ theorem extract_is_fmap_2 (r: Regex α) (acc: Vec α n) (f: α -> β):
     have ih2' := ih2 (by rw [Symbol.num_map])
     clear ih2
     simp only [extract]
-    simp only [Vec.cast_concat]
+    simp only [Vec.cast_assoc]
     rw [ih1']
     have hh: n + Symbol.num r1 + Symbol.num (r2.map f) = n + Symbol.num (r1.map f) + Symbol.num (r2.map f) := by
       repeat rw [Symbol.num_map]
@@ -338,8 +344,7 @@ theorem extract_is_fmap_1 (r: Regex α) (acc: Vec α n) (f: α -> β):
     clear ih2'
 
     simp only [RegexID.add]
-    simp only [RegexID.add_or]
-    simp only [RegexID.add_assoc]
+    simp only [RegexID.cast_assoc]
     repeat rw [RegexID.cast_is_cast_map]
     unfold RegexID.cast_map
     simp only [Regex.map_map]
@@ -387,8 +392,7 @@ theorem extract_is_fmap_1 (r: Regex α) (acc: Vec α n) (f: α -> β):
     rw [ih2']
 
     simp only [RegexID.add]
-    simp only [RegexID.add_concat]
-    simp only [RegexID.add_assoc]
+    simp only [RegexID.cast_assoc]
     repeat rw [RegexID.cast_is_cast_map]
     unfold RegexID.cast_map
     simp only [Regex.map_map]
