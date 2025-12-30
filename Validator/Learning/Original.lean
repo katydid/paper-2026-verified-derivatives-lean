@@ -13,15 +13,6 @@ import Validator.Regex.Regex
 
 namespace Original
 
--- foldLoop is a more readable version of List.foldl for imperative programmers:
--- Imperative programmers can imagine that `Id (Expr α)` = `Expr α`, because it does.
--- The Id wrapper just adds a monad wrapper to enable the do notation, so that we can use the for loop in Lean.
-private def foldLoop (deriv: Hedge.Grammar.Rule n φ -> Hedge.Node α -> Hedge.Grammar.Rule n φ) (start: Hedge.Grammar.Rule n φ) (hedge: Hedge α): Id (Hedge.Grammar.Rule n φ) := do
-  let mut res := start
-  for tree in hedge do
-    res := deriv res tree
-  return res
-
 -- derive is the derivative function for the expression, given a tree.
 -- It returns the expression that is left to match after matching the tree.
 -- Note we need to use `partial`, since Lean cannot automatically figure out that the derive function terminates.
