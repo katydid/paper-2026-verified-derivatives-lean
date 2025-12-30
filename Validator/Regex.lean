@@ -1,6 +1,5 @@
 import Validator.Regex.Compress
 import Validator.Regex.Drawer
-import Validator.Regex.Elem
 import Validator.Regex.Enter
 import Validator.Regex.EnterMem
 import Validator.Regex.Extract
