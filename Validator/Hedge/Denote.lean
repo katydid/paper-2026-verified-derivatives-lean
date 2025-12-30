@@ -114,33 +114,20 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
 
 -- Language.or, Language.concat and Language.star are unfolded to help with the termination proof.
 -- Φ needs to be the last parameter, so that simp only works on this function when the parameter r is provided.
-def Rule.denote'
-  {α: Type} {n: Nat} {φ: Type}
-  (G: Hedge.Grammar n φ)
-  (r: Hedge.Grammar.Rule n φ) (Φ: φ -> α -> Prop) (xs: Hedge α): Prop :=
-  match r with
-  | Regex.emptyset => Language.emptyset xs
-  | Regex.emptystr => Language.emptystr xs
-  | Regex.symbol (pred, ref) =>
-    match xs with
-    | [x] =>
-      (Φ pred x.getLabel)
-      /\ Rule.denote' G (G.lookup ref) Φ x.getChildren
+def Rule.denote' (G: Grammar n φ)
+  (r: Rule n φ) (Φ: φ -> α -> Prop) (xs: Hedge α): Prop := match r with
+  | Regex.emptyset => False | Regex.emptystr => xs = []
+  | Regex.symbol (pred, ref) => match xs with
+    | [x] => (Φ pred x.getLabel) /\ denote' G (G.lookup ref) Φ x.getChildren
     | _ => False
-  | Regex.or r1 r2 =>
-       (Rule.denote' G r1 Φ xs)
-    \/ (Rule.denote' G r2 Φ xs)
-  | Regex.concat r1 r2 =>
-     ∃ (i: Fin (xs.length + 1)),
-       (Rule.denote' G r1 Φ (List.take i xs))
-    /\ (Rule.denote' G r2 Φ (List.drop i xs))
-  | Regex.star r1 =>
-    match xs with
+  | Regex.or r1 r2 => (denote' G r1 Φ xs) \/ (denote' G r2 Φ xs)
+  | Regex.concat r1 r2 => ∃ (i: Fin (xs.length + 1)),
+      (denote' G r1 Φ (List.take i xs)) /\ (denote' G r2 Φ (List.drop i xs))
+  | Regex.star r1 => match xs with
     | [] => True
-    | (x'::xs') =>
-       ∃ (i: Fin xs.length),
-         (Rule.denote' G r1 Φ (x'::List.take i xs'))
-      /\ (Rule.denote' G (Regex.star r1) Φ (List.drop i xs'))
+    | (x'::xs') => ∃ (i: Fin xs.length),
+         (denote' G r1 Φ (x'::List.take i xs'))
+      /\ (denote' G (Regex.star r1) Φ (List.drop i xs'))
   termination_by (xs, r)
   decreasing_by
     · apply decreasing_symbol
@@ -153,20 +140,22 @@ def Rule.denote'
 
 def Rule.denote
   {α: Type} {n: Nat} {φ: Type}
-  (G: Hedge.Grammar n φ)
+  (G: Grammar n φ)
   (Φ: φ -> α -> Prop)
-  (r: Hedge.Grammar.Rule n φ) (xs: Hedge α): Prop :=
+  (r: Rule n φ) (xs: Hedge α): Prop :=
   Rule.denote' G r Φ xs
 
 theorem denote_emptyset {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop):
   Rule.denote G Φ Regex.emptyset = Language.emptyset := by
   unfold Rule.denote
   simp only [Rule.denote']
+  rfl
 
 theorem denote_emptystr {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop):
   Rule.denote G Φ Regex.emptystr = Language.emptystr := by
   unfold Rule.denote
   simp only [Rule.denote']
+  rfl
 
 theorem denote_onlyif {α: Type}
   (condition: Prop) [dcond: Decidable condition]
@@ -184,7 +173,7 @@ theorem denote_onlyif {α: Type}
     simp only [eq_iff_iff]
     rw [Rule.denote]
     rw [Rule.denote']
-    simp only [Language.emptyset, false_iff, not_and]
+    simp only [false_iff, not_and]
     intro h
     contradiction
 
