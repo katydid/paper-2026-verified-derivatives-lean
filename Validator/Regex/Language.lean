@@ -20,33 +20,22 @@ open List (
 
 def Langs (α: Type): Type := List α -> Prop
 
-def emptyset : Langs α := fun _ => False
-
-def emptystr : Langs α := fun xs => xs = []
-
+def emptyset: Langs α := fun _ => False
+def emptystr: Langs α := fun xs => xs = []
 def symbol (Φ: σ -> α -> Prop) (s: σ): Langs α :=
   fun xs => ∃ x, xs = [x] /\ Φ s x
-
--- onlyif is used as an and to make derive char not require an if statement
--- (derive (char c) a) w <-> (onlyif (a = c) emptystr)
-def onlyif (cond : Prop) (P : Langs α) : Langs α := fun xs => cond /\ P xs
-
-def or (P : Langs α) (Q : Langs α) : Langs α := fun xs => P xs \/ Q xs
-
-def concat (P : Langs α) (Q : Langs α) : Langs α := fun (xs : List α) =>
+def onlyif (cond : Prop) (P : Langs α): Langs α := fun xs => cond /\ P xs
+def or (P : Langs α) (Q : Langs α): Langs α := fun xs => P xs \/ Q xs
+def concat (P : Langs α) (Q : Langs α): Langs α := fun (xs : List α) =>
   ∃ n: Fin (xs.length + 1), P (List.take n xs) /\ Q (List.drop n xs)
-
 def star (R: Langs α) (xs: List α): Prop :=
   match xs with
   | [] => True
-  | (x'::xs') =>
-    ∃ (n: Fin xs.length),
-      R (List.take (n + 1) (x'::xs')) /\
-      (star R (List.drop (n + 1) (x'::xs')))
+  | (x::xs') => ∃ (n: Fin xs.length),
+      R (x::List.take n xs') /\ star R (List.drop n xs')
   termination_by xs.length
   decreasing_by
-    obtain ⟨n, hn⟩ := n
-    simp only [List.drop_succ_cons, List.length_drop, List.length_cons]
+    simp only [List.length_drop, List.length_cons]
     omega
 
 -- attribute [simp] allows these definitions to be unfolded when using the simp tactic.
@@ -259,7 +248,7 @@ theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
     simp only [star] at h
     unfold concat
     obtain ⟨n, h⟩ := h
-    simp only [List.length_cons, List.take_succ_cons, List.drop_succ_cons] at h
+    simp only [List.length_cons] at h
     exists n
   case invFun =>
     intro h
