@@ -4,14 +4,10 @@ import Validator.Std.Vec
 
 namespace Regex
 
-def map (r: Regex α) (f: α -> β): Regex β :=
-  match r with
-  | emptyset => emptyset
-  | emptystr => emptystr
-  | symbol s => symbol (f s)
-  | or r1 r2 => or (map r1 f) (map r2 f)
+def map (r: Regex α) (f: α -> β): Regex β := match r with
+  | emptyset => emptyset | emptystr => emptystr | star r1 => star (map r1 f)
+  | symbol s => symbol (f s) | or r1 r2 => or (map r1 f) (map r2 f)
   | concat r1 r2 => concat (map r1 f) (map r2 f)
-  | star r1 => star (map r1 f)
 
 theorem map_id (r: Regex α):
   map r (fun s => s) = r := by

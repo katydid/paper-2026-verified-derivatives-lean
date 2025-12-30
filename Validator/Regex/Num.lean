@@ -1,17 +1,16 @@
 import Validator.Regex.Map
 import Validator.Regex.Regex
 
-namespace Regex.Symbol
+namespace Regex
 
 @[reducible, simp]
-def num (r: Regex σ): Nat :=
-  match r with
-  | Regex.emptyset => 0
-  | Regex.emptystr => 0
-  | Regex.symbol _ => 1
-  | Regex.or r1 r2 => num r1 + num r2
-  | Regex.concat r1 r2 => num r1 + num r2
-  | Regex.star r1 => num r1
+def Symbol.num: (r: Regex σ) -> Nat
+  | emptyset => 0 | emptystr => 0 | symbol _ => 1 | star r1 => num r1
+  | or r1 r2 => num r1 + num r2 | concat r1 r2 => num r1 + num r2
+
+end Regex
+
+namespace Regex.Symbol
 
 def nums (xs: Vec (Regex σ) l): Nat :=
   Vec.foldl (· + ·) 0 (Vec.map xs num)
@@ -64,12 +63,12 @@ theorem num_map (r: Regex α) (f: α -> β):
     simp only [Regex.map, num]
   | case3 =>
     simp only [Regex.map, num]
-  | case4 r1 r2 hr1 hr2 =>
-    simp only [Regex.map, num, hr1, hr2]
+  | case4 r1 hr1 =>
+    simp only [Regex.map, hr1]
   | case5 r1 r2 hr1 hr2 =>
     simp only [Regex.map, num, hr1, hr2]
-  | case6 r1 hr1 =>
-    simp only [Regex.map, hr1]
+  | case6 r1 r2 hr1 hr2 =>
+    simp only [Regex.map, num, hr1, hr2]
 
 theorem nums_map (rs: Vec (Regex α) l) (f: α -> β):
   nums (Regex.maps rs f) = nums rs := by

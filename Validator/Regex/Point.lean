@@ -4,25 +4,24 @@ import Validator.Regex.Map
 -- This file contains the Regex.Point.derive function.
 -- This is called point, for point in the plotted predicate graph.
 -- The Regex is generic on the pair of the input and output of the predicate function or point.
+
+namespace Regex
+
+def Point.first (r: Regex (α × β)): Regex α := map r (fun (s, _) => s)
+
+-- Point.derive is the same as Regex.derive, except the answer to the predicate is already included in a tuple with the original symbol.
+def Point.derive {σ: Type}: (r: Regex (σ × Bool)) -> Regex σ
+  | emptyset => emptyset | emptystr => emptyset
+  | symbol (_, res) => onlyif res emptystr
+  | or r1 r2 => or (derive r1) (derive r2)
+  | concat r1 r2 => or
+    (concat (derive r1) (first r2))
+    (onlyif (null r1) (derive r2))
+  | star r1 => concat (derive r1) (star (first r1))
+
+end Regex
+
 namespace Regex.Point
-
-def first (r: Regex (α × β)): Regex α :=
-  map r (fun (s, _) => s)
-
--- Regex.Point.derive is the same as Regex.derive, except the answer to the predicate is already included in a tuple with the original symbol.
-def derive {σ: Type} (r: Regex (σ × Bool)): Regex σ :=
-  match r with
-  | emptyset => emptyset
-  | emptystr => emptyset
-  | symbol (_, b) => onlyif b emptystr
-  | or r1 r2 =>
-    or (derive r1) (derive r2)
-  | concat r1 r2 =>
-    or
-      (concat (derive r1) (first r2))
-      (onlyif (null r1) (derive r2))
-  | star r1 =>
-      concat (derive r1) (star (first r1))
 
 theorem map_first (Φ: σ -> Bool) (r: Regex σ):
   first (Regex.map r (fun s => (s, Φ s))) = r := by

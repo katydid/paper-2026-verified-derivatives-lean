@@ -4,12 +4,8 @@ import Validator.Regex.Language
 
 -- A regular expression is defined over a generic symbol
 inductive Regex (σ: Type) where
-  | emptyset
-  | emptystr
-  | symbol (s: σ)
-  | or (r1 r2: Regex σ)
-  | concat (r1 r2: Regex σ)
-  | star (r1: Regex σ)
+  | emptyset | emptystr | symbol (s: σ)
+  | or (r1 r2: Regex σ) | concat (r1 r2: Regex σ) | star (r1: Regex σ)
   deriving DecidableEq, Ord, Repr, Hashable, Repr
 
 instance [Ord σ]: Ord (Regex σ) := inferInstance
@@ -35,19 +31,12 @@ def denote {α: Type} {σ: Type} (Φ : σ -> α -> Prop) (r: Regex σ): (xs: Lis
   | concat p q => Language.concat_n (denote Φ p) (denote Φ q)
   | star p => Language.star_n (denote Φ p)
 
-def null {σ: Type} (r: Regex σ): Bool :=
-  match r with
-  | emptyset => false
-  | emptystr => true
-  | symbol _ => false
-  | or p q => null p || null q
-  | concat p q => null p && null q
-  | star _ => true
+def null {σ: Type}: (r: Regex σ) -> Bool
+  | emptyset => false | emptystr => true | symbol _ => false | star _ => true
+  | or p q => (null p || null q) | concat p q => (null p && null q)
 
-def unescapable (x: Regex σ): Bool :=
-  match x with
-  | emptyset => true
-  | _ => false
+def unescapable :(x: Regex σ) -> Bool
+  | emptyset => true | _ => false
 
 def onlyif (cond: Prop) [dcond: Decidable cond] (x: Regex σ): Regex σ :=
   if cond then x else emptyset
