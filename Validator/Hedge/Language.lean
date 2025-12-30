@@ -1,7 +1,7 @@
 import Validator.Std.Hedge
 import Validator.Regex.Language
 
-namespace Hedge.Language
+namespace Language
 
 open List (
   append_assoc
@@ -19,7 +19,7 @@ open List (
 
 -- Definitions
 
-def Lang (α: Type): Type := Regex.Language.Langs (Hedge.Node α)
+def Lang (α: Type): Type := Language.Langs (Hedge.Node α)
 
 def tree {α: Type} (φ: α -> Bool) (R: Lang α): Lang α :=
   fun xs => ∃ label children, xs = [Hedge.Node.mk label children] /\ φ label /\ R children
@@ -45,25 +45,25 @@ theorem tree_exists_is_tree_match:
       simp only [cons.injEq, and_true, eq_iff_iff]
       cases x with
       | mk label children =>
-      simp only [Node.mk.injEq, ↓existsAndEq, and_true, exists_eq_left']
+      simp only [Hedge.Node.mk.injEq, ↓existsAndEq, and_true, exists_eq_left']
     | cons x' xs =>
       simp only [cons.injEq, reduceCtorEq, and_false, false_and, exists_const, exists_false]
 
-example: Lang Nat := (tree (fun x => x = 1) (Regex.Language.or (tree (fun x => x = 1) Regex.Language.emptystr) Regex.Language.emptyset))
+example: Lang Nat := (tree (fun x => x = 1) (Language.or (tree (fun x => x = 1) Language.emptystr) Language.emptyset))
 
 theorem null_iff_tree {α: Type} {p: α -> Bool} {children: Lang α}:
-  Regex.Language.null (tree p children) <-> False :=
+  Language.null (tree p children) <-> False :=
   Iff.intro nofun nofun
 
 theorem null_tree {α: Type} {p: α -> Bool} {children: Lang α}:
-  Regex.Language.null (tree p children) = False := by
+  Language.null (tree p children) = False := by
   rw [null_iff_tree]
 
 theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: α} {children: Hedge α} {xs: Hedge α}:
-  (Regex.Language.derive (tree p childlang) (Hedge.Node.mk label children)) xs <->
-  (Regex.Language.onlyif (p label /\ childlang children) Regex.Language.emptystr) xs := by
-  simp only [Regex.Language.derive, Regex.Language.derives, singleton_append]
-  simp only [Regex.Language.onlyif, Regex.Language.emptystr]
+  (Language.derive (tree p childlang) (Hedge.Node.mk label children)) xs <->
+  (Language.onlyif (p label /\ childlang children) Language.emptystr) xs := by
+  simp only [Language.derive, Language.derives, singleton_append]
+  simp only [Language.onlyif, Language.emptystr]
   refine Iff.intro ?toFun ?invFun
   case toFun =>
     unfold tree
@@ -83,7 +83,7 @@ theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: 
 
 -- Hedge.Language.derive (Hedge.Language.tree p.eval (Denote.denote children)) a
 theorem derive_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: α} {children: Hedge α}:
-  (Regex.Language.derive (tree p childlang) (Hedge.Node.mk label children)) =
-  (Regex.Language.onlyif (p label /\ childlang children) Regex.Language.emptystr) := by
+  (Language.derive (tree p childlang) (Hedge.Node.mk label children)) =
+  (Language.onlyif (p label /\ childlang children) Language.emptystr) := by
   funext
   rw [derive_iff_tree]

@@ -6,7 +6,6 @@ import Validator.Pred.AnyEq
 import Validator.Regex.Regex
 import Validator.Regex.Language
 import Validator.Hedge.Types
-import Validator.Hedge.Language
 
 namespace Hedge.Grammar
 

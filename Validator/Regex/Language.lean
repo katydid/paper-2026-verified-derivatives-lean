@@ -1,6 +1,6 @@
 import Mathlib.Tactic.Linarith -- split_ands
 
-namespace Regex.Language
+namespace Language
 
 open List (
   append_assoc

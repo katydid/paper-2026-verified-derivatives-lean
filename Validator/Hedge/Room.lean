@@ -2,10 +2,12 @@ import Mathlib.Tactic.SimpRw
 
 import Validator.Std.Hedge
 
+import Validator.Regex.Language
 import Validator.Regex.Room
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
 import Validator.Hedge.IfExpr
+import Validator.Hedge.Language
 
 namespace Hedge.Grammar.Room
 
@@ -109,19 +111,19 @@ theorem and_start {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (lab
       rw [ih]
 
 theorem derive_denote_symbol_is_onlyif {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (label: α) (children: Hedge α):
-  Regex.Language.derive
+  Language.derive
     (Rule.denote G (fun s a => Φ s a = true)
       (Regex.symbol (pred, ref))
     )
     (Node.mk label children)
   =
-    Regex.Language.onlyif
+    Language.onlyif
       (Φ pred label = true ∧ Rule.denote G (fun s a => Φ s a = true) (G.lookup ref) children)
-    Regex.Language.emptystr
+    Language.emptystr
   := by
   funext xs
   rw [Hedge.Grammar.denote_symbol]
-  rw [Hedge.Language.derive_iff_tree]
+  rw [Language.derive_iff_tree]
   simp only [Bool.decide_eq_true]
 
 theorem derive_commutes_symbol {α: Type}
@@ -134,11 +136,11 @@ theorem derive_commutes_symbol {α: Type}
   (ihr:
     ∀ (r: Hedge.Grammar.Rule n φ) (x3: Hedge.Node.DescendantOf x4) (xs: Hedge α),
         Hedge.Grammar.Rule.denote G (fun p a => Φ p a) (Hedge.Grammar.Room.derive G Φ r x3.val) xs
-    <-> Regex.Language.derive (Hedge.Grammar.Rule.denote G (fun p a => Φ p a) r) x3.val xs
+    <-> Language.derive (Hedge.Grammar.Rule.denote G (fun p a => Φ p a) r) x3.val xs
   )
   :
   Rule.denote G (fun s a => Φ s a = true) (derive G Φ (Regex.symbol (pred, ref)) x4) xs =
-  Regex.Language.derive (Rule.denote G (fun s a => Φ s a = true) (Regex.symbol (pred, ref))) x4 xs := by
+  Language.derive (Rule.denote G (fun s a => Φ s a = true) (Regex.symbol (pred, ref))) x4 xs := by
   cases x4 with
   | mk label children =>
 
@@ -188,19 +190,19 @@ theorem revert_param (f g: α -> β):
 
 theorem derive_commutesb_iff {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool) (r: Hedge.Grammar.Rule n φ) (x: Hedge.Node α) (xs: Hedge α):
   Hedge.Grammar.Rule.denote G (fun s a => Φ s a) (Hedge.Grammar.Room.derive G Φ r x) xs
-  <-> Regex.Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x xs := by
+  <-> Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x xs := by
   rw [<- eq_iff_iff]
   apply revert_param
   induction r with
   | emptyset =>
     rw [derive_emptyset]
     rw [Hedge.Grammar.denote_emptyset]
-    rw [Regex.Language.derive_emptyset]
+    rw [Language.derive_emptyset]
   | emptystr =>
     rw [derive_emptystr]
     rw [Hedge.Grammar.denote_emptystr]
     rw [Hedge.Grammar.denote_emptyset]
-    rw [Regex.Language.derive_emptystr]
+    rw [Language.derive_emptystr]
   | symbol s =>
     funext xs
     cases s with
@@ -213,7 +215,7 @@ theorem derive_commutesb_iff {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α ->
     rw [derive_or]
     rw [Hedge.Grammar.denote_or]
     rw [Hedge.Grammar.denote_or]
-    rw [Regex.Language.derive_or]
+    rw [Language.derive_or]
     rw [ih1]
     rw [ih2]
   | concat r1 r2 ih1 ih2 =>
@@ -222,7 +224,7 @@ theorem derive_commutesb_iff {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α ->
     rw [Hedge.Grammar.denote_or]
     rw [Hedge.Grammar.denote_concat_n]
     rw [Hedge.Grammar.denote_onlyif]
-    rw [Regex.Language.derive_concat_n]
+    rw [Language.derive_concat_n]
     rw [<- ih1]
     rw [<- ih2]
     congr
@@ -232,7 +234,7 @@ theorem derive_commutesb_iff {α: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α ->
     rw [Hedge.Grammar.denote_star_n]
     rw [Hedge.Grammar.denote_concat_n]
     rw [Hedge.Grammar.denote_star_n]
-    rw [Regex.Language.derive_star_n]
+    rw [Language.derive_star_n]
     rw [ih1]
   termination_by x
   decreasing_by
@@ -244,6 +246,6 @@ theorem derive_commutesb {α: Type}
   (r: Hedge.Grammar.Rule n φ)
   (x: Hedge.Node α):
   Hedge.Grammar.Rule.denote G (fun s a => Φ s a) (Hedge.Grammar.Room.derive G Φ r x)
-  = Regex.Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x := by
+  = Language.derive (Hedge.Grammar.Rule.denote G (fun s a => Φ s a) r) x := by
   funext xs
   rw [derive_commutesb_iff]

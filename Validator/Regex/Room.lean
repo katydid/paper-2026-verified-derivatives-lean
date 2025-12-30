@@ -203,7 +203,7 @@ theorem derives_distrib_nil:
 
 theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
   Regex.denote (fun s a => Φ s a) (Room.derive (fun s => Φ s a) r)
-  = Regex.Language.derive (Regex.denote (fun s a => Φ s a) r) a := by
+  = Language.derive (Regex.denote (fun s a => Φ s a) r) a := by
   rw [derive_is_Partial_derive]
   rw [<- Regex.Partial.derive_is_partial_derive]
   rw [<- Regex.derive_commutesb]

@@ -1,7 +1,8 @@
 import Validator.Std.List
 
-import Validator.Regex.Regex
+import Validator.Regex.Language
 import Validator.Hedge.Grammar
+import Validator.Hedge.Language
 
 namespace Hedge.Grammar
 
@@ -117,8 +118,8 @@ def Rule.denote'
   (G: Hedge.Grammar n φ)
   (r: Hedge.Grammar.Rule n φ) (Φ: φ -> α -> Prop) (xs: Hedge α): Prop :=
   match r with
-  | Regex.emptyset => Regex.Language.emptyset xs
-  | Regex.emptystr => Regex.Language.emptystr xs
+  | Regex.emptyset => Language.emptyset xs
+  | Regex.emptystr => Language.emptystr xs
   | Regex.symbol (pred, ref) =>
     match xs with
     | [x] =>
@@ -157,20 +158,20 @@ def Rule.denote
   Rule.denote' G r Φ xs
 
 theorem denote_emptyset {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop):
-  Rule.denote G Φ Regex.emptyset = Regex.Language.emptyset := by
+  Rule.denote G Φ Regex.emptyset = Language.emptyset := by
   unfold Rule.denote
   simp only [Rule.denote']
 
 theorem denote_emptystr {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop):
-  Rule.denote G Φ Regex.emptystr = Regex.Language.emptystr := by
+  Rule.denote G Φ Regex.emptystr = Language.emptystr := by
   unfold Rule.denote
   simp only [Rule.denote']
 
 theorem denote_onlyif {α: Type}
   (condition: Prop) [dcond: Decidable condition]
   (G: Grammar n φ) {Φ: φ -> α -> Prop} (x: Rule n φ):
-  Rule.denote G Φ (Regex.onlyif condition x) = Regex.Language.onlyif condition (Rule.denote G Φ x) := by
-  unfold Regex.Language.onlyif
+  Rule.denote G Φ (Regex.onlyif condition x) = Language.onlyif condition (Rule.denote G Φ x) := by
+  unfold Language.onlyif
   unfold Regex.onlyif
   funext xs
   split_ifs
@@ -182,14 +183,14 @@ theorem denote_onlyif {α: Type}
     simp only [eq_iff_iff]
     rw [Rule.denote]
     rw [Rule.denote']
-    simp only [Regex.Language.emptyset, false_iff, not_and]
+    simp only [Language.emptyset, false_iff, not_and]
     intro h
     contradiction
 
 theorem denote_symbol {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (s: Symbol n φ):
-  Rule.denote G Φ (Regex.symbol s) = Hedge.Language.tree (fun a => Φ s.1 a) (Rule.denote G Φ (G.lookup s.2)) := by
+  Rule.denote G Φ (Regex.symbol s) = Language.tree (fun a => Φ s.1 a) (Rule.denote G Φ (G.lookup s.2)) := by
   unfold Rule.denote
-  unfold Hedge.Language.tree
+  unfold Language.tree
   funext xs
   simp only
   cases xs with
@@ -219,17 +220,17 @@ theorem denote_symbol {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> �
       simp at h
 
 theorem denote_or {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r1 r2: Rule n φ):
-  Rule.denote G Φ (Regex.or r1 r2) = Regex.Language.or (Rule.denote G Φ r1) (Rule.denote G Φ r2) := by
+  Rule.denote G Φ (Regex.or r1 r2) = Language.or (Rule.denote G Φ r1) (Rule.denote G Φ r2) := by
   unfold Rule.denote
   funext
-  simp only [Rule.denote', Regex.Language.or]
+  simp only [Rule.denote', Language.or]
 
 theorem denote_concat_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (p q: Rule n φ):
-  Rule.denote G Φ (Regex.concat p q) = Regex.Language.concat_n (Rule.denote G Φ p) (Rule.denote G Φ q) := by
+  Rule.denote G Φ (Regex.concat p q) = Language.concat_n (Rule.denote G Φ p) (Rule.denote G Φ q) := by
   unfold Rule.denote
   funext
   simp only [Rule.denote']
-  unfold Regex.Language.concat_n
+  unfold Language.concat_n
   rfl
 
 theorem unfold_denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
@@ -251,9 +252,9 @@ theorem unfold_denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: 
       simp only [Rule.denote']
 
 theorem denote_star_n_iff' {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
-  Rule.denote' G (Regex.star r) (fun p x' => Φ p x') xs <-> Regex.Language.star_n (Rule.denote' G r (fun p x' => Φ p x')) xs := by
+  Rule.denote' G (Regex.star r) (fun p x' => Φ p x') xs <-> Language.star_n (Rule.denote' G r (fun p x' => Φ p x')) xs := by
   rw [<- eq_iff_iff]
-  unfold Regex.Language.star_n
+  unfold Language.star_n
   rw [unfold_denote_star_n]
   cases xs with
   | nil =>
@@ -272,39 +273,39 @@ theorem denote_star_n_iff' {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ
     apply List.list_length_drop_lt_cons
 
 theorem denote_star_n_iff {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ) (xs: Hedge α):
-  Rule.denote G Φ (Regex.star r) xs <-> Regex.Language.star_n (Rule.denote G Φ r) xs := by
+  Rule.denote G Φ (Regex.star r) xs <-> Language.star_n (Rule.denote G Φ r) xs := by
   unfold Rule.denote
   rw [denote_star_n_iff']
 
 theorem denote_star_n {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) (r: Rule n φ):
-  Rule.denote G Φ (Regex.star r) = Regex.Language.star_n (Rule.denote G Φ r) := by
+  Rule.denote G Φ (Regex.star r) = Language.star_n (Rule.denote G Φ r) := by
   funext
   rw [denote_star_n_iff]
 
 theorem null_commutes {α: Type}
   (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (x: Rule n φ):
-  ((Rule.null x) = true) = Regex.Language.null (Rule.denote G Φ x) := by
+  ((Rule.null x) = true) = Language.null (Rule.denote G Φ x) := by
   unfold Rule.null
   induction x with
   | emptyset =>
     rw [denote_emptyset]
-    rw [Regex.Language.null_emptyset]
+    rw [Language.null_emptyset]
     unfold Regex.null
     apply Bool.false_eq_true
   | emptystr =>
     rw [denote_emptystr]
-    rw [Regex.Language.null_emptystr]
+    rw [Language.null_emptystr]
     unfold Regex.null
     simp only
   | symbol s =>
     obtain ⟨p, children⟩ := s
     rw [denote_symbol]
-    rw [Hedge.Language.null_tree]
+    rw [Language.null_tree]
     unfold Regex.null
     apply Bool.false_eq_true
   | or p q ihp ihq =>
     rw [denote_or]
-    rw [Regex.Language.null_or]
+    rw [Language.null_or]
     unfold Regex.null
     rw [<- ihp]
     rw [<- ihq]
@@ -312,7 +313,7 @@ theorem null_commutes {α: Type}
     rw [Bool.or_eq_true]
   | concat p q ihp ihq =>
     rw [denote_concat_n]
-    rw [Regex.Language.null_concat_n]
+    rw [Language.null_concat_n]
     unfold Regex.null
     rw [<- ihp]
     rw [<- ihq]
@@ -320,7 +321,7 @@ theorem null_commutes {α: Type}
     rw [Bool.and_eq_true]
   | star r ih =>
     rw [denote_star_n]
-    rw [Regex.Language.null_star_n]
+    rw [Language.null_star_n]
     unfold Regex.null
     simp only
 
@@ -329,18 +330,18 @@ theorem denote_nil_is_null (Φ: φ -> α -> Prop) [DecidableRel Φ]:
   rw [null_commutes G (fun s a => Φ s a)]
   cases r with
   | emptyset =>
-    simp only [denote_emptyset, Regex.Language.emptyset, Regex.Language.null]
+    simp only [denote_emptyset, Language.emptyset, Language.null]
   | emptystr =>
-    simp only [denote_emptystr, Regex.Language.emptystr, Regex.Language.null]
+    simp only [denote_emptystr, Language.emptystr, Language.null]
   | symbol s =>
     simp only [denote_symbol]
-    simp only [Regex.Language.null]
+    simp only [Language.null]
   | or r1 r2 =>
-    simp only [denote_or, Regex.Language.or, Regex.Language.null]
+    simp only [denote_or, Language.or, Language.null]
   | concat r1 r2 =>
-    simp only [denote_concat_n, Regex.Language.null]
+    simp only [denote_concat_n, Language.null]
   | star r1 =>
-    simp only [denote_star_n, Regex.Language.null]
+    simp only [denote_star_n, Language.null]
 
 def denote (G: Grammar n φ) (Φ: φ -> α -> Prop) (xs: Hedge α): Prop :=
   Rule.denote G Φ G.start xs
