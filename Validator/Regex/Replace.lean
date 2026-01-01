@@ -25,38 +25,10 @@ theorem replace_cast_both (r: RegexID n) (xs: Vec σ n) (h: n = l):
   simp only [Vec.cast_rfl]
   rfl
 
-theorem replaceFrom_cast_both (r: RegexID n) (xs: Vec σ n) (h: n = l):
-  replaceFrom r xs = replaceFrom (RegexID.cast r h) (Vec.cast xs h) := by
-  unfold replaceFrom
-  rw [replace_cast_both]
-
 theorem replace_cast_symbols (r: RegexID n) (xs: Vec σ n) (h: n = l):
   replace r xs (by omega) = replace r (Vec.cast xs h) (by omega) := by
   subst h
   simp only [Vec.cast_rfl]
-
-theorem replace_nil_is_map_id (r: Regex (Fin 0)):
-  replace r Vec.nil (by simp) = Regex.map r id := by
-  induction r with
-  | emptyset =>
-    simp only [replace, Regex.map]
-  | emptystr =>
-    simp only [replace, Regex.map]
-  | symbol s =>
-    nomatch s
-  | or r1 r2 ih1 ih2 =>
-    simp only [replace, Regex.map, Regex.or.injEq]
-    rw [ih1]
-    rw [ih2]
-    apply And.intro rfl rfl
-  | concat r1 r2 ih1 ih2 =>
-    simp only [replace, Regex.map, Regex.concat.injEq]
-    rw [ih1]
-    rw [ih2]
-    apply And.intro rfl rfl
-  | star r1 ih1 =>
-    simp only [replace, Regex.map]
-    rw [ih1]
 
 theorem replace_take (r: RegexID n) (xs: Vec σ (n + l)):
   replace r (Vec.take n xs) (by omega) = replace r xs (by omega):= by
@@ -118,12 +90,3 @@ theorem replace_regexid_add (r: RegexID n) (xs: Vec σ (n + l)):
     generalize_proofs h1 h2 at *
     rw [ih1]
     rfl
-
-theorem replaceFrom_append (e: RegexID n) {xs: Vec α n} {ys: Vec α m}:
-  replaceFrom (RegexID.cast_add m e) (Vec.append xs ys)
-  = replaceFrom e xs := by
-  unfold replaceFrom
-  rw [← replace_regexid_add e (xs.append ys)]
-  rw [← replace_take e (xs.append ys)]
-  rw [Vec.take_append xs ys]
-  rw [replace_cast_symbols]
