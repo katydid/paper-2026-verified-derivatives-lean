@@ -132,70 +132,6 @@ theorem derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ -> �
   rw [Language.derive_iff_tree]
   simp only [decide_eq_true_eq]
 
-theorem derive_commutes_symbol {α: Type}
-  (G: Grammar n φ)
-  (Φ: φ -> α -> Prop)
-  [DecidableRel Φ]
-  (pred: φ)
-  (ref: Ref n)
-  (x4: Node α)
-  (ihr:
-    ∀ (r: Rule n φ) (x3: Node.DescendantOf x4),
-        Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r x3.val)
-      = Language.derive (Rule.denote G Φ r) x3.val
-  )
-  :
-  Rule.denote G Φ (derive G (decideRel Φ) (Regex.symbol (pred, ref)) x4) =
-  Language.derive (Rule.denote G Φ (Regex.symbol (pred, ref))) x4 := by
-  cases x4 with
-  | mk label children =>
-
-  rw [derive_denote_symbol_is_onlyif]
-
-  rw [derive_symbol]
-  simp only
-  rw [Grammar.denote_onlyif]
-
-  rw [Grammar.denote_emptystr]
-  congr
-
-  simp only [evalif]
-  simp only [and_start]
-  simp only [eq_iff_iff, iff_true]
-  rw [<- eq_iff_iff]
-  congr
-
-  generalize G.lookup ref = r
-  induction children generalizing r with
-  | nil =>
-    simp only [List.foldl_nil]
-    rw [Grammar.denote_nil_is_null]
-  | cons x2 xs ihxs =>
-    simp only [List.foldl]
-    rw [ihxs]
-    · have hchild := Node.Descendant.mkFirstChild_eq label x2 xs
-      have ihr := ihr (r := r) (x3 := hchild.val)
-      cases hchild with
-      | mk hdes heq =>
-      rw [<- heq]
-      rw [ihr]
-      rfl
-    · intro r' x3
-      have hcons := Node.Descendant.consFirstChild_eq x2 x3
-      have ihr := ihr r' hcons.val
-      cases hcons with
-      | mk hdes heq =>
-      rw [<- heq]
-      simp at ihr
-      rw [ihr]
-      rfl
-
-theorem revert_param (f g: α -> β):
-  f = g -> ∀ x, f x = g x := by
-  intro a x
-  subst a
-  simp_all only
-
 theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (r: Rule n φ) (x: Node α):
   Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r x)
   = Language.derive (Rule.denote G Φ r) x := by
@@ -210,13 +146,44 @@ theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [Dec
     rw [Grammar.denote_emptyset]
     rw [Language.derive_emptystr]
   | symbol s =>
-    funext xs
     cases s with
     | mk pred ref =>
-    let ihr :=
-      fun (r: Rule n φ) (x7: Node.DescendantOf x) =>
-        derive_commutes G Φ r x7
-    rw [derive_commutes_symbol (ihr := ihr) (x4 := x)]
+
+    cases x with
+    | mk label children =>
+
+    rw [derive_denote_symbol_is_onlyif]
+
+    rw [derive_symbol]
+    simp only
+    rw [Grammar.denote_onlyif]
+
+    rw [Grammar.denote_emptystr]
+    congr
+
+    simp only [evalif]
+    simp only [and_start]
+    simp only [eq_iff_iff, iff_true]
+    rw [<- eq_iff_iff]
+    congr
+
+    generalize G.lookup ref = r
+    have ihr :=
+      fun (x: Node α) (hx: x ∈ children) r' =>
+        derive_commutes (G := G) (Φ := Φ) (x := x) (r := r')
+    induction children generalizing r with
+    | nil =>
+      simp only [List.foldl_nil]
+      rw [Grammar.denote_nil_is_null]
+    | cons x2 xs ihxs =>
+      simp only [List.foldl]
+      rw [ihxs]
+      · rw [ihr]
+        · rfl
+        · simp_all
+      · intro x hxs r'
+        rw [ihr]
+        aesop
   | or r1 r2 ih1 ih2 =>
     rw [Grammar.Room.derive_or]
     rw [Grammar.denote_or]
@@ -243,7 +210,9 @@ theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [Dec
     rw [Language.derive_star]
     rw [ih1]
   termination_by x
-  decreasing_by apply Node.DescendantOf.sizeOf
+  decreasing_by
+    apply Node.sizeOf_children
+    exact hx
 
 theorem derive_commutesb (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Rule n φ) (x: Node α):
   Rule.denote G (fun s a => Φ s a) (Grammar.Room.derive G Φ r x)

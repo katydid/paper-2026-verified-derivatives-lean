@@ -51,14 +51,33 @@ abbrev Node.DescendantOf {α: Type} (ancestor: Hedge.Node α) := {
     // Descendant child ancestor
   }
 
-def Node.Descendant.mkFirstChild (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α): (Node.mk parentLabel (x :: siblings)).DescendantOf := by
+def Node.DescendantOf.mk (d: Descendant child ancestor): DescendantOf ancestor :=
+  Subtype.mk child d
+
+def Node.Descendant.mkFirstChild
+  (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α): Descendant x (Node.mk parentLabel (x :: siblings)) := by
+  unfold Node.Descendant
+  unfold Node.getDescendants
+  simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
+    true_or]
+
+def Node.Descendant.consFirstChild
+  (firstchild: Hedge.Node α):
+  Descendant firstchild (Node.mk label (firstchild :: xs)) := by
+  unfold Node.Descendant
+  unfold Node.getDescendants
+  simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
+    true_or]
+
+def Node.DescendantOf.mkFirstChild
+  (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α): (Node.mk parentLabel (x :: siblings)).DescendantOf := by
   refine (Subtype.mk x ?_)
   unfold Node.Descendant
   unfold Node.getDescendants
   simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
     true_or]
 
-def Node.Descendant.mkFirstChild_eq (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α):
+def Node.DescendantOf.mkFirstChild_eq (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α):
   {
     descendant: (Node.mk parentLabel (x :: siblings)).DescendantOf
     // descendant.val = x
@@ -70,7 +89,7 @@ def Node.Descendant.mkFirstChild_eq (parentLabel: α) (x: Hedge.Node α) (siblin
       true_or]
   · simp only
 
-def Node.Descendant.consFirstChild
+def Node.DescendantOf.consFirstChild
   (firstchild: Hedge.Node α) (h: (Node.mk label xs).DescendantOf):
   (Node.mk label (firstchild :: xs)).DescendantOf := by
   unfold Node.DescendantOf at *
@@ -88,7 +107,7 @@ def Node.Descendant.consFirstChild
     apply Or.inr
     assumption
 
-def Node.Descendant.consFirstChild_eq
+def Node.DescendantOf.consFirstChild_eq
   (firstchild: Hedge.Node α) (h: (Node.mk label xs).DescendantOf):
   {
     descendant: (Node.mk label (firstchild :: xs)).DescendantOf
