@@ -18,7 +18,7 @@ abbrev Grammar.Rule (n: Nat) (φ: Type) := Regex (Symbol n φ)
 
 structure Grammar (n: Nat) (φ: Type) where
   start: Grammar.Rule n φ
-  prods: Vec (Grammar.Rule n φ) n
+  prods: Vector (Grammar.Rule n φ) n
 
 end Hedge
 

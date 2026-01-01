@@ -10,10 +10,10 @@ import Validator.Hedge.Types
 namespace Hedge.Grammar
 
 def lookup {n: Nat} {φ: Type} (G: Grammar n φ) (ref: Ref n): Rule n φ :=
-  Vec.get G.prods ref
+  Vector.get G.prods ref
 
 def singleton (x: Rule 0 φ): Grammar 0 φ  :=
-  Grammar.mk x #vec[]
+  Grammar.mk x #v[]
 
 def emptyset: Grammar 0 φ :=
   singleton Regex.emptyset
@@ -25,7 +25,7 @@ example : Grammar 5 (AnyEq.Pred String) := Grammar.mk
   -- start := ("html", Html)
   (start := Regex.symbol (AnyEq.Pred.eq "html", 0))
   -- production rules
-  (prods := #vec[
+  (prods := #v[
     -- Html -> ("head", Head) · ("body", Body)
     Regex.concat
       (Regex.symbol (AnyEq.Pred.eq "head", 1))
@@ -45,7 +45,7 @@ example : Grammar 5 (AnyEq.Pred String) := Grammar.mk
 private def example_grammar: Grammar 1 (AnyEq.Pred Char) :=
   Grammar.mk
     (Regex.or Regex.emptystr (Regex.symbol (AnyEq.Pred.eq 'a', 0)))
-    #vec[Regex.emptystr]
+    #v[Regex.emptystr]
 
 #guard
   example_grammar.lookup (Fin.mk 0 (by omega))
