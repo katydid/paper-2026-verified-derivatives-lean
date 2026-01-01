@@ -1,11 +1,9 @@
 import Validator.Regex.Compress
 import Validator.Regex.Drawer
 import Validator.Regex.Enter
-import Validator.Regex.EnterMem
 import Validator.Regex.Extract
 import Validator.Regex.Language
 import Validator.Regex.Leave
-import Validator.Regex.LeaveMem
 import Validator.Regex.LeaveSmart
 import Validator.Regex.Map
 import Validator.Regex.Num
