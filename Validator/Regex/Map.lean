@@ -1,7 +1,5 @@
 import Validator.Regex.Regex
 
-import Validator.Std.Vec
-
 def Regex.map (r: Regex α) (f: α -> β): Regex β := match r with
   | emptyset => emptyset | emptystr => emptystr | star r1 => star (map r1 f)
   | symbol s => symbol (f s) | or r1 r2 => or (map r1 f) (map r2 f)
@@ -70,6 +68,3 @@ theorem map_null {σ} (Φ: σ -> Bool) (r: Regex σ):
     rw [ih2]
   | star r1 ih1 =>
     simp only [map, Regex.null]
-
-def maps (rs: Vector (Regex α) l) (f: α -> β): Vector (Regex β) l :=
-  Vec.map rs (fun r => Regex.map r f)

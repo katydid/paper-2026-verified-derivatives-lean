@@ -10,12 +10,12 @@ import Validator.Regex.Regex
 -- room, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.Room.derive (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
-  leave r (Vec.map (enter r) Φ)
+  leave r (Vector.map Φ (enter r))
 
 namespace Regex.Room
 
 def derive_pretty {σ: Type} (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
-  leave r (Vec.map (enter r) Φ)
+  leave r (Vector.map Φ (enter r))
 
 def derive_distrib {σ: Type}
   (ps: {n: Nat} -> Vector σ n -> Vector Bool n) (r: Regex σ): Regex σ :=
@@ -25,12 +25,12 @@ def derive_distrib {σ: Type}
 
 def derive_unapplied {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (r: Regex σ) (a: α): Regex σ :=
   let symbols: Vector σ (Symbol.num r) := enter r
-  let pred_results: Vector Bool (Symbol.num r) := Vec.map symbols (flip Φ a)
+  let pred_results: Vector Bool (Symbol.num r) := Vector.map (flip Φ a) symbols
   leave r pred_results
 
 theorem derive_is_Regex_derive (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
   Room.derive (flip Φ a) r = Regex.derive Φ r a := by
-  simp only [Room.derive, enter, leave, <- Vec.zip_map, flip]
+  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
   rw [<- Symbol.extractFrom_replaceFrom_is_fmap]
   rw [Regex.Point.derive_is_point_derive]
 

@@ -50,7 +50,7 @@ theorem extract_replaceFrom_is_id (r: Regex σ) (acc: Vector σ l):
   | symbol s =>
     intro n acc hr
     simp only [replace, extract]
-    rw [Vec.snoc_get]
+    rw [Vector.snoc_get]
   | or r1 r2 ih1 ih2 =>
     intro n acc hr
     simp only [extract]
@@ -132,7 +132,7 @@ theorem extractFrom_replaceFrom_is_id (r: Regex σ):
   rw [<- extract_replace_is_id r #v[]]
 
 theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> β):
-  Regex.map r f = replaceFrom (extract r acc).1 (Vec.map (extract r acc).2 f) := by
+  Regex.map r f = replaceFrom (extract r acc).1 (Vector.map f (extract r acc).2) := by
   simp only [replaceFrom]
   generalize_proofs hr
   revert acc l
@@ -146,8 +146,8 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
   | symbol s =>
     intro n acc hr
     simp only [replace, extract, Regex.map]
-    simp only [Vec.snoc_map]
-    rw [Vec.snoc_get]
+    simp only [Vector.snoc_map]
+    rw [Vector.snoc_get]
   | or r1 r2 ih1 ih2 =>
     intro n acc hr
     simp only [extract]
@@ -157,13 +157,13 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
       Regex.map r1 f =
         (replace
           (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.map (Vector.cast_assoc (extract r2 (extract r1 acc).2).2) f)
+          (Vector.map f (Vector.cast_assoc (extract r2 (extract r1 acc).2).2))
           hr
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
       rw [Vector.cast_assoc]
-      rw [Vec.map_cast]
+      rw [Vector.map_cast]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
       rw [<- replace_take]
@@ -180,7 +180,7 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
     congr
     rw [RegexID.cast_assoc]
     rw [Vector.cast_assoc]
-    rw [Vec.map_cast]
+    rw [Vector.map_cast]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]
   | concat r1 r2 ih1 ih2 =>
@@ -192,13 +192,13 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
       Regex.map r1 f =
         (replace
           (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extract r1 acc).1))
-          (Vec.map (Vector.cast_assoc (extract r2 (extract r1 acc).2).2) f)
+          (Vector.map f (Vector.cast_assoc (extract r2 (extract r1 acc).2).2))
           hr
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
       rw [Vector.cast_assoc]
-      rw [Vec.map_cast]
+      rw [Vector.map_cast]
       rw [<- replace_cast_both]
       rw [<- replace_regexid_add]
       rw [<- replace_take]
@@ -215,7 +215,7 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
     congr
     rw [RegexID.cast_assoc]
     rw [Vector.cast_assoc]
-    rw [Vec.map_cast]
+    rw [Vector.map_cast]
     rw [<- replace_cast_both]
     rw [<- ih2 ((extract r1 acc).2)]
   | star r1 ih1 =>
@@ -226,14 +226,14 @@ theorem extract_replaceFrom_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> �
     simp only [Regex.map]
 
 theorem extract_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> β):
-  Regex.map r f = replace (extract r acc).1 (Vec.map (extract r acc).2 f) (by omega) := by
+  Regex.map r f = replace (extract r acc).1 (Vector.map f (extract r acc).2) (by omega) := by
   rw [<- replaceFrom]
   rw [<- extract_replaceFrom_is_fmap]
 
 theorem extractFrom_replaceFrom_is_fmap (r: Regex α) (f: α -> β):
-  Regex.map r f = replaceFrom (extractFrom r).1 (Vec.map (extractFrom r).2 f) := by
+  Regex.map r f = replaceFrom (extractFrom r).1 (Vector.map f (extractFrom r).2) := by
   simp only [extractFrom]
   simp only [replaceFrom]
-  rw [Vec.map_cast]
+  rw [Vector.map_cast]
   rw [<- replace_cast_both]
   rw [<- extract_replace_is_fmap r #v[]]

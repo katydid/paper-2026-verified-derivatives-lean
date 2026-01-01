@@ -78,6 +78,3 @@ theorem derive_is_point_derive (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
     have h : first (r1.map fun s => (s, Φ s a)) = r1 := by
       apply map_first
     rw [h]
-
-def derives (rs: Vector (Regex (σ × Bool)) l): Vector (Regex σ) l :=
-  Vec.map rs derive

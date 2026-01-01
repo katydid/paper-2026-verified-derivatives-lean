@@ -20,15 +20,15 @@ end Regex
 namespace Regex.Symbol
 
 theorem replace_cast_both (r: RegexID n) (xs: Vector σ n) (h: n = l):
-  replace r xs (by omega) = replace (RegexID.cast r h) (Vec.cast xs h) (by omega) := by
+  replace r xs (by omega) = replace (RegexID.cast r h) (Vector.cast h xs) (by omega) := by
   subst h
-  simp only [Vec.cast_rfl]
+  simp only [Vector.cast_rfl]
   rfl
 
 theorem replace_cast_symbols (r: RegexID n) (xs: Vector σ n) (h: n = l):
-  replace r xs (by omega) = replace r (Vec.cast xs h) (by omega) := by
+  replace r xs (by omega) = replace r (Vector.cast h xs) (by omega) := by
   subst h
-  simp only [Vec.cast_rfl]
+  simp only [Vector.cast_rfl]
 
 theorem replace_take (r: RegexID n) (xs: Vector σ (n + l)):
   replace r (Vector.take xs n) (by omega) = replace r xs (by omega):= by
@@ -43,7 +43,7 @@ theorem replace_take (r: RegexID n) (xs: Vector σ (n + l)):
     obtain ⟨s, hs⟩ := s
     simp only [Regex.symbol.injEq]
     generalize_proofs h3 h4
-    rw [Vec.take_get]
+    rw [Vector.take_get]
     omega
   | or r1 r2 ih1 ih2 =>
     simp only [replace, Regex.or.injEq]

@@ -7,39 +7,25 @@ import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.RewriteSearch
 import Mathlib.Tactic.SimpRw
 
-def Vec.cast {n1 n2 : Nat} (xs: Vector α n1) (h : n1 = n2): Vector α n2 :=
-  Vector.cast h xs
+namespace Vector
 
-def Vector.cast_assoc (xs: Vector σ (n + n1 + n2)): Vector σ (n + (n1 + n2)) :=
+abbrev nil (α: Type): Vector α 0 := #v[]
+
+def cast_assoc (xs: Vector σ (n + n1 + n2)): Vector σ (n + (n1 + n2)) :=
   have h : (n + n1 + n2) = n + (n1 + n2) := by
     rw [<- Nat.add_assoc]
-  Vec.cast xs h
-
-namespace Vec
-
-def map (xs: Vector α n) (f: α -> β): Vector β n :=
-  Vector.map f xs
-
-def zip (xs: Vector α n) (ys: Vector β n): Vector (α × β) n :=
-  Vector.zip xs ys
+  Vector.cast h xs
 
 def snoc (xs: Vector α l) (y: α): Vector α (l + 1) :=
   xs.push y
-
-def head (xs: Vector α (Nat.succ l)): α :=
-  xs.head
 
 theorem eq (xs ys: Vector α n) (h: Vector.toList xs = Vector.toList ys): xs = ys := by
   obtain ⟨⟨xs⟩, hxs⟩ := xs
   obtain ⟨⟨ys⟩, hxs⟩ := ys
   simp_all
 
-theorem cast_rfl {α: Type u} (xs: Vector α n) (h: n = n):
-  cast xs h = xs := by
-  rfl
-
 theorem cast_toList_nil {α: Type u} (h: 0 = n):
-  (Vec.cast (α := α) #v[] h).toList = [] := by
+  (Vector.cast (α := α) h #v[]).toList = [] := by
   cases n with
   | zero =>
     rw [cast_rfl]
@@ -48,124 +34,81 @@ theorem cast_toList_nil {α: Type u} (h: 0 = n):
     contradiction
 
 theorem cast_toList {n: Nat} (xs: Vector α n) (h: n = n2):
-  (cast xs h).toList = xs.toList := by
-  subst h
-  rw [cast_rfl]
-
-theorem Vector.cast_rfl {α: Type u} (xs: Vector α n) (h: n = n):
-  Vector.cast h xs = xs := by
-  rfl
-
-theorem Vector.cast_toList {n: Nat} (xs: Vector α n) (h: n = n2):
   (Vector.cast h xs).toList = xs.toList := by
   subst h
   rw [cast_rfl]
 
 theorem take_zero (xs : Vector α n):
-  Vector.take xs 0 = Vec.cast #v[] (Eq.symm (Nat.zero_min n)) := by
-  simp only [Vector.take, Vec.cast, Vector.take]
-  simp
-
-theorem Vector.take_zero (xs : Vector α n):
   Vector.take xs 0 = #v[] := by
-  simp only [Vector.take]
+  simp only [Vector.take, Vector.take]
   simp
 
-theorem Vector.drop_zero (xs : Vector α n):
+theorem drop_zero (xs : Vector α n):
   Vector.drop xs 0 = xs := by
   simp only [Vector.drop]
   simp
 
-theorem drop_zero (xs : Vector α n):
-  Vector.drop xs 0 = Vec.cast xs (by omega) := by
-  simp only [Vector.drop]
-  simp only [cast_rfl]
-  simp
-
 theorem take_nil (i: Nat):
-  Vector.take #v[] i  = Vec.cast (α := α) #v[] (Eq.symm (Nat.min_zero i)) := by
+  Vector.take #v[] i = Vector.cast (α := α) (Eq.symm (Nat.min_zero i)) #v[] := by
   induction i with
   | zero =>
     rw [take_zero]
+    simp
   | succ i ih =>
     congr
 
 theorem drop_nil (i: Nat):
-  Vector.drop #v[] i = Vec.cast (α := α) #v[] (by omega) := by
+  Vector.drop #v[] i = Vector.cast (α := α) (by omega) #v[] := by
   cases i with
   | zero =>
     rw [drop_zero]
+    simp
   | succ i =>
     simp only [Vector.drop]
     simp
 
-theorem toList_take {xs: Vector α n}:
-  List.take i xs.toList = (Vector.take xs i).toList := by
-  rw [Vector.toList_take]
-
 theorem map_nil {f: α -> β}:
-  Vec.map #v[] f = #v[] := by
-  simp only [Vec.map]
+  Vector.map f #v[] = #v[] := by
+  simp only [Vector.map]
   simp
-
-theorem toList_map (xs: Vector α n) (f: α -> β):
-  (Vec.map xs f).toList = (List.map f xs.toList) := by
-  unfold Vec.map
-  rw [@Vector.toList_map]
 
 def List.snoc (xs: List α) (x: α) :=
   xs ++ [x]
 
-def toList_append:
-  (Vector.append xs ys).toList = List.append (xs.toList) (ys.toList) := by
-  simp
-  rw [<- show xs ++ ys = xs.append ys from rfl]
-  rw [Vector.toList_append]
-
 theorem toList_snoc {xs : Vector α n} :
-  (Vec.snoc xs x).toList = List.snoc xs.toList x := by
+  (Vector.snoc xs x).toList = List.snoc xs.toList x := by
   simp [snoc, List.snoc, Vector.push]
   rfl
 
 def cons (x: α) (xs: Vector α n): Vector α (n + 1) :=
-  Vec.cast (Vector.append #v[x] xs) (by omega)
+  Vector.cast (by omega) (Vector.append #v[x] xs)
 
 theorem singleton_toList:
   [x] = #v[x].toList := by
   simp
 
 theorem cons_cast {α: Type u} {l n: Nat} (x: α) (xs: Vector α l) (h: l = n):
-  (Vec.cons x (Vec.cast xs h)) = Vec.cast (Vec.cons x xs) (by omega) := by
+  (Vector.cons x (Vector.cast h xs)) = Vector.cast (by omega) (Vector.cons x xs) := by
   subst h
   rfl
 
-theorem Vector.cast_cast (xs: Vector α n) (h1: n = k) (h2: k = l):
-  (Vector.cast h2 (Vector.cast h1 xs)) = Vector.cast (by subst h1 h2; simp only) xs := by
-  simp
-
-theorem cast_cast (xs: Vector α n) (h1: n = k) (h2: k = l):
-  (Vec.cast (Vec.cast xs h1) h2) = Vec.cast xs (by subst h1 h2; simp only):= by
-  simp only [cast]
-  rw [Vector.cast_cast]
-
 theorem toList_cons {xs : Vector α n} :
-  (Vec.cons x xs).toList = List.cons x xs.toList := by
+  (Vector.cons x xs).toList = List.cons x xs.toList := by
   rw [← List.singleton_append]
-  simp only [Vec.cons]
+  simp only [Vector.cons]
   nth_rw 2 [singleton_toList]
   rw [← Vector.toList_append]
   rw [<- show #v[x] ++ xs = #v[x].append xs from rfl]
   rw [cast_toList]
 
 theorem append_nil (xs: Vector α n):
-  Vector.append xs #v[] = Vec.cast xs (Eq.symm (Nat.add_zero n)) := by
+  xs ++ (@Vector.nil α) = Vector.cast (Eq.symm (Nat.add_zero n)) xs := by
   apply eq
-  rw [toList_append]
+  rw [Vector.toList_append]
   simp
-  rfl
 
 theorem cons_append_list (xs: Vector α n1) (ys: Vector α n2):
-  (Vec.cons x (Vector.append xs ys)).toList = (Vector.append (Vec.cons x xs) ys).toList := by
+  (Vector.cons x (xs ++ ys)).toList = ((Vector.cons x xs) ++ ys).toList := by
   rw [toList_cons]
   rw [toList_append]
   rw [toList_append]
@@ -173,62 +116,62 @@ theorem cons_append_list (xs: Vector α n1) (ys: Vector α n2):
   simp
 
 theorem cons_append (xs: Vector α n1) (ys: Vector α n2):
-  Vec.cons x (Vector.append xs ys) = Vec.cast (Vector.append (Vec.cons x xs) ys) (by omega) := by
+  Vector.cons x (xs ++ ys) = Vector.cast (by omega) ((Vector.cons x xs) ++ ys) := by
   apply eq
   rw [cons_append_list]
   rw [cast_toList]
 
-theorem Vector.nil_append (xs: Vector α n):
-  Vector.append #v[] xs = Vec.cast xs (Eq.symm (Nat.zero_add n)) := by
-  simp [Vector.append, Vec.cast]
+theorem nil_append (xs: Vector α n):
+  (@Vector.nil α) ++ xs = Vector.cast (Eq.symm (Nat.zero_add n)) xs := by
+  simp [Vector.cast]
 
 theorem cast_append (xs: Vector α n1) (ys: Vector α n2):
-  Vector.append (Vec.cast xs h1) ys = Vec.cast (Vector.append xs ys) h2 := by
+  Vector.append (Vector.cast h1 xs) ys = Vector.cast h2 (Vector.append xs ys) := by
   subst h1
   rw [cast_rfl]
   rw [cast_rfl]
 
 theorem append_cons_list (xs: Vector α n1) (ys: Vector α n2):
-  (Vector.append (Vec.cons x xs) ys).toList = (Vec.cons x (Vector.append xs ys)).toList := by
+  ((Vector.cons x xs) ++ ys).toList = (Vector.cons x (xs ++ ys)).toList := by
   rw [cons_append_list]
 
 theorem append_cons (xs: Vector α n1) (ys: Vector α n2):
-  Vector.append (Vec.cons x xs) ys = Vec.cast (Vec.cons x (Vector.append xs ys)) (by omega) := by
+  (Vector.cons x xs) ++ ys = Vector.cast (by omega) (Vector.cons x (xs ++ ys)) := by
   apply eq
   rw [append_cons_list]
   rw [cast_toList]
 
 theorem append_cast_r {h: n2 = n3} (xs: Vector α n1) (ys: Vector α n2):
-  Vector.append xs (Vec.cast ys h) = Vec.cast (Vector.append xs ys) (by subst h; rfl) := by
+  xs ++ (Vector.cast h ys) = Vector.cast (by subst h; rfl) (xs ++ ys) := by
   subst h
   rw [cast_rfl]
   rw [cast_rfl]
 
-theorem take_append_drop_list (i : Nat) (xs : Vector α l): (Vector.append (xs.take i) (xs.drop i)).toList = xs.toList := by
+theorem take_append_drop_list (i : Nat) (xs : Vector α l): ((xs.take i) ++ (xs.drop i)).toList = xs.toList := by
   induction i generalizing xs l with
   | zero =>
     simp only [Vector.take_zero]
     simp only [Vector.drop_zero]
-    rw [Vector.nil_append]
-    rw [cast_toList]
+    rw [toList_append]
+    simp
   | succ i ih =>
     rw [toList_append]
     rw [Vector.toList_take]
     rw [Vector.toList_drop]
     simp
 
-theorem take_append_drop (i : Nat) (xs : Vector α l): (Vector.append (xs.take i) (xs.drop i)) = (Vector.cast (by omega) xs) := by
+theorem take_append_drop (i : Nat) (xs : Vector α l): ((xs.take i) ++ (xs.drop i)) = (Vector.cast (by omega) xs) := by
   apply eq
   rw [take_append_drop_list]
   rw [Vector.cast_toList]
 
-theorem take_append_drop_cast (i : Nat) (xs : Vector α l): Vec.cast (Vector.append (xs.take i) (xs.drop i)) (by omega) = xs := by
+theorem take_append_drop_cast (i : Nat) (xs : Vector α l): Vector.cast (by omega) ((xs.take i) ++ (xs.drop i)) = xs := by
   rw [take_append_drop]
-  unfold Vec.cast
+  unfold Vector.cast
   simp
 
 theorem get_cast (xs: Vector α n) (h: n = m):
-  Vector.get (Vec.cast xs h) i = Vector.get xs ⟨i.val, by omega⟩ := by
+  Vector.get (Vector.cast h xs) i = Vector.get xs ⟨i.val, by omega⟩ := by
   subst h
   simp_all only [Fin.eta]
   rfl
@@ -238,12 +181,11 @@ theorem get_is_getElem {n: Nat} {α: Type u} (xs: Vector α n) (hi: i < n):
   aesop
 
 theorem append_getElem (xs: Vector α n) (ys: Vector α m) (h: i < n):
-  (Vector.append xs ys)[i] = xs[i] := by
-  rw [<- show xs ++ ys = xs.append ys from rfl]
+  (xs ++ ys)[i] = xs[i] := by
   rw [Vector.getElem_append_left]
 
 theorem append_get (xs: Vector α n) (ys: Vector α m) (h: i < n):
-  Vector.get (Vector.append xs ys) ⟨i, by omega⟩ = Vector.get xs ⟨i, h⟩ := by
+  Vector.get (xs ++ ys) ⟨i, by omega⟩ = Vector.get xs ⟨i, h⟩ := by
   rw [get_is_getElem]
   rw [get_is_getElem]
   rw [append_getElem]
@@ -252,12 +194,12 @@ theorem take_get (xs: Vector α (n + m)) (h1: i < n):
   Vector.get (Vector.take xs n) ⟨i, (by omega)⟩ = Vector.get xs ⟨i, h⟩ := by
   have h := take_append_drop_cast (xs := xs) (i := n)
   nth_rewrite 2 [<- h]
-  rw [Vec.get_cast]
+  rw [Vector.get_cast]
   simp only
   rw [append_get]
 
 theorem cons_snoc:
-  (Vec.snoc (cons x xs) y) = cons x (Vec.snoc xs y) := by
+  (Vector.snoc (cons x xs) y) = cons x (Vector.snoc xs y) := by
   apply eq
   rw [toList_snoc]
   rw [toList_cons]
@@ -267,24 +209,24 @@ theorem cons_snoc:
   ac_rfl
 
 theorem snoc_append (xs: Vector α l):
-  (Vec.snoc xs y) = (xs.append #v[y]) := by
-  unfold Vec.snoc
+  (Vector.snoc xs y) = (xs.append #v[y]) := by
+  unfold Vector.snoc
   rfl
 
 theorem snoc_getElem {n: Nat} {α: Type u} (xs: Vector α n) (y: α):
-  (Vec.snoc xs y)[n] = y := by
-  simp only [Vec.snoc]
+  (Vector.snoc xs y)[n] = y := by
+  simp only [Vector.snoc]
   simp_all only [Vector.getElem_push_eq]
 
 theorem snoc_get {n: Nat} {α: Type u} (xs: Vector α n) (y: α):
-  Vector.get (Vec.snoc xs y) (Fin.mk n (by omega)) = y := by
+  Vector.get (Vector.snoc xs y) (Fin.mk n (by omega)) = y := by
   rw [get_is_getElem]
   rw [snoc_getElem]
 
 theorem snoc_map_list (xs: Vector α l) (f: α -> β):
-  (Vec.map (Vec.snoc xs x) f).toList
-  = (Vec.snoc (Vec.map xs f) (f x)).toList := by
-  rw [toList_map (snoc xs x) f]
+  (Vector.map f (Vector.snoc xs x)).toList
+  = (Vector.snoc (Vector.map f xs) (f x)).toList := by
+  rw [toList_map]
   rw [toList_snoc]
   rw [toList_snoc]
   rw [toList_map]
@@ -292,8 +234,8 @@ theorem snoc_map_list (xs: Vector α l) (f: α -> β):
   simp
 
 theorem snoc_map (xs: Vector α l) (f: α -> β):
-  (Vec.map (Vec.snoc xs x) f)
-  = (Vec.snoc (Vec.map xs f) (f x)) := by
+  (Vector.map f (Vector.snoc xs x))
+  = (Vector.snoc (Vector.map f xs) (f x)) := by
   apply eq
   apply snoc_map_list
 
@@ -302,21 +244,19 @@ theorem toList_length (xs : Vector α l):
   simp
 
 theorem map_toList:
-  (Vec.map xs f).toList = List.map f (xs.toList) := by
-  simp_all only [Vec.toList_map]
+  (Vector.map f xs).toList = List.map f (xs.toList) := by
+  simp_all only [Vector.toList_map]
 
 theorem map_cast (xs : Vector α l) (f: α -> β) (h: l = n):
-  (Vec.map (Vec.cast xs h) f) = Vec.cast (Vec.map xs f) h := by
+  (Vector.map f (Vector.cast h xs)) = Vector.cast h (Vector.map f xs) := by
   apply eq
   rw [map_toList]
   repeat rw [cast_toList]
   rw [map_toList]
 
-theorem zip_map {α: Type u} {β: Type v} (f: α -> β) (xs: Vector α l):
-  (Vec.map xs (fun x => (x, f x))) =
-  (Vec.zip xs (Vec.map xs f)) := by
-  unfold Vec.map
-  unfold Vec.zip
+theorem map_zip_is_zip_map {α: Type u} {β: Type v} (f: α -> β) (xs: Vector α l):
+  (Vector.map (fun x => (x, f x)) xs) =
+  (Vector.zip xs (Vector.map f xs)) := by
   ext i h : 2
   · simp_all only [Vector.getElem_map, Vector.getElem_zip]
   · simp_all only [Vector.getElem_map, Vector.getElem_zip]
