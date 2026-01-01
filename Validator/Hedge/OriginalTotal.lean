@@ -5,7 +5,6 @@ import Validator.Std.Except
 import Validator.Std.List
 
 import Validator.Std.Hedge
-import Validator.Parser.TokenTree
 
 import Validator.Pred.AnyEq
 import Validator.Hedge.Grammar
@@ -129,7 +128,7 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (t: Hedge.Node α)
 
 -- Tests
 
-open TokenTree (node)
+abbrev node {α} (label: α) children := Hedge.Node.mk label children
 
 #guard run
   (Hedge.Grammar.singleton Regex.emptyset)
@@ -138,7 +137,7 @@ open TokenTree (node)
 
 #guard run
   (Hedge.Grammar.mk (n := 1)
-    (Regex.symbol (AnyEq.Pred.eq (Token.string "a"), 0))
+    (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
   (node "a" []) =
@@ -146,7 +145,7 @@ open TokenTree (node)
 
 #guard run
   (Hedge.Grammar.mk (n := 1)
-    (Regex.symbol (AnyEq.Pred.eq (Token.string "a"), 0))
+    (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
   (node "a" [node "b" []]) =
@@ -154,9 +153,9 @@ open TokenTree (node)
 
 #guard run
   (Hedge.Grammar.mk (n := 2)
-    (Regex.symbol (AnyEq.Pred.eq (Token.string "a"), 0))
+    (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
-      (Regex.symbol (AnyEq.Pred.eq (Token.string "b"), 1))
+      (Regex.symbol (AnyEq.Pred.eq "b", 1))
       , Regex.emptystr
     ]
   )
@@ -165,11 +164,11 @@ open TokenTree (node)
 
 #guard run
   (Hedge.Grammar.mk (n := 2)
-    (Regex.symbol (AnyEq.Pred.eq (Token.string "a"), 0))
+    (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
-        (Regex.symbol (AnyEq.Pred.eq (Token.string "b"), 1))
-        (Regex.symbol (AnyEq.Pred.eq (Token.string "c"), 1))
+        (Regex.symbol (AnyEq.Pred.eq "b", 1))
+        (Regex.symbol (AnyEq.Pred.eq "c", 1))
       )
       , Regex.emptystr
     ]
@@ -179,14 +178,14 @@ open TokenTree (node)
 
 #guard run
   (Hedge.Grammar.mk (n := 3)
-    (Regex.symbol (AnyEq.Pred.eq (Token.string "a"), 0))
+    (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
-        (Regex.symbol (AnyEq.Pred.eq (Token.string "b"), 1))
-        (Regex.symbol (AnyEq.Pred.eq (Token.string "c"), 2))
+        (Regex.symbol (AnyEq.Pred.eq "b", 1))
+        (Regex.symbol (AnyEq.Pred.eq "c", 2))
       )
       , Regex.emptystr
-      , (Regex.symbol (AnyEq.Pred.eq (Token.string "d"), 1))
+      , (Regex.symbol (AnyEq.Pred.eq ("d"), 1))
     ]
   )
   (node "a" [node "b" [], node "c" [node "d" []]]) =
