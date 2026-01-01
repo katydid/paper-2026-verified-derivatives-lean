@@ -6,7 +6,7 @@ import Validator.Hedge.Types
 
 namespace Hedge
 
-def Grammar.evalif (G: Grammar n φ) (Φ: φ -> α -> Bool)
+private def Grammar.evalif (G: Grammar n φ) (Φ: φ -> α -> Bool)
   : (s: Symbol n φ) -> (a: α) -> Rule n φ
   | (cnd, thn), a => if Φ cnd a then G.lookup thn else Regex.emptyset
 
