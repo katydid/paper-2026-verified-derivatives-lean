@@ -211,8 +211,7 @@ theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [Dec
     rw [ih1]
   termination_by x
   decreasing_by
-    apply Node.sizeOf_children
-    exact hx
+    apply Node.sizeOf_children hx
 
 theorem derive_commutesb (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Rule n φ) (x: Node α):
   Rule.denote G (fun s a => Φ s a) (Grammar.Room.derive G Φ r x)

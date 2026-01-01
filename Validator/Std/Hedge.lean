@@ -332,9 +332,9 @@ private theorem Hedge.Node.sizeOf_lt_cons_siblings {α: Type} (label: α) (x1: H
 
 theorem Node.sizeOf_children
   {α : Type}
-  (child : Node α)
-  (label : α)
-  (children : List (Node α))
+  {child : Node α}
+  {label : α}
+  {children : List (Node α)}
   (h : child ∈ children)
   : sizeOf child < sizeOf (Hedge.Node.mk label children) := by
   induction children with
