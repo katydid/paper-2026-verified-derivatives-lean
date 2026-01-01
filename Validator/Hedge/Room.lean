@@ -7,7 +7,6 @@ import Validator.Regex.Language
 import Validator.Regex.Room
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
-import Validator.Hedge.IfExpr
 import Validator.Hedge.Language
 
 namespace Hedge
