@@ -68,36 +68,31 @@ theorem decreasing_symbol {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (l
   have h' := List.list_elem_lt h
   omega
 
-def Rule.derive
-  (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
-  (r: Regex (φ × Ref n)) (x: Hedge.Node α): Regex (φ × Ref n) :=
+def Rule.derive (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
+  (r: Regex (φ × Ref n)) (node: Hedge.Node α): Regex (φ × Ref n) :=
   match r with
   | Regex.emptyset => Regex.emptyset
   | Regex.emptystr => Regex.emptyset
-  | Regex.symbol (p, ref) =>
-    match x with
-    | Hedge.Node.mk label children =>
-      Regex.onlyif
-        (
-          Φ p label
-          /\ Regex.null (List.foldl (Rule.derive G Φ) (G.lookup ref) children)
-        )
-        Regex.emptystr
+  | Regex.symbol (pred, ref) =>
+    let ⟨label, children⟩ := node
+    Regex.onlyif (Φ pred label
+      /\ Regex.null (List.foldl (derive G Φ) (G.lookup ref) children)
+    ) Regex.emptystr
   | Regex.or r1 r2 =>
-    Regex.or (Rule.derive G Φ r1 x) (Rule.derive G Φ r2 x)
+    Regex.or (derive G Φ r1 node) (derive G Φ r2 node)
   | Regex.concat r1 r2 =>
     Regex.or
-      (Regex.concat (Rule.derive G Φ r1 x) r2)
-      (Regex.onlyif (Regex.null r1) (Rule.derive G Φ r2 x))
+      (Regex.concat (derive G Φ r1 node) r2)
+      (Regex.onlyif (Regex.null r1) (derive G Φ r2 node))
   | Regex.star r1 =>
-    Regex.concat (Rule.derive G Φ r1 x) (Regex.star r1)
+    Regex.concat (derive G Φ r1 node) (Regex.star r1)
   -- Lean cannot guess how the recursive function terminates,
   -- so we have to tell it how the arguments decrease in size.
   -- The arguments decrease in the tree case first
   -- (which only happens in the Regex.symbol case)
   -- and in the expression, r, second (which is all other cases).
   -- This means if the tree is not destructed, then the expression is destructed.
-  termination_by (x, r)
+  termination_by (node, r)
   -- Once we tell Lean how the function terminates we have to prove that
   -- the size of the arguments decrease on every call.
   -- Prod.Lex.left represents the case where the tree argument decreases.

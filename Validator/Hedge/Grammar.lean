@@ -9,7 +9,7 @@ import Validator.Hedge.Types
 
 namespace Hedge.Grammar
 
-def lookup {n: Nat} {φ: Type} (G: Grammar n φ) (ref: Ref n): Regex (φ × Ref n) :=
+def lookup (G: Grammar n φ) (ref: Ref n): Regex (φ × Ref n) :=
   Vector.get G.prods ref
 
 def singleton (x: Regex (φ × Ref 0)): Grammar 0 φ  :=
@@ -20,6 +20,13 @@ def emptyset: Grammar 0 φ :=
 
 def emptystr: Grammar 0 φ :=
   singleton Regex.emptystr
+
+example: Grammar 2 String := Grammar.mk
+  (start := Regex.symbol ("title", 0))
+  (prods := #v[
+    Regex.symbol ("verified derivatives", 1),
+    Regex.emptystr,
+  ])
 
 example : Grammar 5 (AnyEq.Pred String) := Grammar.mk
   -- start := ("html", Html)

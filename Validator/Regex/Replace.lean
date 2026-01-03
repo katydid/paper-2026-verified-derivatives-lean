@@ -15,6 +15,9 @@ def Symbol.replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
 def Symbol.replace (r: RegexID n) (xs: Vector σ n): Regex σ :=
   replaceLE r xs (Nat.le_refl n)
 
+#guard Symbol.replace (Regex.or (Regex.symbol 0) (Regex.symbol 1)) #v['a', 'b']
+  = (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
+
 end Regex
 
 namespace Regex.Symbol

@@ -8,10 +8,8 @@ import Validator.Regex.Regex
 --   𝑃 a set of production rules of a regular hedge grammar are of the form X → r such that r is a regular expression over N × T.
 abbrev Ref (n: Nat) := Fin n
 
-namespace Hedge
-
 -- Ref is a non-terminal, where n represents the number of non-terminals
 
-structure Grammar (n: Nat) (φ: Type) where
+structure Hedge.Grammar (n: Nat) (φ: Type) where
   start: Regex (φ × Ref n)
   prods: Vector (Regex (φ × Ref n)) n

@@ -6,8 +6,7 @@ import Validator.Regex.Replace
 
 namespace Regex
 
-def leave (r: Regex σ): Vector Bool (Symbol.num r) -> Regex σ :=
-  fun bools => Regex.Point.derive (
-    Vector.zip (Symbol.extract r).2 bools |>
-    Symbol.replace (Symbol.extract r).1
-  )
+def leave (r: Regex σ) (bools: Vector Bool (Symbol.num r)): Regex σ :=
+  let points := Vector.zip (Symbol.extract r).2 bools
+  let r' := Symbol.replace (Symbol.extract r).1 points
+  Regex.Point.derive r'

@@ -13,7 +13,7 @@ def Symbol.extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + num r) × V
   match r with
   | emptyset => (emptyset, acc)
   | emptystr => (emptystr, acc)
-  | symbol s => (symbol (Fin.mk n lt_add_symbol), Vector.snoc acc s)
+  | symbol s => (symbol (Fin.mk acc.size lt_add_symbol), Vector.snoc acc s)
   | or r1 r2 =>
     let (rid1, acc1) := extractAcc r1 acc
     let (rid2, acc2) := extractAcc r2 acc1
@@ -27,6 +27,9 @@ def Symbol.extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + num r) × V
 def Symbol.extract (r: Regex σ): RegexID (num r) × Vector σ (num r) :=
   let (rid, xs) := extractAcc r #v[]
   (RegexID.cast rid (by omega), Vector.cast (by omega) xs)
+
+#guard Symbol.extract (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
+  = ((Regex.or (Regex.symbol 0) (Regex.symbol 1)), #v['a', 'b'])
 
 end Regex
 

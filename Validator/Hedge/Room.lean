@@ -11,11 +11,11 @@ import Validator.Hedge.Language
 
 namespace Hedge
 
-def Grammar.Room.derive
-  (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
+def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
+  (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
   Regex.Room.derive (fun ((pred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
-    let childr: Regex (φ × Ref n) := if Φ pred label then G.lookup ref else Regex.emptyset
+    let childr := if Φ pred label then G.lookup ref else Regex.emptyset
     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
   ) r
 
@@ -24,7 +24,7 @@ end Hedge
 namespace Hedge.Grammar.Room
 
 theorem unapply_hedge_param_and_flip
-  (G: Grammar n φ) (Φ: φ -> α -> Bool) (node: Node α):
+  (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
   (fun ((pred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
     let childr: Regex (φ × Ref n) := if Φ pred label then G.lookup ref else Regex.emptyset
@@ -38,21 +38,21 @@ theorem unapply_hedge_param_and_flip
   ) node := by
   rfl
 
-theorem derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+theorem derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
   Grammar.Room.derive G Φ Regex.emptyset a = Regex.emptyset := by
   unfold Grammar.Room.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-theorem derive_emptystr {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+theorem derive_emptystr {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
   Grammar.Room.derive G Φ Regex.emptystr a = Regex.emptyset := by
   unfold Grammar.Room.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: Node α):
+theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
   Grammar.Room.derive G Φ (Regex.symbol (pred, ref)) a
     = Regex.onlyif (
         ( match a with
@@ -66,7 +66,7 @@ theorem derive_symbol {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (a: No
   simp only [Regex.derive]
 
 
-theorem derive_or {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+theorem derive_or {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Room.derive G Φ (Regex.or r1 r2) a
   = Regex.or (Grammar.Room.derive G Φ r1 a) (Grammar.Room.derive G Φ r2 a) := by
   unfold Grammar.Room.derive
@@ -74,7 +74,7 @@ theorem derive_or {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Re
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-theorem Grammar.Room.derive_concat {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+theorem Grammar.Room.derive_concat {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Room.derive G Φ (Regex.concat r1 r2) a
     = Regex.or
       (Regex.concat (Grammar.Room.derive G Φ r1 a) r2)
@@ -84,7 +84,7 @@ theorem Grammar.Room.derive_concat {α: Type} (G: Grammar n φ) (Φ: φ -> α ->
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-theorem derive_star {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1: Regex (φ × Ref n)) (a: Node α):
+theorem derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
   Grammar.Room.derive G Φ (Regex.star r1) a
   = Regex.concat (Grammar.Room.derive G Φ r1 a) (Regex.star r1) := by
   unfold Grammar.Room.derive
@@ -92,7 +92,7 @@ theorem derive_star {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Bool) (r1: Reg
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-theorem and_start {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
+theorem and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
   generalize (G.lookup ref) = r
@@ -110,7 +110,7 @@ theorem and_start {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [Decidable
       rw [derive_emptyset]
       rw [ih]
 
-theorem derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
+theorem derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   Language.derive
     (Rule.denote G Φ
       (Regex.symbol (pred, ref))
@@ -126,7 +126,7 @@ theorem derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ -> �
   rw [Language.derive_iff_tree]
   simp only [decide_eq_true_eq]
 
-theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (x: Node α):
+theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (x: Node α):
   Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r x)
   = Language.derive (Rule.denote G Φ r) x := by
   induction r with
@@ -199,7 +199,7 @@ theorem derive_commutes {α: Type} (G: Grammar n φ) (Φ: φ -> α -> Prop) [Dec
   decreasing_by
     apply Node.sizeOf_children hx
 
-theorem derive_commutesb (G: Grammar n φ) (Φ: φ -> α -> Bool) (r: Regex (φ × Ref n)) (x: Node α):
+theorem derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (x: Node α):
   Rule.denote G (fun s a => Φ s a) (Grammar.Room.derive G Φ r x)
   = Language.derive (Rule.denote G (fun s a => Φ s a) r) x := by
   have h1: (fun s a => Φ s a) = decideRel (fun s a => Φ s a) := by

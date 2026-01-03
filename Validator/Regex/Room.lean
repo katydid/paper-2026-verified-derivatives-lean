@@ -9,8 +9,8 @@ import Validator.Regex.Regex
 
 -- room, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
-def Regex.Room.derive (Φ: σ -> Bool) (r: Regex σ): Regex σ :=
-  leave r (Vector.map Φ (enter r))
+def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
+  enter r |> Vector.map Φ |> leave r
 
 namespace Regex.Room
 
@@ -28,10 +28,15 @@ def derive_unapplied {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (r: Regex σ) 
   let pred_results: Vector Bool (Symbol.num r) := Vector.map (flip Φ a) symbols
   leave r pred_results
 
+theorem derive_unfolds_to_map (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
+  Room.derive (flip Φ a) r = Point.derive
+    (Symbol.replace (Symbol.extract r).1 (Vector.map (fun s => (s, Φ s a)) (Symbol.extract r).2)) := by
+  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
+
 theorem derive_is_Regex_derive (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
   Room.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
-  rw [<- Symbol.extract_replace_is_fmap]
+  rw [<- Symbol.extract_replace_is_map]
   rw [Regex.Point.derive_is_point_derive]
 
 theorem derive_emptyset {α: Type} {σ: Type} (Φ: σ -> α -> Bool) (a: α):

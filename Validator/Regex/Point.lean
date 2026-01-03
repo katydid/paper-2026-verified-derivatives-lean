@@ -5,25 +5,21 @@ import Validator.Regex.Map
 -- This is called point, for point in the plotted predicate graph.
 -- The Regex is generic on the pair of the input and output of the predicate function or point.
 
-namespace Regex
-
-def Point.first (r: Regex (α × β)): Regex α := map r (fun (s, _) => s)
+def Regex.Point.first (r: Regex (α × β)): Regex α := Regex.map r (fun (s,_) => s)
 
 -- Point.derive is the same as Regex.derive, except the answer to the predicate is already included in a tuple with the original symbol.
-def Point.derive {σ: Type}: (r: Regex (σ × Bool)) -> Regex σ
+def Regex.Point.derive: (r: Regex (σ × Bool)) → Regex σ
   | emptyset => emptyset | emptystr => emptyset
   | symbol (_, res) => onlyif res emptystr
   | or r1 r2 => or (derive r1) (derive r2)
   | concat r1 r2 => or
-    (concat (derive r1) (first r2))
-    (onlyif (null r1) (derive r2))
+      (concat (derive r1) (first r2))
+      (onlyif (null r1) (derive r2))
   | star r1 => concat (derive r1) (star (first r1))
-
-end Regex
 
 namespace Regex.Point
 
-theorem map_first (Φ: σ -> Bool) (r: Regex σ):
+theorem map_first (Φ: σ → Bool) (r: Regex σ):
   first (Regex.map r (fun s => (s, Φ s))) = r := by
   induction r with
   | emptyset =>
@@ -49,8 +45,8 @@ theorem map_first (Φ: σ -> Bool) (r: Regex σ):
     simp only [star.injEq]
     exact ih1
 
-theorem derive_is_point_derive (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
-  Regex.derive Φ r a = Regex.Point.derive (map r (fun s => (s, Φ s a))) := by
+theorem derive_is_point_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
+  Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
   induction r with
   | emptyset =>
     simp only [Regex.derive, Regex.map, derive]
