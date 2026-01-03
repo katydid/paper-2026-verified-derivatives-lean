@@ -31,7 +31,7 @@ def derive_unapplied {σ: Type} {α: Type} (Φ: σ -> α -> Bool) (r: Regex σ) 
 theorem derive_is_Regex_derive (Φ: σ -> α -> Bool) (r: Regex σ) (a: α):
   Room.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
-  rw [<- Symbol.extractFrom_replaceFrom_is_fmap]
+  rw [<- Symbol.extract_replace_is_fmap]
   rw [Regex.Point.derive_is_point_derive]
 
 theorem derive_emptyset {α: Type} {σ: Type} (Φ: σ -> α -> Bool) (a: α):
