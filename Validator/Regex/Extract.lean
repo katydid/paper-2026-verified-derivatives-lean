@@ -4,12 +4,12 @@ import Validator.Regex.RegexID
 
 namespace Regex
 
-theorem Symbol.lt_add_symbol:
-  n < n + num (symbol s) := by
-  simp only [num]
+theorem lt_add_symbol:
+  n < n + symbols (symbol s) := by
+  simp only [symbols]
   omega
 
-def Symbol.extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + num r) × Vector σ (n + num r) :=
+def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vector σ (n + symbols r) :=
   match r with
   | emptyset => (emptyset, acc)
   | emptystr => (emptystr, acc)
@@ -17,36 +17,32 @@ def Symbol.extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + num r) × V
   | or r1 r2 =>
     let (rid1, acc1) := extractAcc r1 acc
     let (rid2, acc2) := extractAcc r2 acc1
-    (or (rid1.cast_add (num r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
+    (or (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
   | concat r1 r2 =>
     let (rid1, acc1) := extractAcc r1 acc
     let (rid2, acc2) := extractAcc r2 acc1
-    (concat (rid1.cast_add (num r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
+    (concat (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
   | star r1 => let (rid1, acc1) := extractAcc r1 acc; (star rid1, acc1)
 
-def Symbol.extract (r: Regex σ): RegexID (num r) × Vector σ (num r) :=
+def extract (r: Regex σ): RegexID (symbols r) × Vector σ (symbols r) :=
   let (rid, xs) := extractAcc r #v[]
   (RegexID.cast rid (by omega), Vector.cast (by omega) xs)
 
-#guard Symbol.extract (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
+#guard extract (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
   = ((Regex.or (Regex.symbol 0) (Regex.symbol 1)), #v['a', 'b'])
-
-end Regex
-
-namespace Regex.Symbol
 
 theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
   Vector.toList (extractAcc r acc).2 = Vector.toList (acc ++ (extractAcc r #v[]).2) := by
   induction r generalizing acc n  with
   | emptyset =>
-    simp only [Symbol.num, Nat.add_zero, extractAcc, Vector.append_nil, Vector.cast_toList]
+    simp only [symbols, Nat.add_zero, extractAcc, Vector.append_nil, Vector.cast_toList]
   | emptystr =>
-    simp only [Symbol.num, Nat.add_zero, extractAcc, Vector.append_nil, Vector.cast_toList]
+    simp only [symbols, Nat.add_zero, extractAcc, Vector.append_nil, Vector.cast_toList]
   | symbol s =>
     simp only [extractAcc]
     rw [Vector.snoc_append]
     -- aesop?
-    simp_all only [num, Nat.reduceAdd]
+    simp_all only [symbols, Nat.reduceAdd]
     rfl
   | or r1 r2 ih1 ih2 =>
     simp only [extractAcc]
@@ -64,7 +60,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [num, zero_add, List.append_assoc]
+    simp_all only [symbols, zero_add, List.append_assoc]
   | concat r1 r2 ih1 ih2 =>
     simp only [extractAcc]
     rw [Vector.cast_assoc]
@@ -81,7 +77,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [num, zero_add, List.append_assoc]
+    simp_all only [symbols, zero_add, List.append_assoc]
   | star r1 ih1 =>
     simp only [extractAcc]
     rw [ih1]
@@ -91,7 +87,7 @@ theorem extract_take_toList (acc: Vector σ l):
     (Vector.take
       (extractAcc r2
         (extractAcc r1 acc).2).2
-      (l + Symbol.num r1)
+      (l + symbols r1)
     )
   )
   =
@@ -106,7 +102,7 @@ theorem extractAcc_take (acc: Vector σ l):
   (Vector.take
     (extractAcc r2
       (extractAcc r1 acc).2).2
-    (l + Symbol.num r1)
+    (l + symbols r1)
   )
   =
     Vector.cast
@@ -124,7 +120,7 @@ theorem extractAcc_take_toList_fmap (acc: Vector σ l):
         (extractAcc r2
           (extractAcc r1 acc).2).2
       )
-      (l + Symbol.num r1)
+      (l + symbols r1)
     )
   )
   =
@@ -150,7 +146,7 @@ theorem extractAcc_take_fmap (acc: Vector α l) (f: α -> β):
       (extractAcc r2
         (extractAcc r1 acc).2).2
     )
-    (l + Symbol.num r1)
+    (l + symbols r1)
   )
   =
     Vector.cast

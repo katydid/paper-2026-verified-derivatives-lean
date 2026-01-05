@@ -33,7 +33,7 @@ import Validator.Regex.Replace
 -- * rs = replacesFrom (extracts rs acc).1 (extracts rs acc).2
 -- * Regex.maps rs f = replacesFrom (extractsFrom rs).1 (Vec.map (extractsFrom rs).2 f)
 
-namespace Regex.Symbol
+namespace Regex
 
 theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
   r = replace (extractAcc r acc).1 (extractAcc r acc).2 := by
@@ -58,7 +58,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
     have hh1 :
       r1 =
         (replaceLE
-          (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extractAcc r1 acc).1))
+          (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
           hr
         ) := by
@@ -89,7 +89,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
     have hh1 :
       r1 =
         (replaceLE
-          (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extractAcc r1 acc).1))
+          (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
           hr
         ) := by
@@ -124,8 +124,9 @@ theorem extractAcc_replaceLE_is_id (r: Regex σ) (acc: Vector σ l):
   rw [<- replace]
   rw [<- extractAcc_replace_is_id]
 
-theorem extract_replace_is_id (r: Regex σ):
+lemma extract_replace_is_id : ∀ (r: Regex σ),
   r = replace (extract r).1 (extract r).2 := by
+  intro r
   simp only [extract]
   simp only [replace]
   rw [<- replaceLE_cast_both]
@@ -156,7 +157,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> β
     have hh1 :
       Regex.map r1 f =
         (replaceLE
-          (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extractAcc r1 acc).1))
+          (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
           hr
         ) := by
@@ -191,7 +192,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α -> β
     have hh1 :
       Regex.map r1 f =
         (replaceLE
-          (RegexID.cast_assoc (RegexID.cast_add (Symbol.num r2) (extractAcc r1 acc).1))
+          (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
           hr
         ) := by

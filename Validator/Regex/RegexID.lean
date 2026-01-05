@@ -1,7 +1,7 @@
 import Validator.Regex.Regex
 import Validator.Regex.Num
 
-namespace Regex.Symbol
+namespace Regex
 
 abbrev RegexID n := Regex (Fin n)
 
@@ -18,15 +18,15 @@ def RegexID.castLE {n: Nat} (r: RegexID n) (h : n ≤ m): RegexID m :=
 def RegexID.cast_map (r: RegexID n) (h: n = m): RegexID m :=
   Regex.map r (fun s => Fin.castLE (by omega) s)
 
-abbrev RegexID.cast_assoc (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + (Symbol.num r1 + Symbol.num r2)) :=
-  have h : (n + Symbol.num r1 + Symbol.num r2) = n + (Symbol.num r1 + Symbol.num r2) := by
+abbrev RegexID.cast_assoc (r: RegexID (n + symbols r1 + symbols r2)): RegexID (n + (symbols r1 + symbols r2)) :=
+  have h : (n + symbols r1 + symbols r2) = n + (symbols r1 + symbols r2) := by
     rw [<- Nat.add_assoc]
   RegexID.cast r h
 
-def RegexID.cast_or (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.or r1 r2)) :=
+def RegexID.cast_or (r: RegexID (n + symbols r1 + symbols r2)): RegexID (n + symbols (Regex.or r1 r2)) :=
   RegexID.cast_assoc r
 
-def RegexID.cast_concat (r: RegexID (n + Symbol.num r1 + Symbol.num r2)): RegexID (n + Symbol.num (Regex.concat r1 r2)) :=
+def RegexID.cast_concat (r: RegexID (n + symbols r1 + symbols r2)): RegexID (n + symbols (Regex.concat r1 r2)) :=
   RegexID.cast_assoc r
 
 theorem RegexID.cast_rfl (r: RegexID n): RegexID.cast r rfl = r := by
