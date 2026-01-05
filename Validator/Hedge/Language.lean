@@ -72,7 +72,7 @@ theorem null_tree {α: Type} {p: α -> Bool} {children: Lang α}:
 theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: α} {children: Hedge α} {xs: Hedge α}:
   (Language.derive (tree p childlang) (Hedge.Node.mk label children)) xs <->
   (Language.onlyif (p label /\ childlang children) Language.emptystr) xs := by
-  simp only [Language.derive, Language.derives, singleton_append]
+  simp only [Language.derive]
   simp only [Language.onlyif, Language.emptystr]
   refine Iff.intro ?toFun ?invFun
   case toFun =>

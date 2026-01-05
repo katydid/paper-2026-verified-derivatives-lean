@@ -50,16 +50,16 @@ def null {α: Type} (R: Langs α): Prop :=
 def derives {α: Type} (R: Langs α) (xs: List α): Langs α :=
   λ ys => R (xs ++ ys)
 
-def derive {α: Type} (R: Langs α) (x: α): Langs α :=
+def derive' {α: Type} (R: Langs α) (x: α): Langs α :=
   derives R [x]
 
-def derive' {α: Type} (R: Langs α) (x: α): Langs α :=
+def derive {α: Type} (R: Langs α) (x: α): Langs α :=
   fun (xs: List α) => R (x :: xs)
 
 attribute [simp] null derive derives derive'
 
-theorem derive_is_derive' {α: Type} (R: Langs α) (x: α):
-  derive R x = derive' R x :=
+theorem derive_is_derive' {α: Type}:
+  @derive α = derive' :=
   rfl
 
 theorem derives_empty_list {α: Type} (R: Langs α):
@@ -74,7 +74,8 @@ theorem derives_strings {α: Type} (R: Langs α) (xs ys: List α):
 
 theorem derives_step {α: Type} (R: Langs α) (x: α) (xs: List α):
   derives R (x :: xs) = derives (derive R x) xs := by
-  simp only [derive]
+  rw [derive_is_derive']
+  simp only [derive']
   rw [<- derives_strings]
   congr
 
@@ -99,11 +100,13 @@ theorem derives_foldl (R: Langs α) (xs: List α):
     unfold derives
     simp only [nil_append, foldl_nil, implies_true]
   | cons x xs ih =>
-    simp only [List.foldl_cons, derive]
+    rw [derive_is_derive']
+    simp only [List.foldl_cons, derive']
     intro R
     rw [derives_step]
     rw [ih (derive R x)]
-    simp only [derive]
+    rw [derive_is_derive']
+    simp only [derive']
 
 -- Theorems: null
 
@@ -204,7 +207,8 @@ theorem derive_emptystr {α: Type} {a: α}:
 
 theorem derive_iff_symbol {α: Type} {Φ: σ -> α -> Prop} {x: α} {xs: List α}:
   (derive (symbol Φ s) x) xs <-> (onlyif (Φ s x) emptystr) xs := by
-  simp only [derive, derives, singleton_append]
+  rw [derive_is_derive']
+  simp only [derive', derives, singleton_append]
   simp only [onlyif, emptystr]
   refine Iff.intro ?toFun ?invFun
   case toFun =>
@@ -238,10 +242,11 @@ theorem derive_onlyif {α: Type} {a: α} {s: Prop} {P: Langs α}:
 
 theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
   (derive (star R) x) xs <-> (concat (derive R x) (star R)) xs := by
+  rw [derive_is_derive']
   refine Iff.intro ?toFun ?invFun
   case toFun =>
     intro h
-    unfold derive at h
+    unfold derive' at h
     unfold derives at h
     simp only [cons_append, nil_append] at h
     simp only [star] at h
@@ -253,8 +258,8 @@ theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
     intro h
     unfold concat at h
     obtain ⟨n, h⟩ := h
-    simp only [derive, derives, cons_append, nil_append] at h
-    unfold derive
+    simp only [derive', derives, cons_append, nil_append] at h
+    unfold derive'
     unfold derives
     simp only [cons_append, nil_append]
     simp only [star]
@@ -268,11 +273,12 @@ theorem derive_star {α: Type} {x: α} {R: Langs α}:
 theorem derive_iff_concat {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
   (derive (concat P Q) x) xs <->
     (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) xs := by
+  rw [derive_is_derive']
   apply Iff.intro
   case mp =>
     intro h
     obtain ⟨n, hp, hq⟩ := h
-    simp only [Language.or, Language.concat, derive, derives, null, onlyif]
+    simp only [Language.or, Language.concat, derive', derives, null, onlyif]
     simp only [cons_append, nil_append, List.length_cons] at n
     obtain ⟨n, hn⟩ := n
     simp_all only
@@ -285,7 +291,7 @@ theorem derive_iff_concat {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
       simp_all
       exists Fin.mk n (by omega)
   case mpr =>
-    simp only [Language.or, Language.concat, derive, derives, null, onlyif]
+    simp only [Language.or, Language.concat, derive', derives, null, onlyif]
     intro h
     cases h with
     | inl h =>
