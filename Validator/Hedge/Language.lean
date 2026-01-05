@@ -19,12 +19,10 @@ open List (
 
 -- Definitions
 
-def Lang (α: Type): Type := Langs (Hedge.Node α)
-
-def tree {α: Type} (φ: α -> Bool) (R: Lang α): Lang α :=
+def tree {α: Type} (φ: α -> Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
   fun xs => ∃ label children, xs = [Hedge.Node.mk label children] /\ φ label /\ R children
 
-def tree_match {α: Type} (φ: α -> Bool) (R: Lang α): Lang α :=
+def tree_match {α: Type} (φ: α -> Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
   fun xs =>
     match xs with
     | [Hedge.Node.mk label children] =>
@@ -59,17 +57,17 @@ theorem tree_exists_is_tree_match:
     | cons x' xs =>
       simp only [cons.injEq, reduceCtorEq, and_false, false_and, exists_const, exists_false]
 
-example: Lang Nat := (tree (fun x => x = 1) (Language.or (tree (fun x => x = 1) Language.emptystr) Language.emptyset))
+example: Lang (Hedge.Node Nat) := (tree (fun x => x = 1) (Language.or (tree (fun x => x = 1) Language.emptystr) Language.emptyset))
 
-theorem null_iff_tree {α: Type} {p: α -> Bool} {children: Lang α}:
+theorem null_iff_tree {α: Type} {p: α -> Bool} {children: Lang (Hedge.Node α)}:
   Language.null (tree p children) <-> False :=
   Iff.intro nofun nofun
 
-theorem null_tree {α: Type} {p: α -> Bool} {children: Lang α}:
+theorem null_tree {α: Type} {p: α -> Bool} {children: Lang (Hedge.Node α)}:
   Language.null (tree p children) = False := by
   rw [null_iff_tree]
 
-theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: α} {children: Hedge α} {xs: Hedge α}:
+theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α} {xs: Hedge α}:
   (Language.derive (tree p childlang) (Hedge.Node.mk label children)) xs <->
   (Language.onlyif (p label /\ childlang children) Language.emptystr) xs := by
   simp only [Language.derive]
@@ -92,7 +90,7 @@ theorem derive_iff_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: 
     exact hif
 
 -- Hedge.Language.derive (Hedge.Language.tree p.eval (Denote.denote children)) a
-theorem derive_tree {α: Type} {p: α -> Bool} {childlang: Lang α} {label: α} {children: Hedge α}:
+theorem derive_tree {α: Type} {p: α -> Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α}:
   (Language.derive (tree p childlang) (Hedge.Node.mk label children)) =
   (Language.onlyif (p label /\ childlang children) Language.emptystr) := by
   funext

@@ -1,18 +1,18 @@
 namespace Language
 
-def Langs (α: Type): Type := List α -> Prop
+def Lang (α: Type): Type := List α -> Prop
 
 end Language
 
-def Language.emptyset: Langs α := fun _ => False
-def Language.emptystr: Langs α := fun xs => xs = []
-def Language.symbol (Φ: σ -> α -> Prop) (s: σ): Langs α :=
+def Language.emptyset: Lang α := fun _ => False
+def Language.emptystr: Lang α := fun xs => xs = []
+def Language.symbol (Φ: σ -> α -> Prop) (s: σ): Lang α :=
   fun xs => ∃ x, xs = [x] /\ Φ s x
-def Language.onlyif (cond : Prop) (P : Langs α): Langs α := fun xs => cond /\ P xs
-def Language.or (P : Langs α) (Q : Langs α): Langs α := fun xs => P xs \/ Q xs
-def Language.concat (P : Langs α) (Q : Langs α): Langs α := fun (xs : List α) =>
+def Language.onlyif (cond : Prop) (P : Lang α): Lang α := fun xs => cond /\ P xs
+def Language.or (P : Lang α) (Q : Lang α): Lang α := fun xs => P xs \/ Q xs
+def Language.concat (P : Lang α) (Q : Lang α): Lang α := fun (xs : List α) =>
   ∃ n: Fin (xs.length + 1), P (List.take n xs) /\ Q (List.drop n xs)
-def Language.star (R: Langs α) (xs: List α): Prop :=
+def Language.star (R: Lang α) (xs: List α): Prop :=
   match xs with
   | [] => True
   | (x::xs') => ∃ (n: Fin xs.length),
@@ -40,20 +40,20 @@ open List (
 -- attribute [simp] allows these definitions to be unfolded when using the simp tactic.
 attribute [simp] emptyset emptystr onlyif or and
 
-example: Langs α := emptystr
-example: Langs α := emptyset
-example: Langs α := (star emptyset)
+example: Lang α := emptystr
+example: Lang α := emptyset
+example: Lang α := (star emptyset)
 
-def null {α: Type} (R: Langs α): Prop :=
+def null {α: Type} (R: Lang α): Prop :=
   R []
 
-def derives {α: Type} (R: Langs α) (xs: List α): Langs α :=
+def derives {α: Type} (R: Lang α) (xs: List α): Lang α :=
   λ ys => R (xs ++ ys)
 
-def derive' {α: Type} (R: Langs α) (x: α): Langs α :=
+def derive' {α: Type} (R: Lang α) (x: α): Lang α :=
   derives R [x]
 
-def derive {α: Type} (R: Langs α) (x: α): Langs α :=
+def derive {α: Type} (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
 
 attribute [simp] null derive derives derive'
@@ -62,37 +62,37 @@ theorem derive_is_derive' {α: Type}:
   @derive α = derive' :=
   rfl
 
-theorem derives_empty_list {α: Type} (R: Langs α):
+theorem derives_empty_list {α: Type} (R: Lang α):
   derives R [] = R :=
   rfl
 
-theorem derives_strings {α: Type} (R: Langs α) (xs ys: List α):
+theorem derives_strings {α: Type} (R: Lang α) (xs ys: List α):
   derives R (xs ++ ys) = derives (derives R xs) ys :=
   match xs with
   | [] => rfl
   | (x :: xs) => derives_strings (derive R x) xs ys
 
-theorem derives_step {α: Type} (R: Langs α) (x: α) (xs: List α):
+theorem derives_step {α: Type} (R: Lang α) (x: α) (xs: List α):
   derives R (x :: xs) = derives (derive R x) xs := by
   rw [derive_is_derive']
   simp only [derive']
   rw [<- derives_strings]
   congr
 
-theorem null_derives {α: Type} (R: Langs α) (xs: List α):
+theorem null_derives {α: Type} (R: Lang α) (xs: List α):
   (null ∘ derives R) xs = R xs := by
   unfold derives
   unfold null
   simp only [Function.comp_apply]
   simp only [append_nil]
 
-theorem validate {α: Type} (R: Langs α) (xs: List α):
+theorem validate {α: Type} (R: Lang α) (xs: List α):
   null (derives R xs) = R xs := by
   unfold derives
   unfold null
   simp only [append_nil]
 
-theorem derives_foldl (R: Langs α) (xs: List α):
+theorem derives_foldl (R: Lang α) (xs: List α):
   (derives R) xs = (List.foldl derive R) xs := by
   revert R
   induction xs with
@@ -148,15 +148,15 @@ theorem null_symbol {σ: Type} {α: Type} {Φ: σ -> α -> Prop} {s: σ}:
   null (symbol Φ s) = False := by
   rw [null_iff_symbol]
 
-theorem null_or {α: Type} {P Q: Langs α}:
+theorem null_or {α: Type} {P Q: Lang α}:
   null (or P Q) = ((null P) \/ (null Q)) :=
   rfl
 
-theorem null_iff_or {α: Type} {P Q: Langs α}:
+theorem null_iff_or {α: Type} {P Q: Lang α}:
   null (or P Q) <-> ((null P) \/ (null Q)) := by
   rw [null_or]
 
-theorem null_iff_concat {α: Type} {P Q: Langs α}:
+theorem null_iff_concat {α: Type} {P Q: Lang α}:
   null (concat P Q) <-> ((null P) /\ (null Q)) := by
   refine Iff.intro ?toFun ?invFun
   case toFun =>
@@ -173,11 +173,11 @@ theorem null_iff_concat {α: Type} {P Q: Langs α}:
       exists_const]
     exact And.intro hp hq
 
-theorem null_concat {α: Type} {P Q: Langs α}:
+theorem null_concat {α: Type} {P Q: Lang α}:
   null (concat P Q) = ((null P) /\ (null Q)) := by
   rw [null_iff_concat]
 
-theorem null_iff_star {α: Type} {R: Langs α}:
+theorem null_iff_star {α: Type} {R: Lang α}:
   null (star R) <-> True :=
   Iff.intro
     (fun _ => True.intro)
@@ -186,7 +186,7 @@ theorem null_iff_star {α: Type} {R: Langs α}:
       simp only [star]
     )
 
-theorem null_star {α: Type} {R: Langs α}:
+theorem null_star {α: Type} {R: Lang α}:
   null (star R) = True := by
   rw [null_iff_star]
 
@@ -232,15 +232,15 @@ theorem derive_symbol {α: Type} {Φ: σ -> α -> Prop} {x: α}:
   funext
   rw [derive_iff_symbol]
 
-theorem derive_or {α: Type} {a: α} {P Q: Langs α}:
+theorem derive_or {α: Type} {a: α} {P Q: Lang α}:
   (derive (or P Q) a) = (or (derive P a) (derive Q a)) :=
   rfl
 
-theorem derive_onlyif {α: Type} {a: α} {s: Prop} {P: Langs α}:
+theorem derive_onlyif {α: Type} {a: α} {s: Prop} {P: Lang α}:
   (derive (onlyif s P) a) = (onlyif s (derive P a)) :=
   rfl
 
-theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
+theorem derive_iff_star {α: Type} {x: α} {R: Lang α} {xs: List α}:
   (derive (star R) x) xs <-> (concat (derive R x) (star R)) xs := by
   rw [derive_is_derive']
   refine Iff.intro ?toFun ?invFun
@@ -265,12 +265,12 @@ theorem derive_iff_star {α: Type} {x: α} {R: Langs α} {xs: List α}:
     simp only [star]
     exists n
 
-theorem derive_star {α: Type} {x: α} {R: Langs α}:
+theorem derive_star {α: Type} {x: α} {R: Lang α}:
   (derive (star R) x) = (concat (derive R x) (star R)) := by
   funext
   rw [derive_iff_star]
 
-theorem derive_iff_concat {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
+theorem derive_iff_concat {α: Type} {x: α} {P Q: Lang α} {xs: List α}:
   (derive (concat P Q) x) xs <->
     (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) xs := by
   rw [derive_is_derive']
@@ -302,24 +302,24 @@ theorem derive_iff_concat {α: Type} {x: α} {P Q: Langs α} {xs: List α}:
       obtain ⟨hp, hq⟩ := h
       exists Fin.mk 0 (by omega)
 
-theorem derive_concat {α: Type} {x: α} {P Q: Langs α}:
+theorem derive_concat {α: Type} {x: α} {P Q: Lang α}:
   (derive (concat P Q) x) =
     (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) := by
   funext
   rw [derive_iff_concat]
 
-theorem simp_or_emptyset_l_is_r (r: Langs α):
+theorem simp_or_emptyset_l_is_r (r: Lang α):
   or emptyset r = r := by
   unfold or
   simp only [emptyset, false_or]
 
-theorem simp_or_emptyset_r_is_l (r: Langs α):
+theorem simp_or_emptyset_r_is_l (r: Lang α):
   or r emptyset = r := by
   unfold or
   simp only [emptyset, or_false]
 
 theorem simp_or_null_l_emptystr_is_l
-  (r: Langs α)
+  (r: Lang α)
   (nullr: null r):
   or r emptystr = r := by
   unfold or
@@ -332,7 +332,7 @@ theorem simp_or_null_l_emptystr_is_l
   exact nullr
 
 theorem simp_or_emptystr_null_r_is_r
-  (r: Langs α)
+  (r: Lang α)
   (nullr: null r):
   or emptystr r = r := by
   unfold or
@@ -344,13 +344,13 @@ theorem simp_or_emptystr_null_r_is_r
   rw [hxs]
   exact nullr
 
-theorem simp_or_idemp (r: Langs α):
+theorem simp_or_idemp (r: Lang α):
   or r r = r := by
   unfold or
   funext xs
   apply or_self
 
-theorem simp_or_comm (r s: Langs α):
+theorem simp_or_comm (r s: Lang α):
   or r s = or s r := by
   unfold or
   funext xs
@@ -371,7 +371,7 @@ theorem simp_or_comm (r s: Langs α):
     | Or.inr h =>
       exact Or.inl h
 
-theorem simp_or_assoc (r s t: Langs α):
+theorem simp_or_assoc (r s t: Lang α):
   or (or r s) t = or r (or s t) := by
   unfold or
   funext xs
@@ -429,35 +429,35 @@ instance IsLawfulCommIdentity_or {α: Type} : Std.LawfulCommIdentity (@or α) (@
   right_id r := simp_or_emptyset_r_is_l r
 
 -- Test that ac_rfl uses the instance of Std.LawfulCommIdentity
-example (r: Langs α):
+example (r: Lang α):
   or r emptyset = r := by
   ac_rfl
 
 -- Test that ac_rfl uses the instance of Std.Commutative
-example (r s: Langs α):
+example (r s: Lang α):
   or r s = or s r := by
   ac_rfl
 
 -- Test that ac_rfl uses the instance of Std.Associative
-example (r s t: Langs α):
+example (r s t: Lang α):
   or (or r s) t = or r (or s t) := by
   ac_rfl
 
 -- Test that ac_rfl uses the instance of Std.IdempotentOp
-example (r: Langs α):
+example (r: Lang α):
   or (or r r) r = r := by
   ac_rfl
 
 -- Test that ac_rfl uses both the instances of Std.Associative and Std.Commutative
-example (a b c d : Langs α):
+example (a b c d : Lang α):
   (or a (or b (or c d))) = (or d (or (or b c) a)) := by ac_rfl
 
 -- Test that ac_rfl uses both the instances of Std.Associative and Std.Commutative and Std.IdempotentOp
-example (a b c d : Langs α):
+example (a b c d : Lang α):
   (or a (or b (or c d))) = (or a (or d (or (or b c) a))) := by ac_rfl
 
 -- Test ac_nf tactic
-example (r s: Langs α) (H: s = r):
+example (r s: Lang α) (H: s = r):
   or emptyset (or r s) = (or r r) := by
   ac_nf
   rw [H]
@@ -488,7 +488,7 @@ def onlyif_false {cond: Prop} {l: List α -> Prop} (condIsFalse: ¬cond):
     intro h
     nomatch h
 
-theorem simp_onlyif_and {α: Type} (cond1 cond2 : Prop) (P : Langs α):
+theorem simp_onlyif_and {α: Type} (cond1 cond2 : Prop) (P : Lang α):
   onlyif (cond1 /\ cond2) P = onlyif cond1 (onlyif cond2 P) := by
   unfold onlyif
   funext xs
