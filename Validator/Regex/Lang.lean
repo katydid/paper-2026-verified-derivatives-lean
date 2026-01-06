@@ -1,3 +1,5 @@
+import Validator.Std.List
+
 def Lang (α: Type): Type := List α -> Prop
 
 def Lang.emptyset: Lang α := fun _ => False
@@ -17,6 +19,22 @@ def Lang.star (R: Lang α) (xs: List α): Prop :=
 
 def Lang.derive (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
+
+def Lang.interleave_exists (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+  ∃ (i: Fin (List.intersections xs).length),
+    P (List.get (List.intersections xs) i).1
+    /\ Q (List.get (List.intersections xs) i).2
+
+def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+  match xs with
+  | [] => P [] /\ Q []
+  | (x::xs') =>
+      (interleave (P.derive x) Q xs')
+    \/ (interleave (Q.derive x) P xs')
+
+theorem Lang.interleave_is_interleave_exists:
+  Lang.interleave P Q = Lang.interleave_exists P Q := by
+  sorry
 
 namespace Lang
 
@@ -171,6 +189,15 @@ theorem null_concat {α: Type} {P Q: Lang α}:
   null (concat P Q) = ((null P) /\ (null Q)) := by
   rw [null_iff_concat]
 
+theorem null_iff_interleave_exists {α: Type} {P Q: Lang α}:
+  null (interleave_exists P Q) <-> ((null P) /\ (null Q)) := by
+  rw [<- Lang.interleave_is_interleave_exists]
+  rfl
+
+theorem null_interleave_exists {α: Type} {P Q: Lang α}:
+  null (interleave_exists P Q) = ((null P) /\ (null Q)) := by
+  rw [null_iff_interleave_exists]
+
 theorem null_iff_star {α: Type} {R: Lang α}:
   null (star R) <-> True :=
   Iff.intro
@@ -263,6 +290,17 @@ theorem derive_star {α: Type} {x: α} {R: Lang α}:
   (derive (star R) x) = (concat (derive R x) (star R)) := by
   funext
   rw [derive_iff_star]
+
+theorem derive_interleave {α: Type} {x: α} {P Q: Lang α}:
+  (derive (interleave P Q) x) = (or (interleave (derive P x) Q) (interleave (derive Q x) P)) := by
+  rfl
+
+theorem derive_interleave_exists {α: Type} {x: α} {P Q: Lang α}:
+  (derive (interleave_exists P Q) x) = (or (interleave_exists (derive P x) Q) (interleave_exists (derive Q x) P)) := by
+  rw [<- interleave_is_interleave_exists]
+  rw [<- interleave_is_interleave_exists]
+  rw [<- interleave_is_interleave_exists]
+  rfl
 
 theorem derive_iff_concat {α: Type} {x: α} {P Q: Lang α} {xs: List α}:
   (derive (concat P Q) x) xs <->

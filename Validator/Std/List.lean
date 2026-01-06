@@ -267,3 +267,79 @@ theorem list_elemof_drop_is_elem {xs: List α} (y: List.ElemOf (List.drop n xs))
   rw [list_take_drop_n n xs]
   rw [List.mem_append]
   exact Or.inr hy
+
+def intersectionsAcc (xs: List α) (acc: List (List α × List α)): List (List α × List α) :=
+  match xs with
+  | [] => acc
+  | (x::xs) =>
+    let acc' := intersectionsAcc xs acc
+    let fsts := List.map (fun (fst, snd) => (x::fst, snd)) acc'
+    let snds := List.map (fun (fst, snd) => (fst, x::snd)) acc'
+    fsts ++ snds
+
+def intersections (xs: List α): List (List α × List α) :=
+  intersectionsAcc xs [([], [])]
+
+def intersectionsAcc_length (xs: List α) (acc: List (List α × List α)): Nat :=
+  acc.length * (2 ^ xs.length)
+
+theorem intersectionsAcc_length_is_correct (xs: List α) (acc: List (List α × List α)):
+  (intersectionsAcc xs acc).length = intersectionsAcc_length xs acc := by
+  unfold intersectionsAcc_length
+  induction xs with
+  | nil =>
+    simp [intersectionsAcc]
+  | cons x xs ih =>
+    simp [intersectionsAcc]
+    rw [ih]
+    simp +arith
+    rw [Nat.mul_left_comm]
+    rw [Nat.pow_add']
+
+def intersections_length (xs: List α): Nat := 2 ^ xs.length
+
+theorem intersections_length_is_correct (xs: List α):
+  (intersections xs).length = intersections_length xs := by
+  unfold intersections_length
+  unfold intersections
+  rw [intersectionsAcc_length_is_correct]
+  unfold intersectionsAcc_length
+  simp
+
+theorem intersections1_length_is_le (xs: List α):
+  ∀ ys ∈ (List.map (·.1) (intersections xs)),
+    ys.length <= length xs
+  := by
+  intro ys hys
+  induction xs generalizing ys with
+  | nil =>
+    simp [intersections, intersectionsAcc] at hys
+    rw [hys]
+    simp
+  | cons x xs ih =>
+
+    sorry
+
+-- theorem intersectionsAcc_contains_itself_fst (xs: List α) (i: Fin (intersections_length xs)):
+
+theorem intersections_contains_itself_fst (xs: List α) (i: Fin (intersections_length xs)):
+  ∃ i, ((List.intersections xs).get i).1 = xs := by
+  rw [<- intersections_length_is_correct] at i
+  obtain ⟨i, hi⟩ := i
+  induction xs generalizing i with
+  | nil =>
+    exists ⟨0, by simp [intersections, intersectionsAcc]⟩
+  | cons x xs ih =>
+    simp only [intersections, intersectionsAcc]
+
+    sorry
+
+theorem intersections_sizeOf1 (xs: List α) (i: Fin (List.intersections xs).length):
+  ((List.intersections xs).get i).1 = xs \/ sizeOf ((List.intersections xs).get i).1 < sizeOf xs := by
+  obtain ⟨i, hi⟩ := i
+  induction xs generalizing i with
+  | nil =>
+    simp [intersections, intersectionsAcc]
+  | cons x xs ih =>
+    simp [intersections, intersectionsAcc]
+    sorry

@@ -9,6 +9,7 @@ namespace Regex
 def symbols: (r: Regex σ) -> Nat
   | emptyset => 0 | emptystr => 0 | symbol _ => 1 | star r1 => symbols r1
   | or r1 r2 => symbols r1 + symbols r2 | concat r1 r2 => symbols r1 + symbols r2
+  | interleave r1 r2 => symbols r1 + symbols r2
 
 end Regex
 

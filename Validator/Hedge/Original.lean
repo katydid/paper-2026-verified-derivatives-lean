@@ -65,6 +65,24 @@ theorem decreasing_symbol {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (l
   have h' := List.list_elem_lt h
   omega
 
+theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (x, r1)
+    (x, Regex.interleave r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.interleave.sizeOf_spec]
+
+theorem decreasing_interleave_r {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (x, r2)
+    (x, Regex.interleave r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.interleave.sizeOf_spec]
+
 def Rule.derive (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
   (r: Regex (φ × Ref n)) (node: Hedge.Node α): Regex (φ × Ref n) :=
   match r with
@@ -83,6 +101,10 @@ def Rule.derive (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
       (Regex.onlyif (Regex.null r1) (derive G Φ r2 node))
   | Regex.star r1 =>
     Regex.concat (derive G Φ r1 node) (Regex.star r1)
+  | Regex.interleave r1 r2 =>
+    Regex.or
+      (Regex.interleave (derive G Φ r1 node) r2)
+      (Regex.interleave (derive G Φ r2 node) r1)
   -- Lean cannot guess how the recursive function terminates,
   -- so we have to tell it how the arguments decrease in size.
   -- The arguments decrease in the tree case first
@@ -104,6 +126,8 @@ def Rule.derive (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)
     · apply decreasing_concat_l
     · apply decreasing_concat_r
     · apply decreasing_star
+    · apply decreasing_interleave_l
+    · apply decreasing_interleave_r
 
 def validate
   (G: Hedge.Grammar n φ) (Φ: φ -> α -> Bool)

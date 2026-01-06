@@ -112,6 +112,24 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
     simp only [List.cons.sizeOf_spec, gt_iff_lt]
     omega
 
+theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (xs: Hedge α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (xs, r1)
+    (xs, Regex.interleave r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.interleave.sizeOf_spec]
+
+theorem decreasing_interleave_r {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (xs: Hedge α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (xs, r2)
+    (xs, Regex.interleave r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.interleave.sizeOf_spec]
+
 -- Lang.or, Lang.concat and Lang.star are unfolded to help with the termination proof.
 -- Φ needs to be the last parameter, so that simp only works on this function when the parameter r is provided.
 def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
@@ -131,6 +149,10 @@ def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
     | (node::nodes') => ∃ (i: Fin nodes.length),
                         (denote G Φ r1 (node::List.take i nodes'))
                         /\ (denote G Φ (Regex.star r1) (List.drop i nodes'))
+  | Regex.interleave r1 r2 =>
+      ∃ (i: Fin (List.intersections nodes).length),
+      (denote G Φ r1 (List.get (List.intersections nodes) i).1)
+    /\ (denote G Φ r2 (List.get (List.intersections nodes) i).2)
   termination_by (nodes, r)
   decreasing_by
     · apply decreasing_symbol
@@ -140,6 +162,8 @@ def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
     · apply denote_sizeOf_concat_right
     · apply denote_sizeOf_star_left
     · apply denote_sizeOf_star_right
+    · sorry
+    · sorry
 
 theorem denote_emptyset {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop):
   Rule.denote G Φ Regex.emptyset = Lang.emptyset := by
@@ -213,6 +237,13 @@ theorem denote_concat {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → 
   funext
   simp only [Rule.denote]
   unfold Lang.concat
+  rfl
+
+theorem denote_interleave_exists {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) (r1 r2: Regex (φ × Ref n)):
+  Rule.denote G Φ (Regex.interleave r1 r2) = Lang.interleave_exists (Rule.denote G Φ r1) (Rule.denote G Φ r2) := by
+  funext
+  simp only [Rule.denote]
+  unfold Lang.interleave_exists
   rfl
 
 theorem unfold_denote_star {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) (r: Regex (φ × Ref n)) (xs: Hedge α):
@@ -304,6 +335,13 @@ theorem null_commutes {α: Type}
     rw [Lang.null_star]
     unfold Regex.null
     simp only
+  | interleave r1 r2 ih1 ih2 =>
+    rw [denote_interleave_exists]
+    rw [Lang.null_interleave_exists]
+    unfold Regex.null
+    rw [Bool.and_eq_true]
+    rw [ih1]
+    rw [ih2]
 
 theorem denote_nil_is_null (Φ: φ → α → Prop) [DecidableRel Φ]:
   Rule.denote G Φ r [] = Regex.null r := by
@@ -322,6 +360,8 @@ theorem denote_nil_is_null (Φ: φ → α → Prop) [DecidableRel Φ]:
     simp only [denote_concat, Lang.null]
   | star r1 =>
     simp only [denote_star, Lang.null]
+  | interleave r1 r2 =>
+    simp only [denote_interleave_exists, Lang.null]
 
 end Hedge.Grammar
 

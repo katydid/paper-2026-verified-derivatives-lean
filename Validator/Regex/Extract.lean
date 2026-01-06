@@ -23,6 +23,10 @@ def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vect
     let (rid2, acc2) := extractAcc r2 acc1
     (concat (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
   | star r1 => let (rid1, acc1) := extractAcc r1 acc; (star rid1, acc1)
+  | interleave r1 r2 =>
+    let (rid1, acc1) := extractAcc r1 acc
+    let (rid2, acc2) := extractAcc r2 acc1
+    (interleave (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
 
 def extract (r: Regex σ): RegexID (symbols r) × Vector σ (symbols r) :=
   let (rid, xs) := extractAcc r #v[]
@@ -81,6 +85,23 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
   | star r1 ih1 =>
     simp only [extractAcc]
     rw [ih1]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [extractAcc]
+    rw [Vector.cast_assoc]
+    generalize_proofs h1 h2 h3
+    rw [Vector.cast_assoc]
+    generalize_proofs h4
+    rw [Vector.toList_append]
+    rw [Vector.cast_toList]
+    rw [Vector.cast_toList]
+    rw [ih2]
+    rw [Vector.toList_append]
+    rw [ih1]
+    rw [Vector.toList_append]
+    nth_rewrite 2 [ih2]
+    rw [Vector.toList_append]
+    -- aesop?
+    simp_all only [symbols, zero_add, List.append_assoc]
 
 theorem extract_take_toList (acc: Vector σ l):
   (Vector.toList

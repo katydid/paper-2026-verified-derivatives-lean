@@ -4,6 +4,7 @@ def Regex.map (r: Regex α) (f: α -> β): Regex β := match r with
   | emptyset => emptyset | emptystr => emptystr | star r1 => star (map r1 f)
   | symbol s => symbol (f s) | or r1 r2 => or (map r1 f) (map r2 f)
   | concat r1 r2 => concat (map r1 f) (map r2 f)
+  | interleave r1 r2 => interleave (map r1 f) (map r2 f)
 
 namespace Regex
 
@@ -27,6 +28,10 @@ theorem map_id (r: Regex α):
   | star r1 ih1 =>
     simp only [map]
     rw [ih1]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [map]
+    rw [ih1]
+    rw [ih2]
 
 theorem map_map (r: Regex α) (f: α -> β) (g: β -> σ):
   map (map r f) g = map r (fun r' => g (f r')) := by
@@ -48,6 +53,10 @@ theorem map_map (r: Regex α) (f: α -> β) (g: β -> σ):
   | star r1 ih1 =>
     simp only [map]
     rw [ih1]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [map]
+    rw [ih1]
+    rw [ih2]
 
 theorem map_null {σ} (Φ: σ -> Bool) (r: Regex σ):
   (map r (fun s => (s, Φ s))).null = r.null := by
@@ -68,3 +77,7 @@ theorem map_null {σ} (Φ: σ -> Bool) (r: Regex σ):
     rw [ih2]
   | star r1 ih1 =>
     simp only [map, Regex.null]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [map, Regex.null]
+    rw [ih1]
+    rw [ih2]

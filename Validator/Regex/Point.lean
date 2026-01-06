@@ -16,6 +16,9 @@ def Regex.Point.derive: (r: Regex (σ × Bool)) → Regex σ
       (concat (derive r1) (first r2))
       (onlyif (null r1) (derive r2))
   | star r1 => concat (derive r1) (star (first r1))
+  | interleave r1 r2 => or
+      (interleave (derive r1) (first r2))
+      (interleave (derive r2) (first r1))
 
 namespace Regex.Point
 
@@ -44,6 +47,12 @@ theorem map_first (Φ: σ → Bool) (r: Regex σ):
     simp only [Regex.map, first]
     simp only [star.injEq]
     exact ih1
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [Regex.map, first]
+    simp only [interleave.injEq]
+    apply And.intro
+    · exact ih1
+    · exact ih2
 
 lemma regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
   Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
@@ -75,3 +84,13 @@ lemma regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (
     have h : first (r1.map fun s => (s, Φ s a)) = r1 := by
       apply map_first
     rw [h]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [Regex.derive, Regex.map, derive]
+    rw [<- ih1]
+    rw [<- ih2]
+    have h1 : first (r1.map fun s => (s, Φ s a)) = r1 := by
+      apply map_first
+    have h2 : first (r2.map fun s => (s, Φ s a)) = r2 := by
+      apply map_first
+    rw [h1]
+    rw [h2]
