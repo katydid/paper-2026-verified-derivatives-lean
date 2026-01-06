@@ -1,9 +1,11 @@
+import Validator.Std.Decidable
 import Validator.Std.Except
 import Validator.Std.List
 
 import Validator.Std.Hedge
 
 import Validator.Pred.AnyEq
+import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
 import Validator.Regex.Regex
 
@@ -177,3 +179,66 @@ abbrev node {α} (label: α) children := Hedge.Node.mk label children
   )
   (node "a" [node "b" [], node "c" [node "d" []]]) =
   Except.ok true
+
+theorem derive_commutes {α: Type} {φ: Type}
+  (G: Hedge.Grammar n φ) (Φ: φ -> α -> Prop) [DecidableRel Φ]
+  (r: Regex (φ × Ref n)) (x: Hedge.Node α):
+  Hedge.Grammar.Rule.denote G Φ (Rule.derive G (decideRel Φ) r x) = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) x := by
+  fun_induction (Rule.derive G (fun p a => Φ p a)) r x with
+  | case1 => -- emptyset
+    rw [Hedge.Grammar.denote_emptyset]
+    rw [Lang.derive_emptyset]
+  | case2 => -- emptystr
+    rw [Hedge.Grammar.denote_emptyset]
+    rw [Hedge.Grammar.denote_emptystr]
+    rw [Lang.derive_emptystr]
+  | case3 p childRef label children ih =>
+    rw [Hedge.Grammar.denote_symbol]
+    rw [Lang.derive_tree]
+    rw [Hedge.Grammar.denote_onlyif]
+    rw [Hedge.Grammar.denote_emptystr]
+    apply (congrArg fun x => Lang.onlyif x Lang.emptystr)
+    congr
+    generalize (G.lookup childRef) = childExpr
+    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+    unfold Lang.null
+    induction children generalizing childExpr with
+    | nil =>
+      simp only [List.foldl_nil]
+      rfl
+    | cons c cs ih' =>
+      simp only [List.foldl]
+      rw [ih']
+      · cases c
+        rw [ih]
+        simp only [Lang.derive]
+        rw [List.mem_cons]
+        apply Or.inl
+        rfl
+      · intro x child hchild
+        apply ih
+        rw [List.mem_cons]
+        apply Or.inr hchild
+  | case4 x p q ihp ihq => -- or
+    rw [Hedge.Grammar.denote_or]
+    rw [Hedge.Grammar.denote_or]
+    unfold Lang.or
+    rw [ihp]
+    rw [ihq]
+    rfl
+  | case5 x r1 r2 ih1 ih2 => -- concat
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_or]
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_onlyif]
+    rw [Lang.derive_concat]
+    rw [<- ih1]
+    rw [<- ih2]
+    congr
+    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+  | case6 x r ih => -- star
+    rw [Hedge.Grammar.denote_star]
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_star]
+    rw [Lang.derive_star]
+    rw [ih]
