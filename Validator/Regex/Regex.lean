@@ -46,6 +46,10 @@ def unescapable :(x: Regex σ) → Bool
 def onlyif (cond: Prop) [dcond: Decidable cond] (r: Regex σ): Regex σ :=
   if cond then r else emptyset
 
+def oneOrMore (r: Regex σ): Regex σ := Regex.concat r (Regex.star r)
+
+def optional (r: Regex σ): Regex σ := Regex.or r Regex.emptystr
+
 theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dcond: Decidable condition] (r: Regex σ):
   denote Φ (onlyif condition r) = Lang.onlyif condition (denote Φ r) := by
   unfold Lang.onlyif
