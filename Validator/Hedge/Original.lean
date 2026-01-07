@@ -239,25 +239,25 @@ private def example_grammar_doc: Hedge.Grammar 3 String :=
   Hedge.Grammar.mk
     (start := Regex.symbol ("doc", 0))
     (prods := #v[
-      Regex.concat (Regex.symbol ("para", 2)) (Regex.star (Regex.symbol ("para", 1))),
+      Regex.oneOrMore (Regex.symbol ("para", 1)),
       Regex.symbol ("pcdata", 2),
       Regex.emptystr,
     ])
 
 #guard validate example_grammar_doc (· == ·) example_grammar_doc.start
-  [node "doc" [node "para" []]]
+  [node "doc" [node "para" [node "pcdata" []]]]
   = true
 
 #guard validate example_grammar_doc (· == ·) example_grammar_doc.start
-  [node "doc" [node "para" [], node "para" []]]
+  [node "doc" [node "para" []]]
   = false
 
 #guard validate example_grammar_doc (· == ·) example_grammar_doc.start
-  [node "doc" [node "para" [], node "para" [node "pcdata" []]]]
+  [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
   = true
 
 #guard validate example_grammar_doc (· == ·) example_grammar_doc.start
-  [node "doc" [node "para" [], node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
+  [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
   = true
 
 -- modified example from Taxonomy of XML Section 7.1
