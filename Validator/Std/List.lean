@@ -335,17 +335,29 @@ theorem intersections1_length_is_le (xs: List α):
 
 -- theorem intersectionsAcc_contains_itself_fst (xs: List α) (i: Fin (intersections_length xs)):
 
-theorem intersections_contains_itself_fst (xs: List α) (i: Fin (intersections_length xs)):
-  ∃ i, ((List.intersections xs).get i).1 = xs := by
-  rw [<- intersections_length_is_correct] at i
-  obtain ⟨i, hi⟩ := i
-  induction xs generalizing i with
+theorem intersections_contains_itself_fst (xs: List α):
+  ∃ p ∈ intersections xs, p.1 = xs := by
+  induction xs with
   | nil =>
-    exists ⟨0, by simp [intersections, intersectionsAcc]⟩
+    simp only [intersections, intersectionsAcc, mem_cons, not_mem_nil, or_false, exists_eq_left]
   | cons x xs ih =>
-    simp only [intersections, intersectionsAcc]
+    rcases ih with ⟨p, hp_mem, p_fst_eq_xs⟩
+    exists (x :: p.1, p.2)
+    constructor
+    · simp [intersections, intersectionsAcc, List.mem_append, List.mem_map]
+      apply Or.inl
+      apply hp_mem
+    · simp only [cons.injEq, true_and]
+      assumption
 
-    sorry
+theorem intersections_contains_itself_fst_idx (xs: List α):
+  ∃ i, ((List.intersections xs).get i).1 = xs := by
+  have hmem := intersections_contains_itself_fst xs
+  rcases hmem with ⟨p, hp_mem, hp_eq⟩
+  rcases (mem_iff_get).1 hp_mem with ⟨i, hi⟩
+  exists i
+  rw [hi]
+  exact hp_eq
 
 theorem intersections_sizeOf1 (xs: List α) (i: Fin (List.intersections xs).length):
   ((List.intersections xs).get i).1 = xs \/ sizeOf ((List.intersections xs).get i).1 < sizeOf xs := by
