@@ -82,6 +82,22 @@ theorem list_sizeOf_cons [SizeOf α] (xs ys: List α):
     simp only [List.cons.sizeOf_spec] at *
     omega
 
+theorem list_sizeOf_cons_lt_cons [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
+  sizeOf (x :: ys) < sizeOf (x :: xs) := by
+  simp only [cons.sizeOf_spec, Nat.add_lt_add_iff_left]
+  exact h_lt
+
+theorem list_sizeOf_lt_cons_eq [SizeOf α] (x: α) {ys xs: List α} (h_eq: ys = xs):
+  sizeOf ys < sizeOf (x :: xs) := by
+  rw [h_eq]
+  simp [cons.sizeOf_spec]
+  exact Nat.pos_of_neZero (1 + sizeOf x)
+
+theorem list_sizeOf_lt_cons_lt [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
+  sizeOf ys < sizeOf (x :: xs) := by
+  simp [cons.sizeOf_spec]
+  exact Nat.lt_add_left (1 + sizeOf x) h_lt
+
 theorem list_length_neq_take {n: Nat} {xs: List α}:
   ¬List.take n xs = xs → (List.take n xs).length < xs.length := by
   intro h
@@ -267,3 +283,185 @@ theorem list_elemof_drop_is_elem {xs: List α} (y: List.ElemOf (List.drop n xs))
   rw [list_take_drop_n n xs]
   rw [List.mem_append]
   exact Or.inr hy
+
+def intersectionsAcc (xs: List α) (acc: List (List α × List α)): List (List α × List α) :=
+  match xs with
+  | [] => acc
+  | (x::xs) =>
+    let acc' := intersectionsAcc xs acc
+    let fsts := List.map (fun (fst, snd) => (x::fst, snd)) acc'
+    let snds := List.map (fun (fst, snd) => (fst, x::snd)) acc'
+    fsts ++ snds
+
+def intersections (xs: List α): List (List α × List α) :=
+  intersectionsAcc xs [([], [])]
+
+def intersectionsAcc_length (xs: List α) (acc: List (List α × List α)): Nat :=
+  acc.length * (2 ^ xs.length)
+
+theorem intersectionsAcc_length_is_correct (xs: List α) (acc: List (List α × List α)):
+  (intersectionsAcc xs acc).length = intersectionsAcc_length xs acc := by
+  unfold intersectionsAcc_length
+  induction xs with
+  | nil =>
+    simp [intersectionsAcc]
+  | cons x xs ih =>
+    simp [intersectionsAcc]
+    rw [ih]
+    simp +arith
+    rw [Nat.mul_left_comm]
+    rw [Nat.pow_add']
+
+def intersections_length (xs: List α): Nat := 2 ^ xs.length
+
+theorem intersections_length_is_correct (xs: List α):
+  (intersections xs).length = intersections_length xs := by
+  unfold intersections_length
+  unfold intersections
+  rw [intersectionsAcc_length_is_correct]
+  unfold intersectionsAcc_length
+  simp
+
+theorem intersections_mem_swap (xs: List α) :
+  p ∈ intersections xs → (p.2, p.1) ∈ intersections xs := by
+  induction xs generalizing p with
+  | nil =>
+    intro hp
+    simp [intersections, intersectionsAcc] at *
+    subst hp
+    simp only [and_self]
+  | cons x xs ih =>
+    intro hp
+    simp [intersections, intersectionsAcc, List.mem_append] at hp
+    rcases hp with hp | hp
+    · rcases hp with ⟨a, b, hab, heq⟩
+      simp [intersections, intersectionsAcc, List.mem_append]
+      right
+      exists b
+      exists a
+      and_intros
+      · exact ih hab
+      · rw [←heq]
+      · rw [←heq]
+    · rcases hp with ⟨a, b, hab, heq⟩
+      simp [intersections, intersectionsAcc, List.mem_append]
+      left
+      exists b
+      and_intros
+      · rw [←heq]
+        exact ih hab
+      · rw [←heq]
+
+theorem intersections1_length_is_le (xs: List α):
+  ∀ ys ∈ (List.map (·.1) (intersections xs)),
+    ys.length <= length xs
+  := by
+  intro ys hys
+  induction xs generalizing ys with
+    | nil =>
+      simp [intersections, intersectionsAcc] at hys
+      rw [hys]
+      simp
+    | cons x xs ih =>
+      simp [intersections, intersectionsAcc, List.map_append] at hys
+      simp [List.mem_map] at ih
+      rcases hys with hys | hys
+      · rcases hys with ⟨fst, ⟨snd, hpair⟩, hys⟩
+        have hlen := ih fst snd hpair
+        rw [←hys]
+        simp only [length_cons, Nat.add_le_add_iff_right]
+        assumption
+      · rcases hys with ⟨snd, hpair⟩
+        have hlen := ih ys snd hpair
+        rw [length_cons]
+        exact Nat.le_succ_of_le hlen
+
+theorem intersections_contains_itself_fst (xs: List α):
+  ∃ p ∈ intersections xs, p.1 = xs := by
+  induction xs with
+  | nil =>
+    simp only [intersections, intersectionsAcc, mem_cons, not_mem_nil, or_false, exists_eq_left]
+  | cons x xs ih =>
+    rcases ih with ⟨p, hp_mem, p_fst_eq_xs⟩
+    exists (x :: p.1, p.2)
+    constructor
+    · simp [intersections, intersectionsAcc, List.mem_append, List.mem_map]
+      apply Or.inl
+      apply hp_mem
+    · simp only [cons.injEq, true_and]
+      assumption
+
+theorem intersections_contains_itself_fst_idx (xs: List α):
+  ∃ i, ((List.intersections xs).get i).1 = xs := by
+  have hmem := intersections_contains_itself_fst xs
+  rcases hmem with ⟨p, hp_mem, hp_eq⟩
+  rcases (mem_iff_get).1 hp_mem with ⟨i, hi⟩
+  exists i
+  rw [hi]
+  exact hp_eq
+
+theorem intersections_sizeOf1 (xs: List α) [SizeOf α]:
+  ∀ p ∈ intersections xs, p.1 = xs \/ sizeOf p.1 < sizeOf xs := by
+  induction xs with
+  | nil =>
+    intro p hp
+    simp [intersections, intersectionsAcc] at hp
+    left
+    rw [hp]
+  | cons x xs ih =>
+    intro p hp
+    simp [intersections, intersectionsAcc] at hp
+    rcases hp with hp | hp
+    · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
+      obtain h_eq | h_lt := ih (fst, snd) hp_mem
+      · left
+        rw [←hp_eq]
+        exact congrArg (List.cons x) h_eq
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_cons_lt_cons x h_lt
+    · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
+      obtain h_eq | h_lt := ih (fst, snd) hp_mem
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_lt_cons_eq x h_eq
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_lt_cons_lt x h_lt
+
+theorem intersections_sizeOf1_idx (xs: List α) [SizeOf α] (i: Fin (List.intersections xs).length):
+  ((List.intersections xs).get i).1 = xs \/ sizeOf ((List.intersections xs).get i).1 < sizeOf xs := by
+  exact intersections_sizeOf1 xs ((intersections xs).get i) (get_mem _ _)
+
+theorem intersections_sizeOf2 [SizeOf α] (xs: List α):
+  ∀ p ∈ intersections xs, p.2 = xs \/ sizeOf p.2 < sizeOf xs := by
+  induction xs with
+  | nil =>
+    intro p hp
+    simp [intersections, intersectionsAcc] at hp
+    left
+    rw [hp]
+  | cons x xs ih =>
+    intro p hp
+    simp [intersections, intersectionsAcc] at hp
+    rcases hp with hp | hp
+    · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
+      obtain h_eq | h_lt := ih (fst, snd) hp_mem
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_lt_cons_eq x h_eq
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_lt_cons_lt x h_lt
+    · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
+      obtain h_eq | h_lt := ih (fst, snd) hp_mem
+      · left
+        rw [←hp_eq]
+        exact congrArg (List.cons x) h_eq
+      · right
+        rw [←hp_eq]
+        exact list_sizeOf_cons_lt_cons x h_lt
+
+theorem intersections_sizeOf2_idx [SizeOf α] (xs: List α) (i: Fin (List.intersections xs).length):
+  ((List.intersections xs).get i).2 = xs \/ sizeOf ((List.intersections xs).get i).2 < sizeOf xs := by
+  exact intersections_sizeOf2 xs ((intersections xs).get i) (get_mem _ _)

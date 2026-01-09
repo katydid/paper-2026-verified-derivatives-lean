@@ -86,6 +86,16 @@ lemma Grammar.Room.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α → B
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+lemma Grammar.Room.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.interleave r1 r2) a
+  = Regex.or
+    (Regex.interleave (Grammar.Room.derive G Φ r1 a) r2)
+    (Regex.interleave (Grammar.Room.derive G Φ r2 a) r1) := by
+  unfold Grammar.Room.derive
+  rw [unapply_hedge_param_and_flip]
+  repeat rw [Regex.Room.derive_is_Regex_derive]
+  simp only [Regex.derive]
+
 lemma Grammar.Room.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
@@ -190,6 +200,15 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) 
     rw [Grammar.denote_star]
     rw [Lang.derive_star]
     rw [ih1]
+  | interleave r1 r2 ih1 ih2 =>
+    rw [Grammar.Room.derive_interleave]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_interleave_exists]
+    rw [Grammar.denote_interleave_exists]
+    rw [ih1]
+    rw [ih2]
+    rw [Grammar.denote_interleave_exists]
+    rw [Lang.derive_interleave_exists]
   termination_by x
   decreasing_by
     apply Node.sizeOf_children hx

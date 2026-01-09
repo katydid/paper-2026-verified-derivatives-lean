@@ -11,6 +11,7 @@ def replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
   | or r1 r2 => or (replaceLE r1 xs h) (replaceLE r2 xs h)
   | concat r1 r2 => concat (replaceLE r1 xs h) (replaceLE r2 xs h)
   | star r1 => star (replaceLE r1 xs h)
+  | interleave r1 r2 => interleave (replaceLE r1 xs h) (replaceLE r2 xs h)
 
 def replace (r: RegexID n) (xs: Vector σ n): Regex σ :=
   replaceLE r xs (Nat.le_refl n)
@@ -60,6 +61,12 @@ theorem replaceLE_take (r: RegexID n) (xs: Vector σ (n + l)):
     simp only [replaceLE]
     generalize_proofs h1 at *
     rw [<- ih1]
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [replaceLE, Regex.interleave.injEq]
+    generalize_proofs h1 h2 at *
+    rw [<- ih1]
+    rw [<- ih2]
+    apply And.intro rfl rfl
 
 theorem replaceLE_regexid_add (r: RegexID n) (xs: Vector σ (n + l)):
   replaceLE r xs (by omega) = replaceLE (RegexID.cast_add l r) xs (by omega):= by
@@ -89,3 +96,9 @@ theorem replaceLE_regexid_add (r: RegexID n) (xs: Vector σ (n + l)):
     generalize_proofs h1 h2 at *
     rw [ih1]
     rfl
+  | interleave r1 r2 ih1 ih2 =>
+    simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.interleave.injEq]
+    generalize_proofs h1 h2 at *
+    rw [ih1]
+    rw [ih2]
+    apply And.intro rfl rfl
