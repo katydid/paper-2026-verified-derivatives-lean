@@ -400,7 +400,7 @@ theorem intersections_contains_itself_fst_idx (xs: List α):
   rw [hi]
   exact hp_eq
 
-theorem intersections_sizeOf1 (xs: List α):
+theorem intersections_sizeOf1 (xs: List α) [SizeOf α]:
   ∀ p ∈ intersections xs, p.1 = xs \/ sizeOf p.1 < sizeOf xs := by
   induction xs with
   | nil =>
@@ -429,11 +429,11 @@ theorem intersections_sizeOf1 (xs: List α):
         rw [←hp_eq]
         exact list_sizeOf_lt_cons_lt x h_lt
 
-theorem intersections_sizeOf1_idx (xs: List α) (i: Fin (List.intersections xs).length):
+theorem intersections_sizeOf1_idx (xs: List α) [SizeOf α] (i: Fin (List.intersections xs).length):
   ((List.intersections xs).get i).1 = xs \/ sizeOf ((List.intersections xs).get i).1 < sizeOf xs := by
   exact intersections_sizeOf1 xs ((intersections xs).get i) (get_mem _ _)
 
-theorem intersections_sizeOf2 (xs: List α):
+theorem intersections_sizeOf2 [SizeOf α] (xs: List α):
   ∀ p ∈ intersections xs, p.2 = xs \/ sizeOf p.2 < sizeOf xs := by
   induction xs with
   | nil =>
@@ -462,6 +462,6 @@ theorem intersections_sizeOf2 (xs: List α):
         rw [←hp_eq]
         exact list_sizeOf_cons_lt_cons x h_lt
 
-theorem intersections_sizeOf2_idx (xs: List α) (i: Fin (List.intersections xs).length):
+theorem intersections_sizeOf2_idx [SizeOf α] (xs: List α) (i: Fin (List.intersections xs).length):
   ((List.intersections xs).get i).2 = xs \/ sizeOf ((List.intersections xs).get i).2 < sizeOf xs := by
   exact intersections_sizeOf2 xs ((intersections xs).get i) (get_mem _ _)

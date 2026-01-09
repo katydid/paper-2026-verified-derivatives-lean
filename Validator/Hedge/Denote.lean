@@ -112,23 +112,39 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
     simp only [List.cons.sizeOf_spec, gt_iff_lt]
     omega
 
-theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (xs: Hedge α):
+theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ]
+  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.intersections xs).length):
   Prod.Lex
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
-    (xs, r1)
+    (((List.intersections xs).get i).1, r1)
     (xs, Regex.interleave r1 r2) := by
-  apply Prod.Lex.right
-  simp +arith only [Regex.interleave.sizeOf_spec]
+  have h := List.intersections_sizeOf1_idx xs i
+  cases h with
+  | inl h =>
+    rw [h]
+    apply Prod.Lex.right
+    simp +arith only [Regex.interleave.sizeOf_spec]
+  | inr h =>
+    apply Prod.Lex.left
+    exact h
 
-theorem decreasing_interleave_r {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (xs: Hedge α):
+theorem decreasing_interleave_r {α: Type} {σ: Type} [SizeOf σ]
+  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.intersections xs).length):
   Prod.Lex
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
-    (xs, r2)
+    (((List.intersections xs).get i).2, r2)
     (xs, Regex.interleave r1 r2) := by
-  apply Prod.Lex.right
-  simp +arith only [Regex.interleave.sizeOf_spec]
+  have h := List.intersections_sizeOf2_idx xs i
+  cases h with
+  | inl h =>
+    rw [h]
+    apply Prod.Lex.right
+    simp +arith only [Regex.interleave.sizeOf_spec]
+  | inr h =>
+    apply Prod.Lex.left
+    exact h
 
 -- Lang.or, Lang.concat and Lang.star are unfolded to help with the termination proof.
 -- Φ needs to be the last parameter, so that simp only works on this function when the parameter r is provided.
@@ -162,8 +178,8 @@ def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
     · apply denote_sizeOf_concat_right
     · apply denote_sizeOf_star_left
     · apply denote_sizeOf_star_right
-    · sorry
-    · sorry
+    · apply decreasing_interleave_l
+    · apply decreasing_interleave_r
 
 theorem denote_emptyset {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop):
   Rule.denote G Φ Regex.emptyset = Lang.emptyset := by
