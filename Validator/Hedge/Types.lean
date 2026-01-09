@@ -13,3 +13,5 @@ abbrev Ref (n: Nat) := Fin n
 structure Hedge.Grammar (n: Nat) (φ: Type) where
   start: Regex (φ × Ref n)
   prods: Vector (Regex (φ × Ref n)) n
+
+instance [Repr φ]: Repr (Regex (φ × Ref n)) := inferInstance

@@ -4,24 +4,14 @@ namespace AnyEq
 inductive Pred (α: Type) where
   | eq (t: α)
   | any
-  deriving DecidableEq, Ord, Repr, Hashable
-
-instance [Ord α]: Ord (Pred α) := inferInstance
-
-instance [Repr α]: Repr (Pred α) := inferInstance
-
-instance [DecidableEq α]: DecidableEq (Pred α) := inferInstance
-
-instance [DecidableEq α]: BEq (Pred α) := inferInstance
-
-instance [Hashable α]: Hashable (Pred α) := inferInstance
+  deriving DecidableEq, Ord, Repr, Hashable, BEq
 
 def Pred.eval {α: Type} [BEq α] (p: Pred α) (x: α): Prop :=
   match p with
   | Pred.eq y => x = y
   | Pred.any => True
 
-def Pred.pred_is_decpred {α : Type} [d: DecidableEq α] (p: Pred α): (a: α) -> Decidable (Pred.eval p a) :=
+def Pred.pred_is_decpred {α : Type} [d: DecidableEq α] (p: Pred α): (a: α) → Decidable (Pred.eval p a) :=
   fun x =>
     match p with
     | Pred.eq y => d x y
