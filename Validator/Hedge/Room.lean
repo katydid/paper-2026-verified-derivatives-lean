@@ -13,11 +13,12 @@ namespace Hedge
 
 def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  Regex.Room.derive (fun ((pred, ref): (φ × Ref n)) =>
+  let nodePred := (fun ((labelPred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
-    let childr := if Φ pred label then G.lookup ref else Regex.emptyset
+    let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
-  ) r
+  )
+  Regex.Room.derive nodePred r
 
 lemma Grammar.Room.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
