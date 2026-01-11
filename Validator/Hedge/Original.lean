@@ -312,12 +312,11 @@ private def example_grammar_sec: Hedge.Grammar 2 String :=
   [node "p" []]
   = false
 
-theorem Original.derive_commutes {α: Type} {φ: Type}
-  (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ]
-  (r: Regex (φ × Ref n)) (x: Hedge.Node α):
-  Hedge.Grammar.Rule.denote G Φ (Original.Rule.derive G (decideRel Φ) r x)
-  = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) x := by
-  fun_induction (Rule.derive G (fun p a => Φ p a)) r x with
+theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
+  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
+  Hedge.Grammar.Rule.denote G Φ (Original.Rule.derive G (decideRel Φ) r node)
+  = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) node := by
+  fun_induction (Rule.derive G (fun p a => Φ p a)) r node with
   | case1 => -- emptyset
     rw [Hedge.Grammar.denote_emptyset]
     rw [Lang.derive_emptyset]
