@@ -165,10 +165,9 @@ def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
     | (node::nodes') => ∃ (i: Fin nodes.length),
                         (denote G Φ r1 (node::List.take i nodes'))
                         /\ (denote G Φ (Regex.star r1) (List.drop i nodes'))
-  | Regex.interleave r1 r2 =>
-      ∃ (i: Fin (List.interleaves nodes).length),
-      (denote G Φ r1 (List.get (List.interleaves nodes) i).1)
-    /\ (denote G Φ r2 (List.get (List.interleaves nodes) i).2)
+  | Regex.interleave r1 r2 => ∃ (i: Fin (List.interleaves nodes).length),
+        (denote G Φ r1 (List.get (List.interleaves nodes) i).1)
+     /\ (denote G Φ r2 (List.get (List.interleaves nodes) i).2)
   termination_by (nodes, r)
   decreasing_by
     · apply decreasing_symbol
@@ -255,11 +254,11 @@ theorem denote_concat {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → 
   unfold Lang.concat
   rfl
 
-theorem denote_interleave_exists {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) (r1 r2: Regex (φ × Ref n)):
-  Rule.denote G Φ (Regex.interleave r1 r2) = Lang.interleave_exists (Rule.denote G Φ r1) (Rule.denote G Φ r2) := by
+theorem denote_interleave {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) (r1 r2: Regex (φ × Ref n)):
+  Rule.denote G Φ (Regex.interleave r1 r2) = Lang.interleave (Rule.denote G Φ r1) (Rule.denote G Φ r2) := by
   funext
   simp only [Rule.denote]
-  unfold Lang.interleave_exists
+  unfold Lang.interleave
   rfl
 
 theorem unfold_denote_star {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) (r: Regex (φ × Ref n)) (xs: Hedge α):
@@ -352,8 +351,8 @@ theorem null_commutes {α: Type}
     unfold Regex.null
     simp only
   | interleave r1 r2 ih1 ih2 =>
-    rw [denote_interleave_exists]
-    rw [Lang.null_interleave_exists]
+    rw [denote_interleave]
+    rw [Lang.null_interleave]
     unfold Regex.null
     rw [Bool.and_eq_true]
     rw [ih1]
@@ -377,7 +376,7 @@ theorem denote_nil_is_null (Φ: φ → α → Prop) [DecidableRel Φ]:
   | star r1 =>
     simp only [denote_star, Lang.null]
   | interleave r1 r2 =>
-    simp only [denote_interleave_exists, Lang.null]
+    simp only [denote_interleave, Lang.null]
 
 end Hedge.Grammar
 

@@ -376,11 +376,11 @@ theorem Original.derive_commutes {α: Type} {φ: Type}
     rw [Lang.derive_star]
     rw [ih]
   | case7 x r1 r2 ih1 ih2 => -- interleave
-    rw [Hedge.Grammar.denote_interleave_exists]
+    rw [Hedge.Grammar.denote_interleave]
     rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_interleave_exists]
-    rw [Lang.derive_interleave_exists]
+    rw [Hedge.Grammar.denote_interleave]
+    rw [Lang.derive_interleave]
     rw [<- ih1]
     rw [<- ih2]
     congr
-    rw [Hedge.Grammar.denote_interleave_exists]
+    rw [Hedge.Grammar.denote_interleave]

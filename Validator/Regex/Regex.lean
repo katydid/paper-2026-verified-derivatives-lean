@@ -28,11 +28,9 @@ def Regex.denote (Φ : σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
     | (x::xs') => ∃ (i: Fin xs.length),
                         (denote Φ r1 (x::List.take i xs'))
                         /\ (denote Φ (Regex.star r1) (List.drop i xs'))
-  | interleave r1 r2 => match xs with
-    | [] => denote Φ r1 [] /\ denote Φ r2 []
-    | (x::xs') =>
-         (Lang.interleave (Lang.derive (denote Φ r1) x) (denote Φ r2) xs')
-      \/ (Lang.interleave (Lang.derive (denote Φ r2) x) (denote Φ r1) xs')
+  | interleave r1 r2 => ∃ (i: Fin (List.interleaves xs).length),
+        (denote Φ r1 (List.get (List.interleaves xs) i).1)
+     /\ (denote Φ r2 (List.get (List.interleaves xs) i).2)
   termination_by (r, xs.length)
 
 namespace Regex
@@ -246,10 +244,13 @@ theorem null_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) (r: Regex �
     simp only
   | interleave r1 r2 ih1 ih2 =>
     unfold denote
+    rw [<- Lang.interleave]
+    rw [<- Lang.interleave_derive_is_interleave]
+    rw [Lang.interleave_derive]
     unfold null
-    rw [<- ih1]
-    rw [<- ih2]
     rw [Bool.and_eq_true r1.null r2.null]
+    rw [ih1]
+    rw [ih2]
 
 theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (x: α):
   denote Φ (derive (fun s a => Φ s a) r x) = Lang.derive (denote Φ r) x := by

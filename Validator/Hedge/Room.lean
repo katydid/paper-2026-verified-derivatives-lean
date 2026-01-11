@@ -204,12 +204,12 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop)
   | interleave r1 r2 ih1 ih2 =>
     rw [Grammar.Room.derive_interleave]
     rw [Grammar.denote_or]
-    rw [Grammar.denote_interleave_exists]
-    rw [Grammar.denote_interleave_exists]
+    rw [Grammar.denote_interleave]
+    rw [Grammar.denote_interleave]
     rw [ih1]
     rw [ih2]
-    rw [Grammar.denote_interleave_exists]
-    rw [Lang.derive_interleave_exists]
+    rw [Grammar.denote_interleave]
+    rw [Lang.derive_interleave]
   termination_by node
   decreasing_by
     apply Node.sizeOf_children hx

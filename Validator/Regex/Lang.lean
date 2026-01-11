@@ -20,23 +20,23 @@ def Lang.star (R: Lang α) (xs: List α): Prop :=
 def Lang.derive (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
 
-def Lang.interleave_exists (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   ∃ (i: Fin (List.interleaves xs).length),
     P (List.get (List.interleaves xs) i).1
     /\ Q (List.get (List.interleaves xs) i).2
 
-def Lang.interleave_exists_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
-  ∃ p ∈ List.interleaves xs, P p.1 ∧ Q p.2
+def Lang.interleave_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+  ∃ interleave ∈ List.interleaves xs, P interleave.1 ∧ Q interleave.2
 
-def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+def Lang.interleave_derive (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   match xs with
   | [] => P [] /\ Q []
   | (x::xs') =>
-      (interleave (P.derive x) Q xs')
-    \/ (interleave (Q.derive x) P xs')
+      (interleave_derive (P.derive x) Q xs')
+    \/ (interleave_derive (Q.derive x) P xs')
 
-theorem Lang.interleave_exists_iff_interleave_exists_mem (P Q : Lang α) (xs : List α) :
-  Lang.interleave_exists P Q xs ↔ Lang.interleave_exists_mem P Q xs := by
+theorem Lang.interleave_iff_interleave_mem (P Q : Lang α) (xs : List α) :
+  Lang.interleave P Q xs ↔ Lang.interleave_mem P Q xs := by
   constructor
   · intro h
     rcases h with ⟨i, hp, hq⟩
@@ -55,14 +55,14 @@ theorem Lang.interleave_exists_iff_interleave_exists_mem (P Q : Lang α) (xs : L
     · exact hpqP
     · exact hpqQ
 
-theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α) :
-  Lang.interleave P Q xs ↔ Lang.interleave_exists_mem P Q xs := by
+theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α) :
+  Lang.interleave_derive P Q xs ↔ Lang.interleave_mem P Q xs := by
   induction xs generalizing P Q with
   | nil =>
     constructor
     all_goals
       intro h
-      simp [Lang.interleave, Lang.interleave_exists_mem, List.interleaves, List.interleavesAcc] at *
+      simp [Lang.interleave_derive, Lang.interleave_mem, List.interleaves, List.interleavesAcc] at *
       exact h
   | cons x xs ih =>
     constructor
@@ -88,7 +88,7 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
         · exact hpqQ
         · exact hpqP
     · intro h
-      unfold Lang.interleave_exists at h
+      unfold Lang.interleave_derive at h
       rcases h with ⟨p, h, hp, hq⟩
       simp [List.interleaves, List.interleavesAcc, List.mem_append] at h
       rcases h with h | h
@@ -120,15 +120,15 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
         right
         exact (ih (Lang.derive Q x) P).2 hmem'
 
-theorem Lang.interleave_iff_interleave_exists (P Q : Lang α) (xs : List α) :
-  Lang.interleave P Q xs ↔ Lang.interleave_exists P Q xs := by
-  rw [Lang.interleave_iff_interleave_exists_mem]
-  exact Iff.symm (Lang.interleave_exists_iff_interleave_exists_mem P Q xs)
+theorem Lang.interleave_derive_iff_interleave (P Q : Lang α) (xs : List α) :
+  Lang.interleave_derive P Q xs ↔ Lang.interleave P Q xs := by
+  rw [Lang.interleave_derive_iff_interleave_mem]
+  exact Iff.symm (Lang.interleave_iff_interleave_mem P Q xs)
 
-theorem Lang.interleave_is_interleave_exists (P Q : Lang α) :
-  Lang.interleave P Q = Lang.interleave_exists P Q := by
+theorem Lang.interleave_derive_is_interleave (P Q : Lang α) :
+  Lang.interleave_derive P Q = Lang.interleave P Q := by
   funext xs
-  exact propext (Lang.interleave_iff_interleave_exists P Q xs)
+  exact propext (Lang.interleave_derive_iff_interleave P Q xs)
 
 namespace Lang
 
@@ -283,14 +283,14 @@ theorem null_concat {α: Type} {P Q: Lang α}:
   null (concat P Q) = ((null P) /\ (null Q)) := by
   rw [null_iff_concat]
 
-theorem null_iff_interleave_exists {α: Type} {P Q: Lang α}:
-  null (interleave_exists P Q) <-> ((null P) /\ (null Q)) := by
-  rw [<- Lang.interleave_is_interleave_exists]
+theorem null_iff_interleave_idx {α: Type} {P Q: Lang α}:
+  null (interleave P Q) <-> ((null P) /\ (null Q)) := by
+  rw [<- Lang.interleave_derive_is_interleave]
   rfl
 
-theorem null_interleave_exists {α: Type} {P Q: Lang α}:
-  null (interleave_exists P Q) = ((null P) /\ (null Q)) := by
-  rw [null_iff_interleave_exists]
+theorem null_interleave {α: Type} {P Q: Lang α}:
+  null (interleave P Q) = ((null P) /\ (null Q)) := by
+  rw [null_iff_interleave_idx]
 
 theorem null_iff_star {α: Type} {R: Lang α}:
   null (star R) <-> True :=
@@ -385,15 +385,15 @@ theorem derive_star {α: Type} {x: α} {R: Lang α}:
   funext
   rw [derive_iff_star]
 
-theorem derive_interleave {α: Type} {x: α} {P Q: Lang α}:
-  (derive (interleave P Q) x) = (or (interleave (derive P x) Q) (interleave (derive Q x) P)) := by
+theorem derive_interleave_derive {α: Type} {x: α} {P Q: Lang α}:
+  (derive (interleave_derive P Q) x) = (or (interleave_derive (derive P x) Q) (interleave_derive (derive Q x) P)) := by
   rfl
 
-theorem derive_interleave_exists {α: Type} {x: α} {P Q: Lang α}:
-  (derive (interleave_exists P Q) x) = (or (interleave_exists (derive P x) Q) (interleave_exists (derive Q x) P)) := by
-  rw [<- interleave_is_interleave_exists]
-  rw [<- interleave_is_interleave_exists]
-  rw [<- interleave_is_interleave_exists]
+theorem derive_interleave {α: Type} {x: α} {P Q: Lang α}:
+  (derive (interleave P Q) x) = (or (interleave (derive P x) Q) (interleave (derive Q x) P)) := by
+  rw [<- interleave_derive_is_interleave]
+  rw [<- interleave_derive_is_interleave]
+  rw [<- interleave_derive_is_interleave]
   rfl
 
 theorem derive_iff_concat {α: Type} {x: α} {P Q: Lang α} {xs: List α}:
