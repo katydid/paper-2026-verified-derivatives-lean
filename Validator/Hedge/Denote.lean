@@ -113,13 +113,13 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
     omega
 
 theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ]
-  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.intersections xs).length):
+  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.interleaves xs).length):
   Prod.Lex
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
-    (((List.intersections xs).get i).1, r1)
+    (((List.interleaves xs).get i).1, r1)
     (xs, Regex.interleave r1 r2) := by
-  have h := List.intersections_sizeOf1_idx xs i
+  have h := List.interleaves_sizeOf1_idx xs i
   cases h with
   | inl h =>
     rw [h]
@@ -130,13 +130,13 @@ theorem decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ]
     exact h
 
 theorem decreasing_interleave_r {α: Type} {σ: Type} [SizeOf σ]
-  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.intersections xs).length):
+  (r1 r2: Regex σ) (xs: Hedge α) (i: Fin (List.interleaves xs).length):
   Prod.Lex
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
     (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
-    (((List.intersections xs).get i).2, r2)
+    (((List.interleaves xs).get i).2, r2)
     (xs, Regex.interleave r1 r2) := by
-  have h := List.intersections_sizeOf2_idx xs i
+  have h := List.interleaves_sizeOf2_idx xs i
   cases h with
   | inl h =>
     rw [h]
@@ -166,9 +166,9 @@ def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
                         (denote G Φ r1 (node::List.take i nodes'))
                         /\ (denote G Φ (Regex.star r1) (List.drop i nodes'))
   | Regex.interleave r1 r2 =>
-      ∃ (i: Fin (List.intersections nodes).length),
-      (denote G Φ r1 (List.get (List.intersections nodes) i).1)
-    /\ (denote G Φ r2 (List.get (List.intersections nodes) i).2)
+      ∃ (i: Fin (List.interleaves nodes).length),
+      (denote G Φ r1 (List.get (List.interleaves nodes) i).1)
+    /\ (denote G Φ r2 (List.get (List.interleaves nodes) i).2)
   termination_by (nodes, r)
   decreasing_by
     · apply decreasing_symbol

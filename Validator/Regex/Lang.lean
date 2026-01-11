@@ -21,12 +21,12 @@ def Lang.derive (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
 
 def Lang.interleave_exists (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
-  ∃ (i: Fin (List.intersections xs).length),
-    P (List.get (List.intersections xs) i).1
-    /\ Q (List.get (List.intersections xs) i).2
+  ∃ (i: Fin (List.interleaves xs).length),
+    P (List.get (List.interleaves xs) i).1
+    /\ Q (List.get (List.interleaves xs) i).2
 
 def Lang.interleave_exists_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
-  ∃ p ∈ List.intersections xs, P p.1 ∧ Q p.2
+  ∃ p ∈ List.interleaves xs, P p.1 ∧ Q p.2
 
 def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   match xs with
@@ -40,9 +40,9 @@ theorem Lang.interleave_exists_iff_interleave_exists_mem (P Q : Lang α) (xs : L
   constructor
   · intro h
     rcases h with ⟨i, hp, hq⟩
-    exists (List.get (List.intersections xs) i)
+    exists (List.get (List.interleaves xs) i)
     and_intros
-    · exact List.get_mem xs.intersections i
+    · exact List.get_mem xs.interleaves i
     · exact hp
     · exact hq
   · intro h
@@ -62,7 +62,7 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
     constructor
     all_goals
       intro h
-      simp [Lang.interleave, Lang.interleave_exists_mem, List.intersections, List.intersectionsAcc] at *
+      simp [Lang.interleave, Lang.interleave_exists_mem, List.interleaves, List.interleavesAcc] at *
       exact h
   | cons x xs ih =>
     constructor
@@ -72,17 +72,17 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
         rcases hpq with ⟨hpqP, hpqQ⟩
         exists (x :: p.fst, p.snd)
         and_intros
-        · simp [List.intersections, List.intersectionsAcc]
+        · simp [List.interleaves, List.interleavesAcc]
           left
           exact hp
         · exact hpqP
         · exact hpqQ
       · obtain ⟨p, hp, hpq⟩ := (ih (Q.derive x) P).1 h
-        have hp' := List.intersections_mem_swap xs hp
+        have hp' := List.interleaves_mem_swap xs hp
         rcases hpq with ⟨hpqP, hpqQ⟩
         exists (p.snd, x :: p.fst)
         and_intros
-        · simp [List.intersections, List.intersectionsAcc]
+        · simp [List.interleaves, List.interleavesAcc]
           right
           exact hp'
         · exact hpqQ
@@ -90,10 +90,10 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
     · intro h
       unfold Lang.interleave_exists at h
       rcases h with ⟨p, h, hp, hq⟩
-      simp [List.intersections, List.intersectionsAcc, List.mem_append] at h
+      simp [List.interleaves, List.interleavesAcc, List.mem_append] at h
       rcases h with h | h
       · rcases h with ⟨fst, snd, hmem, heq⟩
-        have hmem' : ∃ p ∈ List.intersections xs, Lang.derive P x p.1 ∧ Q p.2 := by
+        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive P x p.1 ∧ Q p.2 := by
           exists (fst, snd)
           and_intros
           · exact hmem
@@ -106,8 +106,8 @@ theorem Lang.interleave_iff_interleave_exists_mem (P Q : Lang α) (xs : List α)
         left
         exact (ih (Lang.derive P x) Q).2 hmem'
       · rcases h with ⟨fst, snd, hmem, heq⟩
-        have hmem_swap := List.intersections_mem_swap xs hmem
-        have hmem' : ∃ p ∈ List.intersections xs, Lang.derive Q x p.1 ∧ P p.2 := by
+        have hmem_swap := List.interleaves_mem_swap xs hmem
+        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive Q x p.1 ∧ P p.2 := by
           exists (snd, fst)
           and_intros
           · exact hmem_swap
