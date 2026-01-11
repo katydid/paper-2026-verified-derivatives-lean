@@ -131,10 +131,10 @@ lemma Grammar.Room.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (
   rw [Lang.derive_iff_tree]
   simp only [decide_eq_true_eq]
 
-theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ]
-  (r: Regex (φ × Ref n)) (x: Node α):
-  Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r x)
-  = Lang.derive (Rule.denote G Φ r) x := by
+theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop)
+  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Node α):
+  Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r node)
+  = Lang.derive (Rule.denote G Φ r) node := by
   induction r with
   | emptyset =>
     rw [Grammar.Room.derive_emptyset]
@@ -147,7 +147,7 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) 
     rw [Lang.derive_emptystr]
   | symbol s =>
     obtain ⟨pred, ref⟩ := s
-    obtain ⟨label, children⟩ := x
+    obtain ⟨label, children⟩ := node
 
     rw [Grammar.Room.derive_symbol]
 
@@ -210,7 +210,7 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) 
     rw [ih2]
     rw [Grammar.denote_interleave_exists]
     rw [Lang.derive_interleave_exists]
-  termination_by x
+  termination_by node
   decreasing_by
     apply Node.sizeOf_children hx
 

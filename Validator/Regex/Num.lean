@@ -11,6 +11,8 @@ def symbols: (r: Regex σ) → Nat
   | or r1 r2 => symbols r1 + symbols r2 | concat r1 r2 => symbols r1 + symbols r2
   | interleave r1 r2 => symbols r1 + symbols r2
 
+#guard symbols (or (symbol 'a') (star (symbol 'b'))) = 2
+
 end Regex
 
 def Vec.cast_or {r1 r2: Regex σ} (xs: Vector σ (n + Regex.symbols r1 + Regex.symbols r2)): Vector σ (n + Regex.symbols (Regex.or r1 r2)) :=

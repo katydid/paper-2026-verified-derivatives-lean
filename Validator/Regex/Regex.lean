@@ -5,14 +5,14 @@ import Validator.Regex.Lang
 -- A regular expression is defined over a generic symbol
 inductive Regex (σ: Type) where
   | emptyset | emptystr | symbol (s: σ)
-  | or (r1 r2: Regex σ) | concat (r1 r2: Regex σ) | star (r1: Regex σ)
-  | interleave (r1 r2: Regex σ)
+  | or (r1 r2: Regex σ) | concat (r1 r2: Regex σ)
+  | star (r1: Regex σ) | interleave (r1 r2: Regex σ)
   deriving DecidableEq, Ord, Repr, Hashable, BEq
 
 def Regex.null: (r: Regex σ) → Bool
-  | emptyset => false | emptystr => true | symbol _ => false | star _ => true
+  | emptyset => false | emptystr => true | symbol _ => false
   | or r1 r2 => (null r1 || null r2) | concat r1 r2 => (null r1 && null r2)
-  | interleave r1 r2 => (null r1 && null r2)
+  | star _ => true | interleave r1 r2 => (null r1 && null r2)
 
 def Regex.denote (Φ : σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
   match r with
@@ -87,11 +87,8 @@ namespace Regex
 def map_derive (Φ: σ → α → Bool) (rs: Vector (Regex σ) l) (a: α): Vector (Regex σ) l :=
   Vector.map (fun r => derive Φ r a) rs
 
-def fold_derive (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Regex σ :=
-  (List.foldl (derive Φ) r) xs
-
 def validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
-  null (fold_derive Φ r xs)
+  null (List.foldl (derive Φ) r xs)
 
 -- derive theorems
 
@@ -311,8 +308,7 @@ theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Rege
   simp only [Bool.decide_eq_true]
 
 theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
-  denote Φ (fold_derive (fun s a => Φ s a) r xs) = Lang.derives (denote Φ r) xs := by
-  unfold fold_derive
+  denote Φ (List.foldl (derive (fun s a => Φ s a)) r xs) = Lang.derives (denote Φ r) xs := by
   rw [Lang.derives_foldl]
   induction xs generalizing r with
   | nil =>

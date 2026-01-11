@@ -16,8 +16,8 @@ def replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
 def replace (r: RegexID n) (xs: Vector σ n): Regex σ :=
   replaceLE r xs (Nat.le_refl n)
 
-#guard replace (Regex.or (Regex.symbol 0) (Regex.symbol 1)) #v['a', 'b']
-  = (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
+#guard replace (or (symbol 0) (star (symbol 1))) #v['a', 'b']
+  = (or (symbol 'a') (star (symbol 'b')))
 
 theorem replaceLE_cast_both (r: RegexID n) (xs: Vector σ n) (h: n = l):
   replaceLE r xs (by omega) = replaceLE (RegexID.cast r h) (Vector.cast h xs) (by omega) := by

@@ -32,8 +32,8 @@ def extract (r: Regex σ): RegexID (symbols r) × Vector σ (symbols r) :=
   let (rid, xs) := extractAcc r #v[]
   (RegexID.cast rid (by omega), Vector.cast (by omega) xs)
 
-#guard extract (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
-  = ((Regex.or (Regex.symbol 0) (Regex.symbol 1)), #v['a', 'b'])
+#guard extract (or (symbol 'a') (star (symbol 'b')))
+  = ((or (symbol 0) (star (symbol 1))), #v['a', 'b'])
 
 theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
   Vector.toList (extractAcc r acc).2 = Vector.toList (acc ++ (extractAcc r #v[]).2) := by
