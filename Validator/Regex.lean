@@ -1,3 +1,4 @@
+import Validator.Regex.Char
 import Validator.Regex.Drawer
 import Validator.Regex.Enter
 import Validator.Regex.Extract
