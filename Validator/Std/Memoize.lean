@@ -2,6 +2,8 @@ import Std
 
 import Mathlib.Tactic.Linarith
 
+import Validator.Std.State
+
 abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: (a: α) → β a) :=
   Std.ExtDHashMap
     α
@@ -24,14 +26,6 @@ def callM
     MonadState.set (Std.ExtDHashMap.insert table a b)
     return b
   | Option.some b => return b
-
-@[always_inline, inline, expose]
-def StateM.run {σ : Type u} {α : Type u} (x : StateM σ α) (s : σ) : α × σ :=
-  x s
-
-@[always_inline, inline, expose]
-def StateM.run' {σ : Type u} {α : Type u} (x : StateM σ α) (s : σ) : α :=
-  (·.1) <$> x s
 
 def call
   {α: Type} {β: α -> Type}
@@ -83,6 +77,29 @@ private def fibM' [Monad m] [MonadState (MemTable fib) m] (n: Nat): m { res: Nat
 private def fibM (n: Nat): Nat :=
   (StateM.run (s := MemTable.init fib) (fibM' n)).1
 
+local elab "simp_monads" : tactic => do
+  Lean.Elab.Tactic.evalTactic (←
+  `(tactic| simp only [
+    getThe,
+    Bind.bind,
+    Except.bind,
+    Except.map,
+    Except.pure,
+    Functor.map,
+    MonadState.get,
+    MonadState.set,
+    MonadStateOf.get,
+    MonadStateOf.set,
+    Pure.pure,
+    StateT.bind,
+    StateT.get,
+    StateT.map,
+    StateT.pure,
+    StateT.run,
+    StateT.set,
+    StateM.run] at *
+  ))
+
 private theorem fibM_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
   have h := call_is_correct fib
   unfold call at h
@@ -91,6 +108,34 @@ private theorem fibM_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM
     rw [h]
   case case2 => -- 1
     rw [h]
-  case case3 n ih1 ih2 => -- n + 2
+  case case3 n _ _ => -- n + 2
     simp only [StateM.run]
-    sorry
+    simp only [bind_pure_comp]
+    simp_monads
+    cases Std.ExtDHashMap.get? table (n + 2) with
+    | none =>
+      simp only
+      simp_monads
+      -- aesop?
+      simp_all only [Nat.succ_eq_add_one]
+      split
+      rename_i __discr a s heq
+      obtain ⟨fst, snd⟩ := __discr
+      obtain ⟨val, property⟩ := a
+      obtain ⟨val_1, property_1⟩ := fst
+      subst property property_1
+      simp_all only
+      split
+      rename_i __discr a s_1 heq_1
+      simp_all only
+      obtain ⟨fst, snd_1⟩ := __discr
+      obtain ⟨val, property⟩ := a
+      obtain ⟨val_1, property_1⟩ := fst
+      subst property property_1
+      simp_all only
+      rfl
+    | some b =>
+      simp only
+      obtain ⟨b, hb⟩ := b
+      simp_monads
+      rw [hb]
