@@ -19,6 +19,8 @@ def Regex.Point.derive: (r: Regex (σ × Bool)) → Regex σ
   | interleave r1 r2 => or
       (interleave (derive r1) (first r2))
       (interleave (derive r2) (first r1))
+  | and r1 r2 => and (derive r1) (derive r2)
+  | compliment r1 => compliment (derive r1)
 
 namespace Regex.Point
 
@@ -53,6 +55,16 @@ theorem map_first (Φ: σ → Bool) (r: Regex σ):
     apply And.intro
     · exact ih1
     · exact ih2
+  | and r1 r2 ih1 ih2 =>
+    simp only [Regex.map, first]
+    simp only [and.injEq]
+    apply And.intro
+    · exact ih1
+    · exact ih2
+  | compliment r1 ih1 =>
+    simp only [Regex.map, first]
+    simp only [compliment.injEq]
+    exact ih1
 
 lemma regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
   Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
@@ -94,3 +106,10 @@ lemma regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (
       apply map_first
     rw [h1]
     rw [h2]
+  | and r1 r2 ih1 ih2 =>
+    simp only [Regex.derive, Regex.map, derive]
+    rw [<- ih1]
+    rw [<- ih2]
+  | compliment r1 ih1 =>
+    simp only [Regex.derive, Regex.map, derive]
+    rw [<- ih1]

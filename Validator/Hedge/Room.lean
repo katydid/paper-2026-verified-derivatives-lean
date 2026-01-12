@@ -102,6 +102,22 @@ lemma Grammar.Room.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+lemma Grammar.Room.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.and r1 r2) a
+  = Regex.and (Grammar.Room.derive G Φ r1 a) (Grammar.Room.derive G Φ r2 a) := by
+  unfold Grammar.Room.derive
+  rw [unapply_hedge_param_and_flip]
+  repeat rw [Regex.Room.derive_is_Regex_derive]
+  simp only [Regex.derive]
+
+lemma Grammar.Room.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.compliment r1) a
+  = Regex.compliment (Grammar.Room.derive G Φ r1 a) := by
+  unfold Grammar.Room.derive
+  rw [unapply_hedge_param_and_flip]
+  repeat rw [Regex.Room.derive_is_Regex_derive]
+  simp only [Regex.derive]
+
 lemma Grammar.Room.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
@@ -215,6 +231,21 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop)
     rw [ih2]
     rw [Grammar.denote_interleave]
     rw [Lang.derive_interleave]
+  | and r1 r2 ih1 ih2 =>
+    rw [Grammar.Room.derive_and]
+    rw [Grammar.denote_and]
+    rw [Grammar.denote_and]
+    rw [Lang.derive_and]
+    rw [ih1]
+    rw [ih2]
+  | compliment r1 ih1 =>
+    rw [Grammar.Room.derive_compliment]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [ih1]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [Lang.derive_compliment]
+    unfold Lang.compliment
+    rfl
   termination_by node
   decreasing_by
     apply Node.sizeOf_children hx

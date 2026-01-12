@@ -85,6 +85,33 @@ theorem Grammar.Original.decreasing_interleave_r {α: Type} {σ: Type} [SizeOf �
   apply Prod.Lex.right
   simp +arith only [Regex.interleave.sizeOf_spec]
 
+theorem Grammar.Original.decreasing_and_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (x, r1)
+    (x, Regex.and r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.and.sizeOf_spec]
+
+theorem Grammar.Original.decreasing_and_r {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (x, r2)
+    (x, Regex.and r1 r2) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.and.sizeOf_spec]
+
+theorem Grammar.Original.decreasing_compliment {α: Type} {σ: Type} [SizeOf σ] (r1: Regex σ) (x: Hedge.Node α):
+  Prod.Lex
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (fun a₁ a₂ => sizeOf a₁ < sizeOf a₂)
+    (x, r1)
+    (x, Regex.compliment r1) := by
+  apply Prod.Lex.right
+  simp +arith only [Regex.compliment.sizeOf_spec]
+
 def Grammar.Original.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
   match r with
@@ -107,6 +134,10 @@ def Grammar.Original.derive (G: Grammar n φ) (Φ: φ → α → Bool)
     Regex.or
       (Regex.interleave (derive G Φ r1 node) r2)
       (Regex.interleave (derive G Φ r2 node) r1)
+  | Regex.and r1 r2 =>
+    Regex.and (derive G Φ r1 node) (derive G Φ r2 node)
+  | Regex.compliment r1 =>
+    Regex.compliment (derive G Φ r1 node)
   -- Lean cannot guess how the recursive function terminates,
   -- so we have to tell it how the arguments decrease in size.
   -- The arguments decrease in the tree case first
@@ -130,6 +161,9 @@ def Grammar.Original.derive (G: Grammar n φ) (Φ: φ → α → Bool)
     · apply decreasing_star
     · apply decreasing_interleave_l
     · apply decreasing_interleave_r
+    · apply decreasing_and_l
+    · apply decreasing_and_r
+    · apply decreasing_compliment
 
 def validate
   (G: Hedge.Grammar n φ) (Φ: φ → α → Bool)
@@ -351,12 +385,12 @@ theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop
         apply ih
         rw [List.mem_cons]
         apply Or.inr hchild
-  | case4 x p q ihp ihq => -- or
+  | case4 x r1 r2 ih1 ih2 => -- or
     rw [Hedge.Grammar.denote_or]
     rw [Hedge.Grammar.denote_or]
     unfold Lang.or
-    rw [ihp]
-    rw [ihq]
+    rw [ih1]
+    rw [ih2]
     rfl
   | case5 x r1 r2 ih1 ih2 => -- concat
     rw [Hedge.Grammar.denote_concat]
@@ -368,12 +402,12 @@ theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop
     rw [<- ih2]
     congr
     rw [Hedge.Grammar.null_commutes (Φ := Φ)]
-  | case6 x r ih => -- star
+  | case6 x r1 ih1 => -- star
     rw [Hedge.Grammar.denote_star]
     rw [Hedge.Grammar.denote_concat]
     rw [Hedge.Grammar.denote_star]
     rw [Lang.derive_star]
-    rw [ih]
+    rw [ih1]
   | case7 x r1 r2 ih1 ih2 => -- interleave
     rw [Hedge.Grammar.denote_interleave]
     rw [Hedge.Grammar.denote_or]
@@ -383,6 +417,20 @@ theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop
     rw [<- ih2]
     congr
     rw [Hedge.Grammar.denote_interleave]
+  | case8 x r1 r2 ih1 ih2 => -- and
+    rw [Hedge.Grammar.denote_and]
+    rw [Hedge.Grammar.denote_and]
+    unfold Lang.and
+    rw [ih1]
+    rw [ih2]
+    rfl
+  | case9 x r1 ih1 => -- compliment
+    rw [Hedge.Grammar.denote_compliment]
+    rw [ih1]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [Lang.derive_compliment]
+    unfold Lang.compliment
+    rfl
 
 theorem Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
   Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Original.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by

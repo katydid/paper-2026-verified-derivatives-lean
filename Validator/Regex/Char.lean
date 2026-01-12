@@ -11,6 +11,8 @@ def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char := match r with
   | interleave r1 r2 => or
       (interleave (derive r1 a) r2)
       (interleave (derive r2 a) r1)
+  | and r1 r2 => and (derive r1 a) (derive r2 a)
+  | compliment r1 => compliment (derive r1 a)
 
 theorem Regex.Char.derive_is_derive_symbol:
   Regex.Char.derive r a = Regex.derive (fun s a => s == a) r a := by
@@ -33,3 +35,10 @@ theorem Regex.Char.derive_is_derive_symbol:
     simp only [Regex.Char.derive, Regex.derive]
     rw [ih1]
     rw [ih2]
+  | and r1 r2 ih1 ih2 =>
+    simp only [Regex.Char.derive, Regex.derive]
+    rw [ih1]
+    rw [ih2]
+  | compliment r1 ih1 =>
+    simp only [Regex.Char.derive, Regex.derive]
+    rw [ih1]

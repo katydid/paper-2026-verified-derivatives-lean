@@ -16,6 +16,10 @@ def Lang.star (R: Lang α) (xs: List α): Prop :=
   | (x::xs') => ∃ (n: Fin xs.length),
       R (x::List.take n xs') /\ Lang.star R (List.drop n xs')
   termination_by xs.length
+def Lang.and {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
+  fun xs => P xs /\ Q xs
+def Lang.compliment {α: Type} (R: Lang α): Lang α :=
+  fun xs => (Not (R xs))
 
 def Lang.derive (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
@@ -305,6 +309,14 @@ theorem null_star {α: Type} {R: Lang α}:
   null (star R) = True := by
   rw [null_iff_star]
 
+theorem null_and {α: Type} {P Q: Lang α}:
+  null (and P Q) = ((null P) /\ (null Q)) :=
+  rfl
+
+theorem null_compliment {α: Type} {R: Lang α}:
+  null (compliment R) = null (Not ∘ R) :=
+  rfl
+
 -- Theorems: derive
 
 theorem derive_emptyset {α: Type} {a: α}:
@@ -394,6 +406,14 @@ theorem derive_interleave {α: Type} {x: α} {P Q: Lang α}:
   rw [<- interleave_derive_is_interleave]
   rw [<- interleave_derive_is_interleave]
   rw [<- interleave_derive_is_interleave]
+  rfl
+
+theorem derive_and {α: Type} {a: α} {P Q: Lang α}:
+  (derive (and P Q) a) = (and (derive P a) (derive Q a)) :=
+  rfl
+
+theorem derive_compliment {α: Type} {x: α} {R: Lang α}:
+  (derive (compliment R) x) = Not ∘ (derive R x) :=
   rfl
 
 theorem derive_iff_concat {α: Type} {x: α} {P Q: Lang α} {xs: List α}:
