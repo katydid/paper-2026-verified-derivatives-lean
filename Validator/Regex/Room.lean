@@ -12,27 +12,6 @@ import Validator.Regex.Regex
 def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> Vector.map Φ |> leave r
 
-namespace Regex.Room
-
-def derive_pretty {σ: Type} (Φ: σ → Bool) (r: Regex σ): Regex σ :=
-  leave r (Vector.map Φ (enter r))
-
-def derive_distrib {σ: Type}
-  (ps: {n: Nat} → Vector σ n → Vector Bool n) (r: Regex σ): Regex σ :=
-  let pred_results: Vector Bool (symbols r) := ps (enter r)
-  leave r pred_results
-
-def derive_unapplied {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ :=
-  let pred_results: Vector Bool (symbols r) := Vector.map (flip Φ a) (enter r)
-  leave r pred_results
-
-lemma derive_unfolds_to_map (Φ: σ → α → Bool) (r: Regex σ) (a: α):
-  Room.derive (flip Φ a) r = Point.derive
-    (replace (extract r).1 (Vector.map (fun s => (s, Φ s a)) (extract r).2)) := by
-  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
-
-end Regex.Room
-
 lemma Regex.Room.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.Room.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]

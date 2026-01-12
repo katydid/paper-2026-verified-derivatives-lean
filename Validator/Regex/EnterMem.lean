@@ -17,15 +17,5 @@ private theorem enterM_is_correct [DecidableEq σ] [Hashable σ] (param: Regex �
   enter param = (StateM.run (s := table) (enterM param)).1 := by
   have h := call_is_correct (@enter σ) table param
   unfold call at h
-  unfold callM at h
   unfold enterM
-  unfold callM
-  simp_state
-  cases Std.ExtDHashMap.get? table param with
-  | none =>
-    simp only
-    simp_state
-  | some res =>
-    obtain ⟨res, hres⟩ := res
-    simp_state
-    rw [hres]
+  rw [h]

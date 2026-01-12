@@ -21,15 +21,5 @@ private theorem leaveM_is_correct [DecidableEq σ] [Hashable σ] (param: Σ (r: 
   leave2 param = (StateM.run (s := table) (leaveM param)).1 := by
   have h := call_is_correct (@leave2 σ) table param
   unfold call at h
-  unfold callM at h
   unfold leaveM
-  unfold callM
-  simp_state
-  cases Std.ExtDHashMap.get? table param with
-  | none =>
-    simp only
-    simp_state
-  | some res =>
-    obtain ⟨res, hres⟩ := res
-    simp_state
-    rw [hres]
+  rw [h]
