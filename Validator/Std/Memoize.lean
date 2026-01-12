@@ -32,8 +32,8 @@ def call
   [DecidableEq α] [Hashable α] (f: (a: α) -> β a) (a: α) (table: MemTable f): ({b: β a // b = f a} × MemTable f) :=
   StateM.run (s := table) (callM f a)
 
-theorem call_is_correct {α: Type} {β: Type}
-  [DecidableEq α] [Hashable α] (f: α -> β)
+theorem call_is_correct {α: Type} {β: α -> Type}
+  [DecidableEq α] [Hashable α] (f: (a: α) -> β a)
   (table: MemTable f) (a: α):
   (call f a table).fst.val = f a := by
   generalize ((call f a table).fst) = x
@@ -77,30 +77,7 @@ private def fibM' [Monad m] [MonadState (MemTable fib) m] (n: Nat): m { res: Nat
 private def fibM (n: Nat): Nat :=
   (StateM.run (s := MemTable.init fib) (fibM' n)).1
 
-local elab "simp_monads" : tactic => do
-  Lean.Elab.Tactic.evalTactic (←
-  `(tactic| simp only [
-    getThe,
-    Bind.bind,
-    Except.bind,
-    Except.map,
-    Except.pure,
-    Functor.map,
-    MonadState.get,
-    MonadState.set,
-    MonadStateOf.get,
-    MonadStateOf.set,
-    Pure.pure,
-    StateT.bind,
-    StateT.get,
-    StateT.map,
-    StateT.pure,
-    StateT.run,
-    StateT.set,
-    StateM.run] at *
-  ))
-
-private theorem fibM_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
+private theorem fibM'_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
   have h := call_is_correct fib
   unfold call at h
   fun_induction fibM' generalizing table
@@ -111,13 +88,12 @@ private theorem fibM_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM
   case case3 n _ _ => -- n + 2
     simp only [StateM.run]
     simp only [bind_pure_comp]
-    simp_monads
+    simp_state
     cases Std.ExtDHashMap.get? table (n + 2) with
     | none =>
       simp only
-      simp_monads
+      simp_state
       -- aesop?
-      simp_all only [Nat.succ_eq_add_one]
       split
       rename_i __discr a s heq
       obtain ⟨fst, snd⟩ := __discr
@@ -137,5 +113,9 @@ private theorem fibM_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM
     | some b =>
       simp only
       obtain ⟨b, hb⟩ := b
-      simp_monads
+      simp_state
       rw [hb]
+
+private theorem fibM_is_correct (n: Nat): fib n = fibM n := by
+  unfold fibM
+  rw [<- fibM'_is_correct]
