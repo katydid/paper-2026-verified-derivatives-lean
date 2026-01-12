@@ -1,3 +1,4 @@
+import Validator.Std.Decidable
 import Validator.Std.Vec
 
 import Validator.Regex.Lang
@@ -302,14 +303,14 @@ theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [Decidabl
     · simp only [denote_interleave]
 
 theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Regex σ) (x: α):
-  denote (fun s a => Φ s a) (derive (fun s a => Φ s a) r x) = Lang.derive (denote (fun s a => Φ s a) r) x := by
+  denote (fun s a => Φ s a) (derive Φ r x) = Lang.derive (denote (fun s a => Φ s a) r) x := by
   rw [<- derive_commutes]
   congr
   funext s a
   simp only [Bool.decide_eq_true]
 
 theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
-  denote Φ (List.foldl (derive (fun s a => Φ s a)) r xs) = Lang.derives (denote Φ r) xs := by
+  denote Φ (List.foldl (derive (decideRel Φ)) r xs) = Lang.derives (denote Φ r) xs := by
   rw [Lang.derives_foldl]
   induction xs generalizing r with
   | nil =>
@@ -322,7 +323,7 @@ theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (
     exact ih'
 
 theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
-  (validate (fun s a => Φ s a) r xs = true) = (denote Φ r) xs := by
+  (validate (decideRel Φ) r xs = true) = (denote Φ r) xs := by
   rw [<- Lang.validate (denote Φ r) xs]
   unfold validate
   rw [<- derives_commutes]

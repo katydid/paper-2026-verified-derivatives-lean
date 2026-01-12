@@ -383,3 +383,23 @@ theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop
     rw [<- ih2]
     congr
     rw [Hedge.Grammar.denote_interleave]
+
+theorem Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Original.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [Lang.derives_foldl]
+  induction nodes generalizing r with
+  | nil =>
+    simp only [List.foldl_nil]
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have h := derive_commutes G Φ r x
+    have ih' := ih (Grammar.Original.derive G (decideRel Φ) r x)
+    rw [h] at ih'
+    exact ih'
+
+theorem Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  (validate G (decideRel Φ) r nodes = true) = (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ r) nodes]
+  unfold validate
+  rw [<- derives_commutes]
+  rw [<- Hedge.Grammar.null_commutes]

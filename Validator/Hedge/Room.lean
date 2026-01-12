@@ -20,6 +20,11 @@ def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   )
   Regex.Room.derive nodePred r
 
+def Grammar.Room.validate
+  (G: Hedge.Grammar n φ) (Φ: φ → α → Bool)
+  (r: Regex (φ × Ref n)) (hedge: Hedge α): Bool :=
+  Regex.null (List.foldl (Grammar.Room.derive G Φ) r hedge)
+
 lemma Grammar.Room.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
   (fun ((pred, ref): (φ × Ref n)) =>
@@ -225,3 +230,23 @@ theorem Grammar.Room.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bool)
   nth_rewrite 2 [<- h2]
   rw [h1]
   rw [derive_commutes]
+
+theorem Grammar.Room.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Room.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [Lang.derives_foldl]
+  induction nodes generalizing r with
+  | nil =>
+    simp only [List.foldl_nil]
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have h := derive_commutes G Φ r x
+    have ih' := ih (Grammar.Room.derive G (decideRel Φ) r x)
+    rw [h] at ih'
+    exact ih'
+
+theorem Grammar.Room.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  (validate G (decideRel Φ) r nodes = true) = (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ r) nodes]
+  unfold validate
+  rw [<- derives_commutes]
+  rw [<- Hedge.Grammar.null_commutes]
