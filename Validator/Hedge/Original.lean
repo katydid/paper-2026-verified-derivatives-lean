@@ -165,13 +165,14 @@ def Grammar.Original.derive (G: Grammar n φ) (Φ: φ → α → Bool)
     · apply decreasing_and_r
     · apply decreasing_compliment
 
-def validate
-  (G: Hedge.Grammar n φ) (Φ: φ → α → Bool)
-  (r: Regex (φ × Ref n)) (hedge: Hedge α): Bool :=
-  Regex.null (List.foldl (Grammar.Original.derive G Φ) r hedge)
+def Grammar.Original.validate
+  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
+  Regex.null (List.foldl (derive G Φ) G.start nodes)
+
+namespace Grammar.Original
 
 def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
-  validate G AnyEq.Pred.evalb G.start nodes
+  validate G AnyEq.Pred.evalb nodes
 
 -- Tests
 
@@ -263,7 +264,6 @@ private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
     | Option.none => true
     | Option.some s' => s' == a
   )
-  example_grammar_library.start
   [node "library"
     [node "book" [
       (node "isbn" [node "123" []]),
@@ -282,7 +282,6 @@ private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
     | Option.none => true
     | Option.some s' => s' == a
   )
-  example_grammar_library.start
   [node "library"
     [node "book" [
       (node "isbn" [node "456" []]),
@@ -302,19 +301,19 @@ private def example_grammar_doc: Hedge.Grammar 3 String :=
       Regex.emptystr,
     ])
 
-#guard validate example_grammar_doc (· == ·) example_grammar_doc.start
+#guard validate example_grammar_doc (· == ·)
   [node "doc" [node "para" [node "pcdata" []]]]
   = true
 
-#guard validate example_grammar_doc (· == ·) example_grammar_doc.start
+#guard validate example_grammar_doc (· == ·)
   [node "doc" [node "para" []]]
   = false
 
-#guard validate example_grammar_doc (· == ·) example_grammar_doc.start
+#guard validate example_grammar_doc (· == ·)
   [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
   = true
 
-#guard validate example_grammar_doc (· == ·) example_grammar_doc.start
+#guard validate example_grammar_doc (· == ·)
   [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
   = true
 
@@ -330,23 +329,25 @@ private def example_grammar_sec: Hedge.Grammar 2 String :=
       Regex.emptystr
     ])
 
-#guard validate example_grammar_sec (· == ·) example_grammar_sec.start
+#guard validate example_grammar_sec (· == ·)
   [node "sec" [node "p" []]]
   = true
 
-#guard validate example_grammar_sec (· == ·) example_grammar_sec.start
+#guard validate example_grammar_sec (· == ·)
   [node "sec" [node "p" []], node "sec" [node "sec" [node "p" []], node "sec" [node "p" []], node "sec" [node "p" []]]]
   = true
 
-#guard validate example_grammar_sec (· == ·) example_grammar_sec.start
+#guard validate example_grammar_sec (· == ·)
   [node "sec" []]
   = false
 
-#guard validate example_grammar_sec (· == ·) example_grammar_sec.start
+#guard validate example_grammar_sec (· == ·)
   [node "p" []]
   = false
 
-theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
+end Grammar.Original
+
+theorem Grammar.Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
   [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
   Hedge.Grammar.Rule.denote G Φ (Grammar.Original.derive G (decideRel Φ) r node)
   = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) node := by
@@ -432,7 +433,7 @@ theorem Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop
     unfold Lang.compliment
     rfl
 
-theorem Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+theorem Grammar.Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
   Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Original.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
   rw [Lang.derives_foldl]
   induction nodes generalizing r with
@@ -440,14 +441,15 @@ theorem Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Pro
     simp only [List.foldl_nil]
   | cons x xs ih =>
     simp only [List.foldl_cons]
-    have h := derive_commutes G Φ r x
+    have h := Grammar.Original.derive_commutes G Φ r x
     have ih' := ih (Grammar.Original.derive G (decideRel Φ) r x)
     rw [h] at ih'
     exact ih'
 
-theorem Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  (validate G (decideRel Φ) r nodes = true) = (Hedge.Grammar.Rule.denote G Φ r) nodes := by
-  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ r) nodes]
+theorem Grammar.Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (validate G (decideRel Φ) nodes = true) = (Hedge.Grammar.denote G Φ) nodes := by
+  unfold Hedge.Grammar.denote
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
   unfold validate
   rw [<- derives_commutes]
   rw [<- Hedge.Grammar.null_commutes]

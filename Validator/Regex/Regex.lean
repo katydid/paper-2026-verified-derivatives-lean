@@ -83,6 +83,9 @@ def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ := mat
   | and r1 r2 => and (derive Φ r1 a) (derive Φ r2 a)
   | compliment r1 => compliment (derive Φ r1 a)
 
+def Regex.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
+  null (List.foldl (derive Φ) r xs)
+
 namespace Regex
 
 #guard
@@ -91,9 +94,6 @@ namespace Regex
 
 def map_derive (Φ: σ → α → Bool) (rs: Vector (Regex σ) l) (a: α): Vector (Regex σ) l :=
   Vector.map (fun r => derive Φ r a) rs
-
-def validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
-  null (List.foldl (derive Φ) r xs)
 
 -- derive theorems
 

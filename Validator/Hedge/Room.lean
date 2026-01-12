@@ -22,8 +22,8 @@ def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
 
 def Grammar.Room.validate
   (G: Hedge.Grammar n φ) (Φ: φ → α → Bool)
-  (r: Regex (φ × Ref n)) (hedge: Hedge α): Bool :=
-  Regex.null (List.foldl (Grammar.Room.derive G Φ) r hedge)
+  (hedge: Hedge α): Bool :=
+  Regex.null (List.foldl (Grammar.Room.derive G Φ) G.start hedge)
 
 lemma Grammar.Room.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
@@ -275,9 +275,11 @@ theorem Grammar.Room.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α →
     rw [h] at ih'
     exact ih'
 
-theorem Grammar.Room.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  (validate G (decideRel Φ) r nodes = true) = (Hedge.Grammar.Rule.denote G Φ r) nodes := by
-  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ r) nodes]
+theorem Grammar.Room.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (Hedge.Grammar.Room.validate G (decideRel Φ) nodes = true)
+  = Hedge.Grammar.denote G Φ nodes := by
+  unfold Hedge.Grammar.denote
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
   unfold validate
   rw [<- derives_commutes]
   rw [<- Hedge.Grammar.null_commutes]
