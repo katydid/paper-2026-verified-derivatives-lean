@@ -14,9 +14,21 @@ abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: 
 def MemTable.init {α: Type} {β: α -> Type} [DecidableEq α] [Hashable α]
   (f: (a: α) → β a): MemTable f := Std.ExtDHashMap.emptyWithCapacity
 
-def callM
-  {α: Type} {β: α -> Type}
-  [DecidableEq α] [Hashable α] (f: (a: α) -> β a)
+def MemTable.modifyGet
+  {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type}
+  (f: (a: α) -> β a)
+  (a: α): MemTable f -> ({ b: β a // b = f a } × MemTable f) :=
+  fun table =>
+    match Std.ExtDHashMap.get? table a with
+    | Option.none =>
+      let b: { b: β a // b = f a } := Subtype.mk (f a) rfl
+      (b, (Std.ExtDHashMap.insert table a b))
+    | Option.some b =>
+      (b, table)
+
+def MemTable.call
+  {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type}
+  (f: (a: α) -> β a)
   [Monad m] [MonadState (MemTable f) m]
   (a: α): m { b: β a // b = f a } := do
   let table <- MonadState.get
@@ -27,22 +39,97 @@ def callM
     return b
   | Option.some b => return b
 
-def call
-  {α: Type} {β: α -> Type}
-  [DecidableEq α] [Hashable α] (f: (a: α) -> β a) (a: α) (table: MemTable f): ({b: β a // b = f a} × MemTable f) :=
-  StateM.run (s := table) (callM f a)
+private def MemTable.StateM.run
+  {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type}
+  (f: (a: α) -> β a) (a: α) (table: MemTable f): ({b: β a // b = f a} × MemTable f) :=
+  MemTable.call (m := StateM (MemTable f)) f a table
 
-theorem call_is_correct {α: Type} {β: α -> Type}
+private theorem MemTable.StateM.call_is_correct {α: Type} {β: α -> Type}
   [DecidableEq α] [Hashable α] (f: (a: α) -> β a)
   (table: MemTable f) (a: α):
-  (call f a table).fst.val = f a := by
-  generalize ((call f a table).fst) = x
+  (MemTable.call (m := StateM (MemTable f)) f a table).fst.val = f a := by
+  generalize ((MemTable.call (m := StateM (MemTable f)) f a table).fst) = x
   obtain ⟨x, hx⟩ := x
   simp only
   assumption
 
-class Memoize (m: Type -> Type u) {α: Type} {β: α -> Type} [DecidableEq α] [Hashable α] (f: (a: α) → β a) where
+-- consider {β: α -> outParam Type}
+class Memoize {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a) (m: Type -> Type u) where
   call : (a: α) -> m { b: β a // b = f a }
+
+def Memoize.MonadState.call
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  [memf: Memoize f m]
+  (a: α): m {b: β a // b = f a} :=
+  memf.call a
+
+def Memoize.StateM.call
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  [memf: Memoize f (StateM σ)]
+  (a: α): StateM σ {b: β a // b = f a} :=
+  memf.call a
+
+def Memoize.STRef.call
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  [memf: Memoize f (ST.Ref σ)]
+  (a: α): ST.Ref σ {b: β a // b = f a} :=
+  memf.call a
+
+theorem Memoize.StateM.call_is_correct
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  {σ: Type}
+  [memf: Memoize f (StateM σ)]
+  (a: α) (state: σ):
+  (Memoize.StateM.call f a state).1 = f a := by
+  generalize ((call f a state)) = x
+  obtain ⟨⟨val, property⟩⟩ := x
+  subst property
+  simp only
+
+def Memoize.StateM.run
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  {σ: Type}
+  [memf: Memoize f (StateM σ)]
+  (a: α) (state: σ): {b: β a // b = f a} × σ :=
+  Memoize.StateM.call f a state
+
+def Memoize.StateM.run'
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  {σ: Type}
+  [memf: Memoize f (StateM σ)]
+  (a: α) (state: σ): {b: β a // b = f a} :=
+  (Memoize.StateM.run f a state).1
+
+theorem Memoize.StateM.run'_is_correct {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: α -> Type}
+  (f: (a: α) -> β a)
+  {σ: Type}
+  [Memoize f (StateM σ)]
+  (a: α) (state: σ):
+  (Memoize.StateM.run' f a state) = f a := by
+  generalize ((run' f a state)) = x
+  obtain ⟨val, property⟩ := x
+  subst property
+  simp only
 
 -- Example
 
@@ -52,69 +139,29 @@ private def fib (n: Nat): Nat :=
   | 1 => 1
   | n + 2 => fib n + fib (n + 1)
 
-private def fibM' [Monad m] [MonadState (MemTable fib) m] (n: Nat): m { res: Nat // res = fib n } := do
+instance [Monad m] [MonadState (MemTable fib) m]: Memoize fib m where
+  call n := MemTable.call fib n
+
+private def fibM' [Monad m] [MonadState (MemTable fib) m] [memfib: Memoize fib m] (n: Nat): m { b: Nat // b = fib n } := do
   match n with
-  | 0 => callM fib 0
-  | 1 => callM fib 1
+  | 0 => memfib.call 0
+  | 1 => memfib.call 1
   | n + 2 =>
-    let table <- MonadState.get
-    match Std.ExtDHashMap.get? table (n + 2) with
-    | Option.none =>
-      let fn <- fibM' n
-      let fn1 <- fibM' (n + 1)
-      let b: { res: Nat // res = fib (n + 2) } := Subtype.mk (fn + fn1) (by
-        obtain ⟨fn, hfn⟩ := fn
-        obtain ⟨fn1, hfn1⟩ := fn1
-        simp only
-        unfold fib
-        subst_vars
-        rfl
-      )
-      MonadState.set (Std.ExtDHashMap.insert table (n + 2) b)
-      return b
-    | Option.some b => return b
+    let fn1: { res: Nat // res = fib n } <- memfib.call n
+    let fn2: { res: Nat // res = fib (n + 1) } <- memfib.call (n + 1)
+    let result: { res: Nat // res = fib (n + 2) } := Subtype.mk
+      (fn1.val + fn2.val)
+      (by obtain ⟨fn1, hfn1⟩ := fn1; obtain ⟨fn2, hfn2⟩ := fn2; unfold fib; subst_vars; rfl)
+    return result
 
 private def fibM (n: Nat): Nat :=
   (StateM.run (s := MemTable.init fib) (fibM' n)).1
 
-private theorem fibM'_is_correct (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
-  have h := call_is_correct fib
-  unfold call at h
-  fun_induction fibM' generalizing table
-  case case1 => -- 0
-    rw [h]
-  case case2 => -- 1
-    rw [h]
-  case case3 n _ _ => -- n + 2
-    simp only [StateM.run]
-    simp only [bind_pure_comp]
-    simp_state
-    cases Std.ExtDHashMap.get? table (n + 2) with
-    | none =>
-      simp only
-      simp_state
-      -- aesop?
-      split
-      rename_i __discr a s heq
-      obtain ⟨fst, snd⟩ := __discr
-      obtain ⟨val, property⟩ := a
-      obtain ⟨val_1, property_1⟩ := fst
-      subst property property_1
-      simp_all only
-      split
-      rename_i __discr a s_1 heq_1
-      simp_all only
-      obtain ⟨fst, snd_1⟩ := __discr
-      obtain ⟨val, property⟩ := a
-      obtain ⟨val_1, property_1⟩ := fst
-      subst property property_1
-      simp_all only
-      rfl
-    | some b =>
-      simp only
-      obtain ⟨b, hb⟩ := b
-      simp_state
-      rw [hb]
+private theorem fibM'_is_correct (table: MemTable fib) (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
+  generalize (StateM.run (fibM' n) table) = x
+  obtain ⟨⟨b, hb⟩, table'⟩ := x
+  simp only
+  rw [hb]
 
 private theorem fibM_is_correct (n: Nat): fib n = fibM n := by
   unfold fibM

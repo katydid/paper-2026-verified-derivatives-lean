@@ -6,7 +6,7 @@ def StateM.run {σ : Type u} {α : Type u} (x : StateM σ α) (s : σ) : α × �
 
 @[always_inline, inline, expose]
 def StateM.run' {σ : Type u} {α : Type u} (x : StateM σ α) (s : σ) : α :=
-  (·.1) <$> x s
+  (x s).1
 
 elab "simp_state" : tactic => do
   Lean.Elab.Tactic.evalTactic (←

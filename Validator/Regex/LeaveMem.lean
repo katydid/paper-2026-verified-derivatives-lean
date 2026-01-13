@@ -11,15 +11,15 @@ def leave2 {σ: Type}: (Σ (r: Regex σ), (Vector Bool (symbols r))) → Regex �
 
 def leaveM {σ: Type} [DecidableEq σ] [Hashable σ] [Monad m] [MonadState (MemTable leave2 (α := (Σ (r: Regex σ), (Vector Bool (symbols r))))) m]
   (param: Σ (r: Regex σ), (Vector Bool (symbols r))): m { res // res = leave2 param } :=
-  callM leave2 param
+  MemTable.call leave2 param
 
 instance {σ: Type} [DecidableEq σ] [Hashable σ] [Monad m] [MonadState (MemTable leave2 (α := (Σ (r: Regex σ), (Vector Bool (symbols r))))) m]:
-  Memoize m (α := (Σ (r: Regex σ), (Vector Bool (symbols r)))) (β := fun _ => Regex σ) leave2 where
+  Memoize (α := (Σ (r: Regex σ), (Vector Bool (symbols r)))) (β := fun _ => Regex σ) leave2 m where
   call param := leaveM param
 
 private theorem leaveM_is_correct [DecidableEq σ] [Hashable σ] (param: Σ (r: Regex σ), (Vector Bool (symbols r))) (table: (MemTable (@leave2 σ))):
   leave2 param = (StateM.run (s := table) (leaveM param)).1 := by
-  have h := call_is_correct (@leave2 σ) table param
-  unfold call at h
-  unfold leaveM
-  rw [h]
+  generalize (StateM.run (leaveM param) table) = x
+  obtain ⟨⟨res, hres⟩, table'⟩ := x
+  simp only
+  rw [hres]
