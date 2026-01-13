@@ -21,7 +21,7 @@ def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
   | 0 =>
     IfExpr.res (Vector.cast (by omega) acc)
   | k + 1 =>
-    let xs': Vector σ k := Vector.cast (by omega) (Vector.tail xs)
+    let xs': Vector σ k := Vector.cast (by omega) xs.tail
     let pos: Vector Bool (l + 1) := (Vector.push acc true)
     let neg: Vector Bool (l + 1) := (Vector.push acc false)
     let posexpr: IfExpr σ ((l + 1) + k) := IfExpr.mkAcc xs' pos
@@ -33,75 +33,91 @@ def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
 def IfExpr.mk (xs: Vector σ n): IfExpr σ n :=
   IfExpr.cast (IfExpr.mkAcc xs #v[]) (by omega)
 
-theorem IfExpr.lift_mkAcc_cast2 (xs: Vector σ j) (acc: Vector Bool k) (h: k = l) (hlift: k + j = l + j):
-  (mkAcc xs (Vector.cast h acc)) = IfExpr.cast (mkAcc xs acc) hlift :=
-  sorry
-
 theorem IfExpr.lift_cast_eval (x: IfExpr σ k) (h: k = l):
-  (x.cast h).eval Φ = Vector.cast h (x.eval Φ) :=
-  sorry
-
-theorem Vector.append_zero_list (xs: Vector σ 0) (ys: Vector σ k):
-  (xs ++ ys).toList = ys.toList := by
-  sorry
-
-theorem Vector.append_zero (xs: Vector σ 0) (ys: Vector σ k):
-  (xs ++ ys) = (Vector.cast (by omega) ys) := by
-  apply Vector.eq
-  rw [Vector.append_zero_list]
-  rw [Vector.cast_toList]
-
-def IfExpr.mkAcc_eval_append_list (xs: Vector σ k) (acc1: Vector Bool l1) (acc2: Vector Bool l2):
-  ((IfExpr.mkAcc xs (acc1 ++ acc2)).eval Φ).toList = (acc1 ++ (IfExpr.mkAcc xs acc2).eval Φ).toList := by
-  induction l1 with
-  | zero =>
-    rw [Vector.append_zero_list]
-    rw [Vector.append_zero]
-    rw [IfExpr.lift_mkAcc_cast2]
-    rw [IfExpr.lift_cast_eval]
-    rw [Vector.cast_toList]
-    omega
-  | succ l1 ih =>
-
-    sorry
+  (x.cast h).eval Φ = Vector.cast h (x.eval Φ) := by
+    subst h
+    rfl
 
 theorem Vector.tail_cons (x: α) (xs: List α) (hxs : (Array.mk (x :: xs)).size = n + 1):
   (Vector.mk { toList := x :: xs } hxs).tail = Vector.mk { toList := xs } (by simp_all) := by
-  sorry
+  have hlen : xs.length = n := by
+    simp +arith only [List.size_toArray, List.length_cons] at hxs
+    exact hxs
+  apply Vector.eq
+  simp +arith only [tail_eq_cast_extract, extract_mk, List.extract_toArray,
+    List.extract_eq_drop_take, List.drop_succ_cons, List.drop_zero, cast_mk,
+    toList_mk]
+  subst hlen
+  exact List.take_length
+
+theorem IfExpr.mkAcc_eval_cons_list (xs: Vector σ k) (b: Bool) (acc: Vector Bool l):
+  ((IfExpr.mkAcc xs (Vector.cons b acc)).eval Φ).toList =
+    b :: ((IfExpr.mkAcc xs acc).eval Φ).toList := by
+  induction k generalizing l with
+  | zero => simp only [IfExpr.mkAcc, IfExpr.eval, Vector.cast_toList, Vector.toList_cons]
+  | succ k ih =>
+      obtain ⟨⟨xs⟩, hxs⟩ := xs
+      cases xs with
+      | nil => contradiction
+      | cons x xs =>
+          let xs' : Vector σ k :=
+            Vector.cast (by rfl) ((Vector.mk { toList := x :: xs } hxs).tail)
+          have hhead : (Vector.mk { toList := x :: xs } hxs).head = x := rfl
+          have hpush : ∀ x, (Vector.cons b acc).push x = Vector.cons b (acc.push x) := by
+            intro x
+            exact Vector.cons_snoc (x := b) (xs := acc) (y := x)
+          cases hx : Φ x with
+          | true =>
+              simp only [IfExpr.mkAcc, IfExpr.eval, hhead, hx, IfExpr.lift_cast_eval, hpush]
+              exact ih (xs := xs') (acc := acc.push true)
+          | false =>
+              simp only [IfExpr.mkAcc, IfExpr.eval, hhead, hx, IfExpr.lift_cast_eval, hpush]
+              exact ih (xs := xs') (acc := acc.push false)
 
 theorem IfExpr.eval_is_map_list (xs: Vector σ n):
   ((IfExpr.mk xs).eval Φ).toList = (Vector.map Φ xs).toList := by
   simp only [Vector.toList_map]
   induction n with
   | zero =>
-    simp [IfExpr.mk, IfExpr.mkAcc, IfExpr.eval]
-    sorry
-  | succ n ih =>
-
     obtain ⟨⟨xs⟩, hxs⟩ := xs
     cases xs with
     | nil =>
-      simp at hxs
+        simp only [Vector.toList_mk, List.map_nil, Vector.toList_eq_nil_iff]
+    | cons x xs =>
+        simp +arith only [List.size_toArray, List.length_cons] at hxs
+  | succ n ih =>
+    obtain ⟨⟨xs⟩, hxs⟩ := xs
+    cases xs with
+    | nil =>
+      simp +arith only [List.size_toArray, List.length_nil] at hxs
     | cons x xs =>
       have ih := ih (Vector.mk (Array.mk xs) (by simp_all))
-      simp at ih
+      simp only [Vector.toList_mk] at ih
       simp only [Vector.toList_mk, List.map_cons]
-      rw [<- ih]
+      rw [←ih]
       simp only [IfExpr.mk, IfExpr.mkAcc]
-      rw [show (Vector.mk { toList := x :: xs } hxs).head = x from rfl]
-      rw [Vector.tail_cons]
-      simp only [Vector.push, Array.push, List.concat]
-
-
-
-      rw??
-
-
-
-      sorry
-
-
-
+      have hhead : (Vector.mk { toList := x :: xs } hxs).head = x := rfl
+      rw [hhead]
+      simp only [Vector.tail_cons, Vector.push, Array.push, List.concat]
+      cases hx : Φ x with
+      | true =>
+          have htrue :
+              (Vector.mk { toList := [true] } (by rfl)) =
+                Vector.cons true #v[] := by
+            apply Vector.eq
+            simp only [Vector.toList_cons, Vector.toList_mk]
+          simp only [hx, IfExpr.eval, IfExpr.lift_cast_eval, Vector.cast_toList]
+          rw [htrue]
+          apply IfExpr.mkAcc_eval_cons_list
+      | false =>
+          have hfalse :
+              (Vector.mk { toList := [false] } (by rfl)) =
+                Vector.cons false #v[] := by
+            apply Vector.eq
+            simp only [Vector.toList_cons, Vector.toList_mk]
+          simp only [hx, IfExpr.eval, IfExpr.lift_cast_eval, Vector.cast_toList]
+          rw [hfalse]
+          apply IfExpr.mkAcc_eval_cons_list
 
 theorem IfExpr.eval_is_map:
   (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
