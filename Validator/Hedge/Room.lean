@@ -13,11 +13,17 @@ namespace Hedge
 
 def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  Regex.Room.derive (fun ((pred, ref): (φ × Ref n)) =>
+  let nodePred := (fun ((labelPred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
-    let childr := if Φ pred label then G.lookup ref else Regex.emptyset
+    let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
-  ) r
+  )
+  Regex.Room.derive nodePred r
+
+def Grammar.Room.validate
+  (G: Hedge.Grammar n φ) (Φ: φ → α → Bool)
+  (hedge: Hedge α): Bool :=
+  Regex.null (List.foldl (Grammar.Room.derive G Φ) G.start hedge)
 
 lemma Grammar.Room.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
@@ -96,6 +102,22 @@ lemma Grammar.Room.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+lemma Grammar.Room.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.and r1 r2) a
+  = Regex.and (Grammar.Room.derive G Φ r1 a) (Grammar.Room.derive G Φ r2 a) := by
+  unfold Grammar.Room.derive
+  rw [unapply_hedge_param_and_flip]
+  repeat rw [Regex.Room.derive_is_Regex_derive]
+  simp only [Regex.derive]
+
+lemma Grammar.Room.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
+  Grammar.Room.derive G Φ (Regex.compliment r1) a
+  = Regex.compliment (Grammar.Room.derive G Φ r1 a) := by
+  unfold Grammar.Room.derive
+  rw [unapply_hedge_param_and_flip]
+  repeat rw [Regex.Room.derive_is_Regex_derive]
+  simp only [Regex.derive]
+
 lemma Grammar.Room.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
@@ -130,10 +152,10 @@ lemma Grammar.Room.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (
   rw [Lang.derive_iff_tree]
   simp only [decide_eq_true_eq]
 
-theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ]
-  (r: Regex (φ × Ref n)) (x: Node α):
-  Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r x)
-  = Lang.derive (Rule.denote G Φ r) x := by
+theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop)
+  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Node α):
+  Rule.denote G Φ (Grammar.Room.derive G (decideRel Φ) r node)
+  = Lang.derive (Rule.denote G Φ r) node := by
   induction r with
   | emptyset =>
     rw [Grammar.Room.derive_emptyset]
@@ -146,7 +168,7 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) 
     rw [Lang.derive_emptystr]
   | symbol s =>
     obtain ⟨pred, ref⟩ := s
-    obtain ⟨label, children⟩ := x
+    obtain ⟨label, children⟩ := node
 
     rw [Grammar.Room.derive_symbol]
 
@@ -203,13 +225,28 @@ theorem Grammar.Room.derive_commutes (G: Grammar n φ) (Φ: φ → α → Prop) 
   | interleave r1 r2 ih1 ih2 =>
     rw [Grammar.Room.derive_interleave]
     rw [Grammar.denote_or]
-    rw [Grammar.denote_interleave_exists]
-    rw [Grammar.denote_interleave_exists]
+    rw [Grammar.denote_interleave]
+    rw [Grammar.denote_interleave]
     rw [ih1]
     rw [ih2]
-    rw [Grammar.denote_interleave_exists]
-    rw [Lang.derive_interleave_exists]
-  termination_by x
+    rw [Grammar.denote_interleave]
+    rw [Lang.derive_interleave]
+  | and r1 r2 ih1 ih2 =>
+    rw [Grammar.Room.derive_and]
+    rw [Grammar.denote_and]
+    rw [Grammar.denote_and]
+    rw [Lang.derive_and]
+    rw [ih1]
+    rw [ih2]
+  | compliment r1 ih1 =>
+    rw [Grammar.Room.derive_compliment]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [ih1]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [Lang.derive_compliment]
+    unfold Lang.compliment
+    rfl
+  termination_by node
   decreasing_by
     apply Node.sizeOf_children hx
 
@@ -224,3 +261,25 @@ theorem Grammar.Room.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bool)
   nth_rewrite 2 [<- h2]
   rw [h1]
   rw [derive_commutes]
+
+theorem Grammar.Room.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Room.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [Lang.derives_foldl]
+  induction nodes generalizing r with
+  | nil =>
+    simp only [List.foldl_nil]
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have h := derive_commutes G Φ r x
+    have ih' := ih (Grammar.Room.derive G (decideRel Φ) r x)
+    rw [h] at ih'
+    exact ih'
+
+theorem Grammar.Room.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (Hedge.Grammar.Room.validate G (decideRel Φ) nodes = true)
+  = Hedge.Grammar.denote G Φ nodes := by
+  unfold Hedge.Grammar.denote
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
+  unfold validate
+  rw [<- derives_commutes]
+  rw [<- Hedge.Grammar.null_commutes]

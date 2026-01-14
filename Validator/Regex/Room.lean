@@ -2,6 +2,7 @@ import Validator.Std.Vec
 
 import Validator.Regex.Enter
 import Validator.Regex.Drawer
+import Validator.Regex.IfExpr
 import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Num
@@ -10,11 +11,11 @@ import Validator.Regex.Regex
 -- room, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
-  enter r |> Vector.map Φ |> leave r
+  enter r |> IfExpr.eval (Φ := Φ) |> leave r
 
 lemma Regex.Room.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.Room.derive (flip Φ a) r = Regex.derive Φ r a := by
-  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
+  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip, IfExpr.eval_is_map]
   rw [<- Regex.extract_replace_is_map]
   rw [Regex.Point.regex_derive_is_point_derive]
 
