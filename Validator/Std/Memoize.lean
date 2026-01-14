@@ -51,17 +51,18 @@ private theorem MemTable.StateM.call_is_correct {α: Type} {β: α -> Type}
   generalize ((MemTable.call (m := StateM (MemTable f)) f a table).fst) = x
   obtain ⟨x, hx⟩ := x
   simp only
-  assumption
+  rw [hx]
 
 -- consider {β: α -> outParam Type}
 class Memoize {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a) (m: Type -> Type u) where
   call : (a: α) -> m { b: β a // b = f a }
 
-def Memoize.MonadState.call
+def Memoize.call'
   {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
   (f: (a: α) -> β a)
+  {m: Type -> Type u}
   [memf: Memoize f m]
   (a: α): m {b: β a // b = f a} :=
   memf.call a
@@ -144,15 +145,15 @@ instance [Monad m] [MonadState (MemTable fib) m]: Memoize fib m where
 
 private def fibM' [Monad m] [MonadState (MemTable fib) m] [memfib: Memoize fib m] (n: Nat): m { b: Nat // b = fib n } := do
   match n with
-  | 0 => memfib.call 0
-  | 1 => memfib.call 1
+  | 0 => pure ⟨0, rfl⟩
+  | 1 => pure ⟨1, rfl⟩
   | n + 2 =>
-    let fn1: { res: Nat // res = fib n } <- memfib.call n
-    let fn2: { res: Nat // res = fib (n + 1) } <- memfib.call (n + 1)
+    let fn1: { res: Nat // res = fib n } <- fibM' n
+    let fn2: { res: Nat // res = fib (n + 1) } <- fibM' (n + 1)
     let result: { res: Nat // res = fib (n + 2) } := Subtype.mk
       (fn1.val + fn2.val)
       (by obtain ⟨fn1, hfn1⟩ := fn1; obtain ⟨fn2, hfn2⟩ := fn2; unfold fib; subst_vars; rfl)
-    return result
+    pure result
 
 private def fibM (n: Nat): Nat :=
   (StateM.run (s := MemTable.init fib) (fibM' n)).1
