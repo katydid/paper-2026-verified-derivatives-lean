@@ -14,5 +14,5 @@ def Regex.Mem.derive
   [mementer: MemoizedEnter σ]
   (Φ: σ → Bool) (r: Regex σ): StateM (MemTable (@enter σ)) (Regex σ) := do
   let ⟨ifexpr, _⟩ <- mementer.call r
-  let bools := IfExpr.eval ifexpr Φ
+  let bools := IfExpr.eval Φ ifexpr
   return leave r bools
