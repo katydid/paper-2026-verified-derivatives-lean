@@ -284,58 +284,58 @@ theorem list_elemof_drop_is_elem {xs: List α} (y: List.ElemOf (List.drop n xs))
   rw [List.mem_append]
   exact Or.inr hy
 
-def intersectionsAcc (xs: List α) (acc: List (List α × List α)): List (List α × List α) :=
+def interleavesAcc (xs: List α) (acc: List (List α × List α)): List (List α × List α) :=
   match xs with
   | [] => acc
   | (x::xs) =>
-    let acc' := intersectionsAcc xs acc
+    let acc' := interleavesAcc xs acc
     let fsts := List.map (fun (fst, snd) => (x::fst, snd)) acc'
     let snds := List.map (fun (fst, snd) => (fst, x::snd)) acc'
     fsts ++ snds
 
-def intersections (xs: List α): List (List α × List α) :=
-  intersectionsAcc xs [([], [])]
+def interleaves (xs: List α): List (List α × List α) :=
+  interleavesAcc xs [([], [])]
 
-def intersectionsAcc_length (xs: List α) (acc: List (List α × List α)): Nat :=
+def interleavesAcc_length (xs: List α) (acc: List (List α × List α)): Nat :=
   acc.length * (2 ^ xs.length)
 
-theorem intersectionsAcc_length_is_correct (xs: List α) (acc: List (List α × List α)):
-  (intersectionsAcc xs acc).length = intersectionsAcc_length xs acc := by
-  unfold intersectionsAcc_length
+theorem interleavesAcc_length_is_correct (xs: List α) (acc: List (List α × List α)):
+  (interleavesAcc xs acc).length = interleavesAcc_length xs acc := by
+  unfold interleavesAcc_length
   induction xs with
   | nil =>
-    simp [intersectionsAcc]
+    simp [interleavesAcc]
   | cons x xs ih =>
-    simp [intersectionsAcc]
+    simp [interleavesAcc]
     rw [ih]
     simp +arith
     rw [Nat.mul_left_comm]
     rw [Nat.pow_add']
 
-def intersections_length (xs: List α): Nat := 2 ^ xs.length
+def interleaves_length (xs: List α): Nat := 2 ^ xs.length
 
-theorem intersections_length_is_correct (xs: List α):
-  (intersections xs).length = intersections_length xs := by
-  unfold intersections_length
-  unfold intersections
-  rw [intersectionsAcc_length_is_correct]
-  unfold intersectionsAcc_length
+theorem interleaves_length_is_correct (xs: List α):
+  (interleaves xs).length = interleaves_length xs := by
+  unfold interleaves_length
+  unfold interleaves
+  rw [interleavesAcc_length_is_correct]
+  unfold interleavesAcc_length
   simp
 
-theorem intersections_mem_swap (xs: List α) :
-  p ∈ intersections xs → (p.2, p.1) ∈ intersections xs := by
+theorem interleaves_mem_swap (xs: List α) :
+  p ∈ interleaves xs → (p.2, p.1) ∈ interleaves xs := by
   induction xs generalizing p with
   | nil =>
     intro hp
-    simp [intersections, intersectionsAcc] at *
+    simp [interleaves, interleavesAcc] at *
     subst hp
     simp only [and_self]
   | cons x xs ih =>
     intro hp
-    simp [intersections, intersectionsAcc, List.mem_append] at hp
+    simp [interleaves, interleavesAcc, List.mem_append] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨a, b, hab, heq⟩
-      simp [intersections, intersectionsAcc, List.mem_append]
+      simp [interleaves, interleavesAcc, List.mem_append]
       right
       exists b
       exists a
@@ -344,7 +344,7 @@ theorem intersections_mem_swap (xs: List α) :
       · rw [←heq]
       · rw [←heq]
     · rcases hp with ⟨a, b, hab, heq⟩
-      simp [intersections, intersectionsAcc, List.mem_append]
+      simp [interleaves, interleavesAcc, List.mem_append]
       left
       exists b
       and_intros
@@ -352,18 +352,18 @@ theorem intersections_mem_swap (xs: List α) :
         exact ih hab
       · rw [←heq]
 
-theorem intersections1_length_is_le (xs: List α):
-  ∀ ys ∈ (List.map (·.1) (intersections xs)),
+theorem interleaves1_length_is_le (xs: List α):
+  ∀ ys ∈ (List.map (·.1) (interleaves xs)),
     ys.length <= length xs
   := by
   intro ys hys
   induction xs generalizing ys with
     | nil =>
-      simp [intersections, intersectionsAcc] at hys
+      simp [interleaves, interleavesAcc] at hys
       rw [hys]
       simp
     | cons x xs ih =>
-      simp [intersections, intersectionsAcc, List.map_append] at hys
+      simp [interleaves, interleavesAcc, List.map_append] at hys
       simp [List.mem_map] at ih
       rcases hys with hys | hys
       · rcases hys with ⟨fst, ⟨snd, hpair⟩, hys⟩
@@ -376,41 +376,41 @@ theorem intersections1_length_is_le (xs: List α):
         rw [length_cons]
         exact Nat.le_succ_of_le hlen
 
-theorem intersections_contains_itself_fst (xs: List α):
-  ∃ p ∈ intersections xs, p.1 = xs := by
+theorem interleaves_contains_itself_fst (xs: List α):
+  ∃ p ∈ interleaves xs, p.1 = xs := by
   induction xs with
   | nil =>
-    simp only [intersections, intersectionsAcc, mem_cons, not_mem_nil, or_false, exists_eq_left]
+    simp only [interleaves, interleavesAcc, mem_cons, not_mem_nil, or_false, exists_eq_left]
   | cons x xs ih =>
     rcases ih with ⟨p, hp_mem, p_fst_eq_xs⟩
     exists (x :: p.1, p.2)
     constructor
-    · simp [intersections, intersectionsAcc, List.mem_append, List.mem_map]
+    · simp [interleaves, interleavesAcc, List.mem_append, List.mem_map]
       apply Or.inl
       apply hp_mem
     · simp only [cons.injEq, true_and]
       assumption
 
-theorem intersections_contains_itself_fst_idx (xs: List α):
-  ∃ i, ((List.intersections xs).get i).1 = xs := by
-  have hmem := intersections_contains_itself_fst xs
+theorem interleaves_contains_itself_fst_idx (xs: List α):
+  ∃ i, ((List.interleaves xs).get i).1 = xs := by
+  have hmem := interleaves_contains_itself_fst xs
   rcases hmem with ⟨p, hp_mem, hp_eq⟩
   rcases (mem_iff_get).1 hp_mem with ⟨i, hi⟩
   exists i
   rw [hi]
   exact hp_eq
 
-theorem intersections_sizeOf1 (xs: List α) [SizeOf α]:
-  ∀ p ∈ intersections xs, p.1 = xs \/ sizeOf p.1 < sizeOf xs := by
+theorem interleaves_sizeOf1 (xs: List α) [SizeOf α]:
+  ∀ p ∈ interleaves xs, p.1 = xs \/ sizeOf p.1 < sizeOf xs := by
   induction xs with
   | nil =>
     intro p hp
-    simp [intersections, intersectionsAcc] at hp
+    simp [interleaves, interleavesAcc] at hp
     left
     rw [hp]
   | cons x xs ih =>
     intro p hp
-    simp [intersections, intersectionsAcc] at hp
+    simp [interleaves, interleavesAcc] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
@@ -429,21 +429,21 @@ theorem intersections_sizeOf1 (xs: List α) [SizeOf α]:
         rw [←hp_eq]
         exact list_sizeOf_lt_cons_lt x h_lt
 
-theorem intersections_sizeOf1_idx (xs: List α) [SizeOf α] (i: Fin (List.intersections xs).length):
-  ((List.intersections xs).get i).1 = xs \/ sizeOf ((List.intersections xs).get i).1 < sizeOf xs := by
-  exact intersections_sizeOf1 xs ((intersections xs).get i) (get_mem _ _)
+theorem interleaves_sizeOf1_idx (xs: List α) [SizeOf α] (i: Fin (List.interleaves xs).length):
+  ((List.interleaves xs).get i).1 = xs \/ sizeOf ((List.interleaves xs).get i).1 < sizeOf xs := by
+  exact interleaves_sizeOf1 xs ((interleaves xs).get i) (get_mem _ _)
 
-theorem intersections_sizeOf2 [SizeOf α] (xs: List α):
-  ∀ p ∈ intersections xs, p.2 = xs \/ sizeOf p.2 < sizeOf xs := by
+theorem interleaves_sizeOf2 [SizeOf α] (xs: List α):
+  ∀ p ∈ interleaves xs, p.2 = xs \/ sizeOf p.2 < sizeOf xs := by
   induction xs with
   | nil =>
     intro p hp
-    simp [intersections, intersectionsAcc] at hp
+    simp [interleaves, interleavesAcc] at hp
     left
     rw [hp]
   | cons x xs ih =>
     intro p hp
-    simp [intersections, intersectionsAcc] at hp
+    simp [interleaves, interleavesAcc] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
@@ -462,6 +462,6 @@ theorem intersections_sizeOf2 [SizeOf α] (xs: List α):
         rw [←hp_eq]
         exact list_sizeOf_cons_lt_cons x h_lt
 
-theorem intersections_sizeOf2_idx [SizeOf α] (xs: List α) (i: Fin (List.intersections xs).length):
-  ((List.intersections xs).get i).2 = xs \/ sizeOf ((List.intersections xs).get i).2 < sizeOf xs := by
-  exact intersections_sizeOf2 xs ((intersections xs).get i) (get_mem _ _)
+theorem interleaves_sizeOf2_idx [SizeOf α] (xs: List α) (i: Fin (List.interleaves xs).length):
+  ((List.interleaves xs).get i).2 = xs \/ sizeOf ((List.interleaves xs).get i).2 < sizeOf xs := by
+  exact interleaves_sizeOf2 xs ((interleaves xs).get i) (get_mem _ _)
