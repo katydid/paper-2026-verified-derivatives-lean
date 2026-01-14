@@ -11,7 +11,18 @@ import Validator.Regex.Regex
 -- room, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
-  enter r |> IfExpr.eval (Φ := Φ) |> leave r
+  enter r |> IfExpr.eval Φ |> leave r
+
+def Regex.Room.derive_with_alloc (Φ: σ → Bool) (r: Regex σ): Regex σ :=
+  enter_with_alloc r |> Vector.map Φ |> leave r
+
+lemma Regex.Room.derive_is_Regex.Room.derive_with_alloc (Φ: σ → Bool) (r: Regex σ):
+  Regex.Room.derive Φ r = Regex.Room.derive_with_alloc Φ r := by
+  unfold Regex.Room.derive_with_alloc
+  unfold Regex.Room.derive
+  unfold Regex.enter
+  unfold Regex.enter_with_alloc
+  rw [IfExpr.eval_is_map]
 
 lemma Regex.Room.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.Room.derive (flip Φ a) r = Regex.derive Φ r a := by
