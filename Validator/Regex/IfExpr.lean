@@ -3,6 +3,7 @@ import Validator.Std.Vec
 inductive IfExpr (σ: Type) (l: Nat) where
   | res (bools: Vector Bool l): IfExpr σ l
   | expr (s: σ) (thn: IfExpr σ l) (els: IfExpr σ l)
+  deriving DecidableEq
 
 def IfExpr.cast (x: IfExpr σ l) (h: l = k): IfExpr σ k := by
   cases h
@@ -32,6 +33,16 @@ def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
 
 def IfExpr.mk (xs: Vector σ n): IfExpr σ n :=
   IfExpr.cast (IfExpr.mkAcc xs #v[]) (by omega)
+
+#guard IfExpr.mk #v['a','b']
+  = IfExpr.expr 'a'
+      (IfExpr.expr 'b'
+        (IfExpr.res  #v[true, true])
+        (IfExpr.res  #v[true, false]))
+      (IfExpr.expr
+        'b'
+        (IfExpr.res  #v[false, true])
+        (IfExpr.res  #v[false, false]))
 
 theorem IfExpr.lift_cast_eval (x: IfExpr σ k) (h: k = l):
   (x.cast h).eval Φ = Vector.cast h (x.eval Φ) := by
