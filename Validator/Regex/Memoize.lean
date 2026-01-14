@@ -9,11 +9,9 @@ import Validator.Regex.Leave
 import Validator.Regex.LeaveMem
 import Validator.Regex.Num
 import Validator.Regex.Regex
+import Validator.Regex.Room
 
 namespace Regex
-
--- class Memoize {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a) (m: Type -> Type u) where
---   call : (a: α) -> m { b: β a // b = f a }
 
 class MemoizeRoom (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] where
   enterM : (a: enterParam σ) -> m { b: enterResult a // b = enter a }
@@ -33,6 +31,32 @@ instance (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
 end Regex
 
 def Regex.Mem.derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
-  (Φ: σ → Bool) (r: Regex σ): m (Regex σ) := do
-  let ifexpr <- MemoizeRoom.enterM r
-  MemoizeRoom.leaveM ⟨r, IfExpr.eval Φ ifexpr⟩
+  (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Room.derive Φ r } := do
+  let ⟨ifexpr, hifexpr⟩ <- MemoizeRoom.enterM r
+  let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, IfExpr.eval Φ ifexpr⟩
+  let h: res = r.leave (IfExpr.eval Φ r.enter) := by
+    unfold leave2 at hres
+    simp only at hres
+    rw [hifexpr] at hres
+    assumption
+  pure (Subtype.mk res h)
+
+private def Regex.Mem.StateM.derive [DecidableEq σ] [Hashable σ] (Φ: σ → Bool) (r: Regex σ)
+  : StateT (enterMemTable σ) (StateM (leaveMemTable σ)) (Regex σ) :=
+  Regex.Mem.derive Φ r
+
+private def Regex.Mem.StateM.derive.run [DecidableEq σ] [Hashable σ] (Φ: σ → Bool) (r: Regex σ)
+  (enterState: Regex.enterMemTable σ) (leaveState: Regex.leaveMemTable σ): Regex σ :=
+  ((StateM.run (StateT.run (Regex.Mem.derive Φ r) enterState) leaveState).1).1
+
+theorem run_is_correct [DecidableEq σ] [Hashable σ] (Φ: σ → Bool) (r: Regex σ)
+  (enterState: Regex.enterMemTable σ) (leaveState: Regex.leaveMemTable σ):
+  Regex.Mem.StateM.derive.run Φ r enterState leaveState = Regex.Room.derive Φ r := by
+  unfold Regex.Mem.StateM.derive.run
+  generalize ((StateM.run (StateT.run (Regex.Mem.derive Φ r) enterState) leaveState)).1.1 = x
+  obtain ⟨dr, hdr⟩ := x
+  simp only
+  rw [hdr]
+
+#guard Regex.Mem.StateM.derive.run (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b')) (MemTable.init Regex.enter) (MemTable.init Regex.leave2)
+  = Regex.or Regex.emptystr Regex.emptyset
