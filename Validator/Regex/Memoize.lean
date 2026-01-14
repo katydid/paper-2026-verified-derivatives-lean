@@ -3,6 +3,7 @@ import Validator.Std.Memoize
 
 import Validator.Regex.EnterMem
 import Validator.Regex.Drawer
+import Validator.Regex.IfExpr
 import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Num
@@ -12,6 +13,6 @@ def Regex.Mem.derive
   [DecidableEq σ] [Hashable σ]
   [mementer: MemoizedEnter σ]
   (Φ: σ → Bool) (r: Regex σ): StateM (MemTable (@enter σ)) (Regex σ) := do
-  let ⟨ss, _⟩ <- mementer.call r
-  let bools := Vector.map Φ ss
+  let ⟨ifexpr, _⟩ <- mementer.call r
+  let bools := IfExpr.eval ifexpr Φ
   return leave r bools

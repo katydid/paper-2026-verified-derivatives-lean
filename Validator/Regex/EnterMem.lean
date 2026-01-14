@@ -1,7 +1,8 @@
 import Validator.Std.Memoize
 
-import Validator.Regex.Regex
 import Validator.Regex.Enter
+import Validator.Regex.IfExpr
+import Validator.Regex.Regex
 
 namespace Regex
 
@@ -20,7 +21,7 @@ abbrev enterParam (σ: Type) := Regex σ
 abbrev enterMemTable (σ: Type) [DecidableEq σ] [Hashable σ] := MemTable enter (α := enterParam σ)
 
 instance [DecidableEq σ] [Hashable σ] [Monad m] [MonadState (MemTable (@enter σ)) m]:
-  Memoize (α := Regex σ) (β := fun r => Vector σ (symbols r)) enter m where
+  Memoize (α := Regex σ) (β := fun r => IfExpr σ (symbols r)) enter m where
   call param := MemTable.enterM param
 
 abbrev MemoizedEnter (σ: Type) [DecidableEq σ] [Hashable σ] := Memoize (@enter σ) (StateM (enterMemTable σ))
