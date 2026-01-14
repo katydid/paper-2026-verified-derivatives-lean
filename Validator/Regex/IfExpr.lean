@@ -9,13 +9,9 @@ def IfExpr.cast (x: IfExpr σ l) (h: l = k): IfExpr σ k := by
   cases h
   exact x
 
-def IfExpr.eval (x: IfExpr σ l) (Φ: σ -> Bool): Vector Bool l :=
-  match x with
+def IfExpr.eval (Φ: σ -> Bool): IfExpr σ l -> Vector Bool l
   | res bools => bools
-  | expr s thn els =>
-    if Φ s
-    then thn.eval Φ
-    else els.eval Φ
+  | expr s thn els => if Φ s then thn.eval Φ else els.eval Φ
 
 def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
   match k with
@@ -130,7 +126,6 @@ theorem IfExpr.eval_is_map_list (xs: Vector σ n):
           rw [hfalse]
           apply IfExpr.mkAcc_eval_cons_list
 
-theorem IfExpr.eval_is_map:
-  (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
+lemma IfExpr.eval_is_map (xs: Vector σ l): (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
   apply Vector.eq
   rw [IfExpr.eval_is_map_list]
