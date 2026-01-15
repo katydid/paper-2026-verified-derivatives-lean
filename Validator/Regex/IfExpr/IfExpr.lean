@@ -1,19 +1,25 @@
 import Validator.Std.Vec
 
+namespace Regex
+
 inductive IfExpr (σ: Type) (l: Nat) where
   | res (bools: Vector Bool l): IfExpr σ l
   | expr (s: σ) (thn: IfExpr σ l) (els: IfExpr σ l)
   deriving DecidableEq
 
-def IfExpr.cast (x: IfExpr σ l) (h: l = k): IfExpr σ k := by
+end Regex
+
+namespace Regex.IfExpr
+
+def cast (x: IfExpr σ l) (h: l = k): IfExpr σ k := by
   cases h
   exact x
 
-def IfExpr.eval (Φ: σ -> Bool): IfExpr σ l -> Vector Bool l
+def eval (Φ: σ -> Bool): IfExpr σ l -> Vector Bool l
   | res bools => bools
   | expr s thn els => if Φ s then thn.eval Φ else els.eval Φ
 
-def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
+def mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
   match k with
   | 0 =>
     IfExpr.res (Vector.cast (by omega) acc)
@@ -27,7 +33,7 @@ def IfExpr.mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
       (IfExpr.cast posexpr (by omega))
       (IfExpr.cast negexpr (by omega))
 
-def IfExpr.mk (xs: Vector σ n): IfExpr σ n :=
+def mk (xs: Vector σ n): IfExpr σ n :=
   IfExpr.cast (IfExpr.mkAcc xs #v[]) (by omega)
 
 #guard IfExpr.mk #v['a','b']
@@ -40,7 +46,7 @@ def IfExpr.mk (xs: Vector σ n): IfExpr σ n :=
         (IfExpr.res  #v[false, true])
         (IfExpr.res  #v[false, false]))
 
-theorem IfExpr.lift_cast_eval (x: IfExpr σ k) (h: k = l):
+theorem lift_cast_eval (x: IfExpr σ k) (h: k = l):
   (x.cast h).eval Φ = Vector.cast h (x.eval Φ) := by
     subst h
     rfl
@@ -51,13 +57,13 @@ theorem Vector.tail_cons (x: α) (xs: List α) (hxs : (Array.mk (x :: xs)).size 
     simp +arith only [List.size_toArray, List.length_cons] at hxs
     exact hxs
   apply Vector.eq
-  simp +arith only [tail_eq_cast_extract, extract_mk, List.extract_toArray,
-    List.extract_eq_drop_take, List.drop_succ_cons, List.drop_zero, cast_mk,
-    toList_mk]
+  simp +arith only [Nat.add_one_sub_one, Vector.tail_eq_cast_extract, Vector.extract_mk,
+    List.extract_toArray, List.extract_eq_drop_take, add_tsub_cancel_right, List.drop_succ_cons,
+    List.drop_zero, Vector.cast_mk, Vector.toList_mk]
   subst hlen
   exact List.take_length
 
-theorem IfExpr.mkAcc_eval_cons_list (xs: Vector σ k) (b: Bool) (acc: Vector Bool l):
+theorem mkAcc_eval_cons_list (xs: Vector σ k) (b: Bool) (acc: Vector Bool l):
   ((IfExpr.mkAcc xs (Vector.cons b acc)).eval Φ).toList =
     b :: ((IfExpr.mkAcc xs acc).eval Φ).toList := by
   induction k generalizing l with
@@ -81,7 +87,7 @@ theorem IfExpr.mkAcc_eval_cons_list (xs: Vector σ k) (b: Bool) (acc: Vector Boo
               simp only [IfExpr.mkAcc, IfExpr.eval, hhead, hx, IfExpr.lift_cast_eval, hpush]
               exact ih (xs := xs') (acc := acc.push false)
 
-theorem IfExpr.eval_is_map_list (xs: Vector σ n):
+theorem eval_is_map_list (xs: Vector σ n):
   ((IfExpr.mk xs).eval Φ).toList = (Vector.map Φ xs).toList := by
   simp only [Vector.toList_map]
   induction n with
@@ -126,6 +132,6 @@ theorem IfExpr.eval_is_map_list (xs: Vector σ n):
           rw [hfalse]
           apply IfExpr.mkAcc_eval_cons_list
 
-lemma IfExpr.eval_is_map (xs: Vector σ l): (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
+lemma eval_is_map (xs: Vector σ l): (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
   apply Vector.eq
   rw [IfExpr.eval_is_map_list]
