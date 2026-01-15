@@ -6,6 +6,7 @@ import Validator.Regex.IfExpr
 import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Map
+import Validator.Regex.Memoize
 import Validator.Regex.Num
 import Validator.Regex.Point
 import Validator.Regex.Regex
