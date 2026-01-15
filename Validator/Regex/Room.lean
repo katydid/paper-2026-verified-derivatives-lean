@@ -2,7 +2,7 @@ import Validator.Std.Vec
 
 import Validator.Regex.Enter
 import Validator.Regex.Drawer
-import Validator.Regex.IfExpr
+import Validator.Regex.IfExpr.IfExpr
 import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Num
