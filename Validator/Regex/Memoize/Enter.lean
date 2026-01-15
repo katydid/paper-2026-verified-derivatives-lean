@@ -8,7 +8,7 @@ namespace Regex.Memoize
 
 abbrev enterParam (σ: Type) := Regex σ
 abbrev enterMemTable (σ: Type) [DecidableEq σ] [Hashable σ] := MemTable enter (α := enterParam σ)
-abbrev enterResult (r: Regex σ) := IfExpr σ (symbols r)
+abbrev enterResult (r: Regex σ) := Vector σ (symbols r)
 
 def MemTable.enter [DecidableEq σ] [Hashable σ] [Monad m] [monadState: MonadState (enterMemTable σ) m]
   (param: Regex σ): m { res // res = enter param } :=

@@ -31,12 +31,12 @@ instance (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
 
 def derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
   (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Room.derive Φ r } := do
-  let ⟨ifexpr, hifexpr⟩ <- MemoizeRoom.enterM r
-  let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, IfExpr.eval Φ ifexpr⟩
-  let h: res = r.leave (IfExpr.eval Φ r.enter) := by
+  let ⟨symbols, hsymbols⟩ <- MemoizeRoom.enterM r
+  let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, Vector.map Φ symbols⟩
+  let h: res = r.leave (Vector.map Φ r.enter) := by
     unfold leave at hres
     simp only at hres
-    rw [hifexpr] at hres
+    rw [hsymbols] at hres
     assumption
   pure (Subtype.mk res h)
 
