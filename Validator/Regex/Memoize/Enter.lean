@@ -1,7 +1,6 @@
 import Validator.Std.Memoize
 
 import Validator.Regex.Enter
-import Validator.Regex.IfExpr.IfExpr
 import Validator.Regex.Regex
 
 namespace Regex.Memoize
