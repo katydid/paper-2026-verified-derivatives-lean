@@ -16,6 +16,9 @@ def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
 def Regex.Room.derive_with_alloc (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter_with_alloc r |> Vector.map Φ |> leave r
 
+def Regex.Room.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
+  null (List.foldl (fun dr x => Regex.Room.derive (flip Φ x) dr) r xs)
+
 lemma Regex.Room.derive_is_Regex.Room.derive_with_alloc (Φ: σ → Bool) (r: Regex σ):
   Regex.Room.derive Φ r = Regex.Room.derive_with_alloc Φ r := by
   unfold Regex.Room.derive_with_alloc
@@ -70,3 +73,29 @@ theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Rege
   = Lang.derive (Regex.denote (fun s a => Φ s a) r) a := by
   rw [Regex.Room.derive_is_Regex_derive]
   rw [<- Regex.derive_commutesb]
+
+theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (a: α):
+  denote Φ (Room.derive (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
+  rw [Regex.Room.derive_is_Regex_derive]
+  rw [<- Regex.derive_commutes]
+  congr
+
+theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
+  denote Φ ((List.foldl (fun dr x => Regex.Room.derive (flip (decideRel Φ) x) dr)) r xs) = Lang.derives (denote Φ r) xs := by
+  rw [Lang.derives_foldl]
+  induction xs generalizing r with
+  | nil =>
+    simp only [List.foldl_nil]
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have h := derive_commutes Φ r x
+    have ih' := ih (derive (flip (decideRel Φ) x) r)
+    rw [h] at ih'
+    exact ih'
+
+theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
+  (Room.validate (decideRel Φ) r xs = true) = (denote Φ r) xs := by
+  rw [<- Lang.validate (denote Φ r) xs]
+  unfold validate
+  rw [<- derives_commutes]
+  rw [<- null_commutes]

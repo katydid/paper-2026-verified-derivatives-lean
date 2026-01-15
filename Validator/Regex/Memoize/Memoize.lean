@@ -49,7 +49,11 @@ private def StateM.derive.run [DecidableEq σ] [Hashable σ]
   (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   ((StateM.run (StateT.run (Regex.Memoize.derive Φ r) enterState) leaveState).1).1
 
-theorem run_is_correct [DecidableEq σ] [Hashable σ]
+#guard StateM.derive.run (MemTable.init enter) (MemTable.init leave)
+  (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
+  = Regex.or Regex.emptystr Regex.emptyset
+
+theorem StateM.derive.run_is_correct [DecidableEq σ] [Hashable σ]
   (enterState: enterMemTable σ) (leaveState: leaveMemTable σ)
   (Φ: σ → Bool) (r: Regex σ):
   StateM.derive.run enterState leaveState Φ r = Regex.Room.derive Φ r := by
@@ -58,7 +62,3 @@ theorem run_is_correct [DecidableEq σ] [Hashable σ]
   obtain ⟨dr, hdr⟩ := x
   simp only
   rw [hdr]
-
-#guard StateM.derive.run (MemTable.init enter) (MemTable.init leave)
-  (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
-  = Regex.or Regex.emptystr Regex.emptyset
