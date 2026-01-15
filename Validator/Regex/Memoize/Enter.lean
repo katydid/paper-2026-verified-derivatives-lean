@@ -4,26 +4,26 @@ import Validator.Regex.Enter
 import Validator.Regex.IfExpr
 import Validator.Regex.Regex
 
-namespace Regex
+namespace Regex.Memoize
 
 abbrev enterParam (σ: Type) := Regex σ
 abbrev enterMemTable (σ: Type) [DecidableEq σ] [Hashable σ] := MemTable enter (α := enterParam σ)
 abbrev enterResult (r: Regex σ) := IfExpr σ (symbols r)
 
-def MemTable.enterM [DecidableEq σ] [Hashable σ] [Monad m] [monadState: MonadState (enterMemTable σ) m]
+def MemTable.enter [DecidableEq σ] [Hashable σ] [Monad m] [monadState: MonadState (enterMemTable σ) m]
   (param: Regex σ): m { res // res = enter param } :=
-  MemTable.call enter param
+  MemTable.call Regex.enter param
 
 private theorem MemTable.enterM_is_correct [DecidableEq σ] [Hashable σ] (param: enterParam σ) (table: (enterMemTable σ)):
-  enter param = (StateM.run (s := table) (MemTable.enterM param)).1 := by
-  generalize (StateM.run (MemTable.enterM param) table) = x
+  Regex.enter param = (StateM.run (s := table) (MemTable.enter param)).1 := by
+  generalize (StateM.run (MemTable.enter param) table) = x
   obtain ⟨⟨res, hres⟩, table'⟩ := x
   simp only
   rw [hres]
 
 instance [DecidableEq σ] [Hashable σ] [Monad m] [MonadState (enterMemTable σ) m]:
   Memoize (α := enterParam σ) (β := enterResult) enter m where
-  call param := MemTable.enterM param
+  call param := MemTable.enter param
 
 abbrev MemoizedEnter (σ: Type) [DecidableEq σ] [Hashable σ] := Memoize (@enter σ) (StateM (enterMemTable σ))
 
