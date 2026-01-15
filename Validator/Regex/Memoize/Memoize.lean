@@ -40,25 +40,73 @@ def derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
     assumption
   pure (Subtype.mk res h)
 
-private def StateM.derive [DecidableEq σ] [Hashable σ] (Φ: σ → Bool) (r: Regex σ)
-  : StateT (enterMemTable σ) (StateM (leaveMemTable σ)) (Regex σ) :=
+abbrev StateMemoize σ [DecidableEq σ] [Hashable σ] := StateT (enterMemTable σ) (StateM (leaveMemTable σ))
+abbrev memoizeState σ [DecidableEq σ] [Hashable σ] := (enterMemTable σ × leaveMemTable σ)
+def memoizeState.init {σ: Type} [DecidableEq σ] [Hashable σ]: memoizeState σ := ((MemTable.init enter), (MemTable.init leave))
+
+def StateMemoize.run {σ: Type} {β: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (f: StateMemoize σ β): β :=
+  ((StateM.run (StateT.run f state.1) state.2).1).1
+
+def StateMemoize.derive [DecidableEq σ] [Hashable σ] (Φ: σ → Bool) (r: Regex σ): StateMemoize σ (Regex σ) :=
   Regex.Memoize.derive Φ r
 
-private def StateM.derive.run [DecidableEq σ] [Hashable σ]
-  (enterState: enterMemTable σ) (leaveState: leaveMemTable σ)
-  (Φ: σ → Bool) (r: Regex σ): Regex σ :=
-  ((StateM.run (StateT.run (Regex.Memoize.derive Φ r) enterState) leaveState).1).1
+def StateMemoize.derive.run {σ: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → Bool) (r: Regex σ): Regex σ :=
+  StateMemoize.run state (Regex.Memoize.derive Φ r)
 
-#guard StateM.derive.run (MemTable.init enter) (MemTable.init leave)
+#guard StateMemoize.derive.run memoizeState.init
   (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
   = Regex.or Regex.emptystr Regex.emptyset
 
-theorem StateM.derive.run_is_correct [DecidableEq σ] [Hashable σ]
-  (enterState: enterMemTable σ) (leaveState: leaveMemTable σ)
+def validate [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
+  (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): m Bool :=
+  null <$> (List.foldlM (fun dr x => derive (flip Φ x) dr) r xs)
+
+def StateMemoize.validate [DecidableEq σ] [Hashable σ]
+  (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): StateMemoize σ Bool :=
+  Regex.Memoize.validate Φ r xs
+
+def StateMemoize.validate.run {σ: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
+  StateMemoize.run state (StateMemoize.validate Φ r xs)
+
+#guard StateMemoize.validate.run memoizeState.init
+  (· == ·) (Regex.or (Regex.symbol 'a') (Regex.symbol 'b')) ['a']
+  = true
+
+def filter  [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
+  (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): m (List (List α)) :=
+  List.filterM (validate Φ r) xss
+
+def StateMemoize.filter [DecidableEq σ] [Hashable σ]
+  (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): StateMemoize σ (List (List α)) :=
+  Regex.Memoize.filter Φ r xss
+
+def StateMemoize.filter.run [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ)
+  (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
+  StateMemoize.run state (StateMemoize.filter Φ r xss)
+
+lemma StateMemoize.derive.run_unfold [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → Bool) (r: Regex σ):
+  (StateMemoize.derive.run state Φ r) = StateMemoize.run state (Memoize.derive Φ r) :=
+  rfl
+
+theorem StateMemoize.derive.run_is_correct [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ)
   (Φ: σ → Bool) (r: Regex σ):
-  StateM.derive.run enterState leaveState Φ r = Regex.Room.derive Φ r := by
-  unfold StateM.derive.run
-  generalize ((StateM.run (StateT.run (Regex.Memoize.derive Φ r) enterState) leaveState)).1.1 = x
+  StateMemoize.derive.run state Φ r = Regex.Room.derive Φ r := by
+  rw [StateMemoize.derive.run_unfold]
+  generalize StateMemoize.run state (Memoize.derive Φ r) = x
   obtain ⟨dr, hdr⟩ := x
   simp only
   rw [hdr]
+
+theorem StateMemoize.derive_commutes {σ: Type} {α: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (a: α):
+  denote Φ (StateMemoize.derive.run state (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
+  rw [StateMemoize.derive.run_is_correct]
+  rw [Regex.Room.derive_is_Regex_derive]
+  rw [<- Regex.derive_commutes]
+  congr
