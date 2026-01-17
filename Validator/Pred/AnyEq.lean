@@ -1,15 +1,16 @@
 -- A simple predicate with only equality and any.
 namespace AnyEq
 
-inductive Pred (α: Type) where
-  | eq (t: α)
-  | any
+inductive Pred (α: Type) where | any | eq (t: α)
   deriving DecidableEq, Ord, Repr, Hashable, BEq
 
-def Pred.eval {α: Type} [BEq α] (p: Pred α) (x: α): Prop :=
-  match p with
+def Pred.eval {α: Type} [DecidableEq α] (p: Pred α) (x: α): Prop := match p with
   | Pred.eq y => x = y
   | Pred.any => True
+
+def Pred.evalb {α: Type} [DecidableEq α] (p: Pred α) (x: α): Bool := match p with
+  | Pred.eq y => x = y
+  | Pred.any => true
 
 def Pred.pred_is_decpred {α : Type} [d: DecidableEq α] (p: Pred α): (a: α) → Decidable (Pred.eval p a) :=
   fun x =>
@@ -22,6 +23,9 @@ def Pred.decidablePredEval {α: Type} [BEq α] [d: DecidableEq α] (p: Pred α) 
 
 instance inst_pred_decrel {α: Type} [d: DecidableEq α]: DecidableRel (Pred.eval (α := α)) :=
   Pred.decidablePredEval
+
+def Pred.evalb' {α: Type} [DecidableEq α] (p: Pred α) (x: α): Bool :=
+  Pred.eval p x
 
 instance inst_pred_decpred {α: Type} [d: DecidableEq α] (p: Pred α): DecidablePred p.eval :=
   p.decidablePredEval
@@ -46,6 +50,3 @@ def Pred.rfl {α: Type} {a : Pred α} [d: DecidableEq (Pred α)]: a == a := of_d
 instance inst_deq_lbeq {α: Type} [DecidableEq (Pred α)]: LawfulBEq (Pred α) where
   eq_of_beq : {a b : Pred α} → a == b → a = b := Pred.eq_of_beq
   rfl : {a : Pred α} → a == a := Pred.rfl
-
-def Pred.evalb {α: Type} [DecidableEq α] (p: Pred α) (x: α): Bool :=
-  Pred.eval p x
