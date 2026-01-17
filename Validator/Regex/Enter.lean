@@ -6,6 +6,6 @@ import Validator.Regex.Regex
 
 namespace Regex
 
-def enter (r: Regex σ) := (extract r).2
+def enter (r: Regex σ): Vector σ (symbols r) := (extract r).2
 
-#guard enter (Regex.or (Regex.symbol 'a') (Regex.symbol 'b')) = #v['a','b']
+#guard enter (or (symbol 'a') (symbol 'b')) = #v['a','b']
