@@ -169,12 +169,119 @@ def Grammar.Original.validate
   (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
   Regex.null (List.foldl (derive G Φ) G.start nodes)
 
+theorem Grammar.Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
+  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
+  Hedge.Grammar.Rule.denote G Φ (Grammar.Original.derive G (decideRel Φ) r node)
+  = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) node := by
+  fun_induction (Grammar.Original.derive G (fun p a => Φ p a)) r node with
+  | case1 => -- emptyset
+    rw [Hedge.Grammar.denote_emptyset]
+    rw [Lang.derive_emptyset]
+  | case2 => -- emptystr
+    rw [Hedge.Grammar.denote_emptyset]
+    rw [Hedge.Grammar.denote_emptystr]
+    rw [Lang.derive_emptystr]
+  | case3 p childRef label children ih =>
+    rw [Hedge.Grammar.denote_symbol]
+    rw [Lang.derive_tree]
+    rw [Hedge.Grammar.denote_onlyif]
+    rw [Hedge.Grammar.denote_emptystr]
+    apply (congrArg fun x => Lang.onlyif x Lang.emptystr)
+    congr
+    generalize (G.lookup childRef) = childExpr
+    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+    unfold Lang.null
+    induction children generalizing childExpr with
+    | nil =>
+      simp only [List.foldl_nil]
+      rfl
+    | cons c cs ih' =>
+      simp only [List.foldl]
+      rw [ih']
+      · cases c
+        rw [ih]
+        simp only [Lang.derive]
+        rw [List.mem_cons]
+        apply Or.inl
+        rfl
+      · intro x child hchild
+        apply ih
+        rw [List.mem_cons]
+        apply Or.inr hchild
+  | case4 x r1 r2 ih1 ih2 => -- or
+    rw [Hedge.Grammar.denote_or]
+    rw [Hedge.Grammar.denote_or]
+    unfold Lang.or
+    rw [ih1]
+    rw [ih2]
+    rfl
+  | case5 x r1 r2 ih1 ih2 => -- concat
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_or]
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_onlyif]
+    rw [Lang.derive_concat]
+    rw [<- ih1]
+    rw [<- ih2]
+    congr
+    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+  | case6 x r1 ih1 => -- star
+    rw [Hedge.Grammar.denote_star]
+    rw [Hedge.Grammar.denote_concat]
+    rw [Hedge.Grammar.denote_star]
+    rw [Lang.derive_star]
+    rw [ih1]
+  | case7 x r1 r2 ih1 ih2 => -- interleave
+    rw [Hedge.Grammar.denote_interleave]
+    rw [Hedge.Grammar.denote_or]
+    rw [Hedge.Grammar.denote_interleave]
+    rw [Lang.derive_interleave]
+    rw [<- ih1]
+    rw [<- ih2]
+    congr
+    rw [Hedge.Grammar.denote_interleave]
+  | case8 x r1 r2 ih1 ih2 => -- and
+    rw [Hedge.Grammar.denote_and]
+    rw [Hedge.Grammar.denote_and]
+    unfold Lang.and
+    rw [ih1]
+    rw [ih2]
+    rfl
+  | case9 x r1 ih1 => -- compliment
+    rw [Hedge.Grammar.denote_compliment]
+    rw [ih1]
+    rw [Hedge.Grammar.denote_compliment]
+    rw [Lang.derive_compliment]
+    unfold Lang.compliment
+    rfl
+
+theorem Grammar.Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Original.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+  rw [Lang.derives_foldl]
+  induction nodes generalizing r with
+  | nil =>
+    simp only [List.foldl_nil]
+  | cons x xs ih =>
+    simp only [List.foldl_cons]
+    have h := Grammar.Original.derive_commutes G Φ r x
+    have ih' := ih (Grammar.Original.derive G (decideRel Φ) r x)
+    rw [h] at ih'
+    exact ih'
+
+theorem Grammar.Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (validate G (decideRel Φ) nodes = true) = (Hedge.Grammar.denote G Φ) nodes := by
+  unfold Hedge.Grammar.denote
+  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
+  unfold validate
+  rw [<- derives_commutes]
+  rw [<- Hedge.Grammar.null_commutes]
+
+-- Tests
+
 namespace Grammar.Original
 
 def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes
-
--- Tests
 
 #guard run
   (Hedge.Grammar.singleton Regex.emptyset)
@@ -344,112 +451,3 @@ private def example_grammar_sec: Hedge.Grammar 2 String :=
 #guard validate example_grammar_sec (· == ·)
   [node "p" []]
   = false
-
-end Grammar.Original
-
-theorem Grammar.Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
-  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
-  Hedge.Grammar.Rule.denote G Φ (Grammar.Original.derive G (decideRel Φ) r node)
-  = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) node := by
-  fun_induction (Grammar.Original.derive G (fun p a => Φ p a)) r node with
-  | case1 => -- emptyset
-    rw [Hedge.Grammar.denote_emptyset]
-    rw [Lang.derive_emptyset]
-  | case2 => -- emptystr
-    rw [Hedge.Grammar.denote_emptyset]
-    rw [Hedge.Grammar.denote_emptystr]
-    rw [Lang.derive_emptystr]
-  | case3 p childRef label children ih =>
-    rw [Hedge.Grammar.denote_symbol]
-    rw [Lang.derive_tree]
-    rw [Hedge.Grammar.denote_onlyif]
-    rw [Hedge.Grammar.denote_emptystr]
-    apply (congrArg fun x => Lang.onlyif x Lang.emptystr)
-    congr
-    generalize (G.lookup childRef) = childExpr
-    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
-    unfold Lang.null
-    induction children generalizing childExpr with
-    | nil =>
-      simp only [List.foldl_nil]
-      rfl
-    | cons c cs ih' =>
-      simp only [List.foldl]
-      rw [ih']
-      · cases c
-        rw [ih]
-        simp only [Lang.derive]
-        rw [List.mem_cons]
-        apply Or.inl
-        rfl
-      · intro x child hchild
-        apply ih
-        rw [List.mem_cons]
-        apply Or.inr hchild
-  | case4 x r1 r2 ih1 ih2 => -- or
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_or]
-    unfold Lang.or
-    rw [ih1]
-    rw [ih2]
-    rfl
-  | case5 x r1 r2 ih1 ih2 => -- concat
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_onlyif]
-    rw [Lang.derive_concat]
-    rw [<- ih1]
-    rw [<- ih2]
-    congr
-    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
-  | case6 x r1 ih1 => -- star
-    rw [Hedge.Grammar.denote_star]
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_star]
-    rw [Lang.derive_star]
-    rw [ih1]
-  | case7 x r1 r2 ih1 ih2 => -- interleave
-    rw [Hedge.Grammar.denote_interleave]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_interleave]
-    rw [Lang.derive_interleave]
-    rw [<- ih1]
-    rw [<- ih2]
-    congr
-    rw [Hedge.Grammar.denote_interleave]
-  | case8 x r1 r2 ih1 ih2 => -- and
-    rw [Hedge.Grammar.denote_and]
-    rw [Hedge.Grammar.denote_and]
-    unfold Lang.and
-    rw [ih1]
-    rw [ih2]
-    rfl
-  | case9 x r1 ih1 => -- compliment
-    rw [Hedge.Grammar.denote_compliment]
-    rw [ih1]
-    rw [Hedge.Grammar.denote_compliment]
-    rw [Lang.derive_compliment]
-    unfold Lang.compliment
-    rfl
-
-theorem Grammar.Original.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Original.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
-  rw [Lang.derives_foldl]
-  induction nodes generalizing r with
-  | nil =>
-    simp only [List.foldl_nil]
-  | cons x xs ih =>
-    simp only [List.foldl_cons]
-    have h := Grammar.Original.derive_commutes G Φ r x
-    have ih' := ih (Grammar.Original.derive G (decideRel Φ) r x)
-    rw [h] at ih'
-    exact ih'
-
-theorem Grammar.Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
-  (validate G (decideRel Φ) nodes = true) = (Hedge.Grammar.denote G Φ) nodes := by
-  unfold Hedge.Grammar.denote
-  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
-  unfold validate
-  rw [<- derives_commutes]
-  rw [<- Hedge.Grammar.null_commutes]
