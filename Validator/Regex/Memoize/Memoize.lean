@@ -1,5 +1,6 @@
 import Validator.Std.Vec
 import Validator.Std.Memoize
+import Validator.Std.MonadAttach
 
 import Validator.Regex.Drawer
 import Validator.Regex.Lang
@@ -32,7 +33,7 @@ def derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
   (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Room.derive Φ r } := do
   let ⟨symbols, hsymbols⟩ <- MemoizeRoom.enterM r
   let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, Vector.map Φ symbols⟩
-  let h: res = r.leave (Vector.map Φ r.enter) := by
+  let h: res = Regex.Room.derive Φ r := by
     unfold leave at hres
     simp only at hres
     rw [hsymbols] at hres
@@ -57,6 +58,64 @@ def StateMemoize.derive.run {σ: Type} [DecidableEq σ] [Hashable σ]
 #guard StateMemoize.derive.run memoizeState.init
   (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
   = Regex.or Regex.emptystr Regex.emptyset
+
+def StateMemoize.deriveM [DecidableEq σ] [Hashable σ] [MemoizeRoom (StateMemoize σ) σ] [LawfulMonad (StateMemoize σ)]
+  (Φ: σ → StateMemoize σ Bool) (r: Regex σ): StateMemoize σ {dr: Regex σ // pure dr = Regex.Room.deriveM Φ r } := do
+  let ⟨symbols, hsymbols⟩ <- MemoizeRoom.enterM r
+  let bools <- MonadAttach.attach (Vector.mapM Φ symbols)
+  let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, bools⟩
+  let h: pure res = Regex.Room.deriveM Φ r := by
+
+
+    obtain ⟨bools, canbools⟩ := bools
+    rename_i hbools
+
+    unfold Room.deriveM
+    unfold Regex.Memoize.leave at hres
+    simp only at hres
+    subst hres
+
+    simp only
+    simp_state
+    subst hsymbols
+    obtain ⟨val, property⟩ := hbools
+    subst property
+
+    have hh := LawfulMonad.bind_pure_comp (x := (Vector.mapM Φ (Regex.enter r))) (m := StateMemoize σ) (f := fun bools => Regex.leave r bools)
+
+    change (StateT.pure (r.leave bools) = StateT.bind (Vector.mapM Φ r.enter) fun bools => StateT.pure (r.leave bools))
+    change ((StateT.bind (Vector.mapM Φ r.enter) fun bools => StateT.pure (r.leave bools)) = r.leave <$> Vector.mapM Φ r.enter) at hh
+    rw [hh]
+
+    unfold MonadAttach.CanReturn at canbools
+    unfold instMonadAttachStateTOfMonad at canbools
+    unfold MonadAttach.CanReturn at canbools
+    unfold instMonadAttachId at canbools
+    simp only at canbools
+
+    obtain ⟨enterState, enterState', leaveState, leaveState', canbools⟩ := canbools
+    simp only [Id.run, StateT.run] at canbools
+
+    funext enterState leaveState
+    simp_state
+
+
+
+
+
+    aesop?
+
+
+
+
+
+
+
+
+
+
+    sorry
+  pure (Subtype.mk res h)
 
 def validate [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
   (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): m Bool :=

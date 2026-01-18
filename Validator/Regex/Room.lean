@@ -15,6 +15,11 @@ def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
 def Regex.Room.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
   null (List.foldl (fun dr x => Regex.Room.derive (flip Φ x) dr) r xs)
 
+def Regex.Room.deriveM [Monad m] (Φ: σ → m Bool) (r: Regex σ): m (Regex σ) := do
+  let symbols := enter r
+  let bools <- Vector.mapM Φ symbols
+  pure (leave r bools)
+
 lemma Regex.Room.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.Room.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
@@ -87,3 +92,10 @@ theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] 
   unfold validate
   rw [<- derives_commutes]
   rw [<- null_commutes]
+
+theorem deriveMId_is_derive:
+  Regex.Room.derive Φ r = Regex.Room.deriveM (m := Id) (fun s => pure (Φ s)) r := by
+  unfold Regex.Room.derive
+  unfold Regex.Room.deriveM
+  simp only [Vector.mapM_pure, bind_pure_comp, map_pure]
+  rfl

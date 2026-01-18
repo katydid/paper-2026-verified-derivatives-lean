@@ -19,7 +19,7 @@ def MemTable.leave {σ: Type} [DecidableEq σ] [Hashable σ] [Monad m] [monadSta
   MemTable.call Regex.Memoize.leave param
 
 private theorem MemTable.leaveM_is_correct [DecidableEq σ] [Hashable σ] (param: leaveParam σ) (table: leaveMemTable σ):
-  Regex.Memoize.leave param = (StateM.run (s := table) (leave param)).1 := by
+  Regex.Memoize.leave param = (StateM.run (s := table) (MemTable.leave param)).1 := by
   generalize (StateM.run (leave param) table) = x
   obtain ⟨⟨res, hres⟩, table'⟩ := x
   simp only

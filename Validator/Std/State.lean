@@ -11,6 +11,7 @@ def StateM.run' {σ : Type u} {α : Type u} (x : StateM σ α) (s : σ) : α :=
 elab "simp_state" : tactic => do
   Lean.Elab.Tactic.evalTactic (←
   `(tactic| simp only [
+    Id.run,
     getThe,
     Bind.bind,
     Functor.map,
