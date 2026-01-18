@@ -1,13 +1,15 @@
 import Validator.Std.Decidable
 import Validator.Std.Except
 import Validator.Std.List
-
 import Validator.Std.Hedge
 
-import Validator.Pred.AnyEq
+import Validator.Regex.Regex
+
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
-import Validator.Regex.Regex
+
+import Validator.Pred.AnyEq
+import Validator.Pred.Compare
 
 namespace Hedge
 
@@ -279,6 +281,8 @@ theorem Grammar.Original.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → �
 -- Tests
 
 namespace Grammar.Original
+
+open Pred
 
 def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes

@@ -1,5 +1,5 @@
 -- A simple predicate with only equality and any.
-namespace AnyEq
+namespace Pred.AnyEq
 
 inductive Pred (α: Type) where | any | eq (t: α)
   deriving DecidableEq, Ord, Repr, Hashable, BEq

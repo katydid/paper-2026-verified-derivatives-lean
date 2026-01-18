@@ -28,6 +28,8 @@ example: Grammar 2 String := Grammar.mk
     Regex.emptystr,
   ])
 
+open Pred
+
 example : Grammar 5 (AnyEq.Pred String) := Grammar.mk
   -- start := ("html", Html)
   (start := Regex.symbol (AnyEq.Pred.eq "html", 0))

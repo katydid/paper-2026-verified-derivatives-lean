@@ -5,9 +5,13 @@ import Validator.Std.Hedge
 
 import Validator.Regex.Lang
 import Validator.Regex.Room
+
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
 import Validator.Hedge.Lang
+
+import Validator.Pred.AnyEq
+import Validator.Pred.Compare
 
 namespace Hedge
 
@@ -288,8 +292,19 @@ theorem Grammar.Room.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α �
 
 namespace Grammar.Room
 
+open Pred
+
 def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes
+
+abbrev contains (r: Regex σ) := Regex.contains r
+abbrev symbol (s: σ) := Regex.symbol s
+abbrev emptystr : Regex σ := Regex.emptystr
+abbrev interleave (r1 r2: Regex σ) := Regex.interleave r1 r2
+abbrev or (r1 r2: Regex σ) := Regex.or r1 r2
+abbrev and (r1 r2: Regex σ) := Regex.and r1 r2
+abbrev optional (r: Regex σ) := Regex.optional r
+abbrev starAny: Regex σ := Regex.starAny
 
 #guard run
   (Hedge.Grammar.singleton Regex.emptyset)
@@ -458,4 +473,127 @@ private def example_grammar_sec: Hedge.Grammar 2 String :=
 
 #guard validate example_grammar_sec (· == ·)
   [node "p" []]
+  = false
+
+private def example_benchmark_nested_contains: Hedge.Grammar 3 String :=
+  mk (contains (symbol ("A",0))) #v[contains (symbol ("B",1)), symbol ("C",2), emptystr]
+
+#guard validate example_benchmark_nested_contains (· == ·)
+  [node "A" [node "B" [node "C" []]]]
+
+#guard validate example_benchmark_nested_contains (· == ·)
+  [node "a" [], node "A" [node "B" [node "D" []], node "B" [node "C" []], node "B" [node "D" []]], node "a" []]
+
+#guard validate example_benchmark_nested_contains (· == ·)
+  [node "a" [node "B" [node "C" []]], node "A" [node "D" [node "C" []], node "B" [node "D" []], node "D" [node "D" []]], node "a" []]
+  = false
+
+private def example_interleave: Hedge.Grammar 5 String :=
+  mk (interleave (symbol ("A",0)) (interleave (symbol ("B",1)) (optional (symbol ("C",2))))) #v[
+    interleave (symbol ("A1", 3)) (symbol ("A2",3)),
+    interleave (symbol ("Bb", 3)) starAny,
+    contains (symbol ("Cc", 3)),
+    symbol ("t", 4), emptystr]
+
+#guard validate example_interleave (· == ·)
+  [node "A" [node "A1" [node "t" []], node "A2" [node "t" []]], node "B" [node "B2" [node "t" []], node "Bb" [node "t" []]]]
+
+#guard validate example_interleave (· == ·)
+  [node "D" [], node "A" [node "A1" [node "t" []], node "A2" [node "t" []]], node "B" [node "B2" [node "t" []], node "Bb" [node "t" []]]]
+  = false
+
+#guard validate example_interleave (· == ·)
+  [node "B" [node "B1" [node "t" []], node "B2" [node "t" []], node "Bb" [node "t" []]], node "A" [node "A1" [node "t" []], node "A2" [node "t" []]]]
+  = true
+
+#guard validate example_interleave (· == ·)
+  [
+    node "B" [node "B1" [node "t" []], node "Bb" [node "t" []]],
+    node "C" [node "C1" [node "t" []], node "Cc" [node "t" []], node "C2" [node "t" []]],
+    node "A" [node "A1" [node "t" []], node "A2" [node "t" []]]
+  ]
+  = true
+
+#guard validate example_interleave (· == ·)
+  [
+    node "B" [node "B2" [node "t" []], node "Bb" [node "t" []]],
+    node "A" [node "C1" [node "t" []], node "Cc" [node "t" []], node "C2" [node "t" []]],
+    node "A" [node "A1" [node "t" []], node "A2" [node "t" []]]
+  ]
+  = false
+
+#guard validate example_interleave (· == ·)
+  [
+    node "B" [node "B2" [node "t" []], node "Bb" [node "t" []]],
+    node "C" [node "C1" [node "t" []], node "Cc" [node "g" []], node "C2" [node "t" []]],
+    node "A" [node "A1" [node "t" []], node "A2" [node "t" []]]
+  ]
+  = false
+
+-- Benchmark tests
+
+open Pred.Compare
+
+def eq (v: α × Fin n) := symbol (Pred.eq v.1, v.2)
+def field (v: α × Fin n) := contains (symbol (Pred.eq v.1, v.2))
+
+def simple: Grammar 2 (Pred String) :=
+  mk (field ("Category", 1)) #v[emptystr, eq ("Computer Science", 0)]
+
+#guard validate simple Pred.evalb
+  [node "Category" [node "Computer Science" []]]
+
+#guard validate simple Pred.evalb
+  [node "Name" [node "ITP" []], node "Category" [node "Computer Science" []]]
+
+#guard validate simple Pred.evalb
+  [node "Name" [node "ICFP" []], node "Category" [node "Functional Programming" []]]
+  = false
+
+def complex : Grammar 7 (Pred String) :=
+  mk (interleave (eq ("Due", 1)) (interleave (eq ("Loc", 5)) starAny)) #v[emptystr,
+    or (field ("Y", 2)) (and (field ("Y", 3)) (field ("M", 4))),
+    eq ("2026", 0), eq ("2025", 0), symbol (Pred.ge "10", 0),
+    field ("Cont", 6), eq ("EU", 0),
+  ]
+
+#guard validate complex Pred.evalb
+  [
+    node "Name" [node "ITP" []],
+    node "Loc" [
+      node "Cont" [node "EU" []],
+    ],
+    node "Due" [
+      node "Y" [node "2026" []],
+      node "M" [node "02" []],
+      node "D" [node "19" []],
+    ],
+  ]
+
+#guard validate complex Pred.evalb
+  [
+    node "Name" [node "ITP" []],
+    node "Loc" [
+      node "Cont" [node "EU" []],
+    ],
+    node "Due" [
+      node "Y" [node "2027" []],
+      node "M" [node "02" []],
+      node "D" [node "19" []],
+    ],
+  ]
+  = false
+
+#guard validate complex Pred.evalb
+  [
+    node "Name" [node "ITP" []],
+    node "Loc" [
+      node "Cont" [node "AN" []],
+    ],
+    node "Due" [
+      node "Y" [node "2026" []],
+      node "M" [node "02" []],
+      node "D" [node "19" []],
+    ],
+  ]
   = false
