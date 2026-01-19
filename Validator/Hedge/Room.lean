@@ -552,7 +552,7 @@ def simple: Grammar 2 (Pred String) :=
 
 def complex : Grammar 7 (Pred String) :=
   mk (interleave (eq ("Due", 1)) (interleave (eq ("Loc", 5)) starAny)) #v[emptystr,
-    or (field ("Y", 2)) (and (field ("Y", 3)) (field ("M", 4))),
+    or (field ("Year", 2)) (and (field ("Year", 3)) (field ("Month", 4))),
     eq ("2026", 0), eq ("2025", 0), symbol (Pred.ge "10", 0),
     field ("Cont", 6), eq ("EU", 0),
   ]
@@ -562,11 +562,26 @@ def complex : Grammar 7 (Pred String) :=
     node "Name" [node "ITP" []],
     node "Loc" [
       node "Cont" [node "EU" []],
+      node "City" [node "Lisbon" []]
     ],
     node "Due" [
-      node "Y" [node "2026" []],
-      node "M" [node "02" []],
-      node "D" [node "19" []],
+      node "Year" [node "2026" []],
+      node "Month" [node "02" []],
+      node "Day" [node "19" []],
+    ],
+  ]
+
+#guard validate complex Pred.evalb
+  [
+    node "Name" [node "ITP" []],
+    node "Loc" [
+      node "Cont" [node "EU" []],
+      node "City" [node "Amsterdam" []]
+    ],
+    node "Due" [
+      node "Year" [node "2025" []],
+      node "Month" [node "11" []],
+      node "Day" [node "19" []],
     ],
   ]
 
@@ -578,8 +593,8 @@ def complex : Grammar 7 (Pred String) :=
     ],
     node "Due" [
       node "Y" [node "2027" []],
-      node "M" [node "02" []],
-      node "D" [node "19" []],
+      node "Month" [node "02" []],
+      node "Day" [node "19" []],
     ],
   ]
   = false
@@ -592,8 +607,8 @@ def complex : Grammar 7 (Pred String) :=
     ],
     node "Due" [
       node "Y" [node "2026" []],
-      node "M" [node "02" []],
-      node "D" [node "19" []],
+      node "Month" [node "02" []],
+      node "Day" [node "19" []],
     ],
   ]
   = false
