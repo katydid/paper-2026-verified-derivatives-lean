@@ -1,3 +1,5 @@
+import Mathlib.Tactic.NthRewrite
+
 -- Copied from https://relaxng.org/jclark/derivative.html and added translations for Lean
 import Validator.RelaxNG.StdHaskell
 
@@ -229,38 +231,39 @@ def datatypeEqual : Datatype -> String -> Context -> String -> Context -> Bool
 
 -- textDeriv computes the derivative of a pattern with respect to a text node.
 -- textDeriv :: Context -> Pattern -> String -> Pattern
-def Pattern.textDeriv: Context -> Pattern -> String -> Pattern
+def Pattern.textDeriv (cx: Context) (p: Pattern) (s: String): Pattern :=
+  match p with
 -- Choice is easy:
 -- textDeriv cx (Choice p1 p2) s =
 --   choice (textDeriv cx p1 s) (textDeriv cx p2 s)
-  | cx, Choice p1 p2, s =>
+  | Choice p1 p2 =>
     choice (textDeriv cx p1 s) (textDeriv cx p2 s)
 -- Interleave is almost as easy (one of the main advantages of this validation technique is the ease with which it handles interleave):
 -- textDeriv cx (Interleave p1 p2) s =
 --   choice (interleave (textDeriv cx p1 s) p2)
 --          (interleave p1 (textDeriv cx p2 s))
-  | cx, Interleave p1 p2, s =>
+  | Interleave p1 p2 =>
     choice (interleave (textDeriv cx p1 s) p2)
            (interleave p1 (textDeriv cx p2 s))
 -- For Group, the derivative depends on whether the first operand is nullable.
 -- textDeriv cx (Group p1 p2) s =
 --   let p = group (textDeriv cx p1 s) p2
 --   in if nullable p1 then choice p (textDeriv cx p2 s) else p
-  | cx, Group p1 p2, s =>
+  | Group p1 p2 =>
     let p := group (textDeriv cx p1 s) p2
     if nullable p1 then choice p (textDeriv cx p2 s) else p
 -- For After, we recursively apply textDeriv to the first argument.
 -- textDeriv cx (After p1 p2) s = after (textDeriv cx p1 s) p2
-  | cx, After p1 p2, s =>
+  | After p1 p2 =>
     after (textDeriv cx p1 s) p2
 -- For OneOrMore we partially expand the OneOrMore into a Group.
 -- textDeriv cx (OneOrMore p) s =
 --   group (textDeriv cx p s) (choice (OneOrMore p) Empty)
-  | cx, OneOrMore p, s =>
+  | OneOrMore p =>
     group (textDeriv cx p s) (choice (OneOrMore p) Empty)
 -- A text pattern matches zero or more text nodes. Thus the derivative of Text with respect to a text node is Text, not Empty.
 -- textDeriv cx Text _ = Text
-  | cx, Text, _ =>
+  | Text =>
     Text
 -- The derivative of a value, data or list pattern with respect to a text node is Empty if the pattern matches and NotAllowed if it does not.
 -- To determine whether a value or data pattern matches, we rely respectively on the datatypeEqual and datatypeAllows functions which implement the semantics of a datatype library.
@@ -273,11 +276,11 @@ def Pattern.textDeriv: Context -> Pattern -> String -> Pattern
 --     Empty
 --   else
 --     NotAllowed
-  | cx1, Value dt value cx2, s =>
-    if datatypeEqual dt value cx2 s cx1 then Empty else NotAllowed
-  | cx, Data dt params, s =>
+  | Value dt value cx2 =>
+    if datatypeEqual dt value cx2 s cx then Empty else NotAllowed
+  | Data dt params =>
     if datatypeAllows dt params s cx then Empty else NotAllowed
-  | cx, DataExcept dt params p, s =>
+  | DataExcept dt params p =>
     if datatypeAllows dt params s cx && not (nullable (textDeriv cx p s)) then
       Empty
     else
@@ -285,11 +288,26 @@ def Pattern.textDeriv: Context -> Pattern -> String -> Pattern
 -- To determine whether a pattern List p matches a text node, the value of the text node is split into a sequence of whitespace-delimited tokens, and the resulting sequence is matched against p:
 -- textDeriv cx (List p) s =
 --   if nullable (listDeriv cx p (words s)) then Empty else NotAllowed
-  | cx, List p, s =>
-    if nullable (listDeriv cx p (words s)) then Empty else NotAllowed
+  | List p =>
+    if nullable (List.foldl (textDeriv cx) p (words s)) then Empty else NotAllowed
 -- In any other case, the pattern does not match the node.
 -- textDeriv _ _ _ = NotAllowed
-  | _, _, _ => NotAllowed
+  | _ => NotAllowed
+  termination_by p
+  decreasing_by
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
 
 -- To compute the derivative of a pattern with respect to a list of strings, simply compute the derivative with respect to each member of the list in turn.
 -- listDeriv :: Context -> Pattern -> [String] -> Pattern
@@ -298,6 +316,9 @@ def Pattern.textDeriv: Context -> Pattern -> String -> Pattern
 def listDeriv : Context -> Pattern -> List String -> Pattern
   | _, p, [] => p
   | cx, p, h::t => listDeriv cx (Pattern.textDeriv cx p h) t
+
+def listDeriv' : Context -> Pattern -> List String -> Pattern
+  | cx, p, xs => List.foldl (Pattern.textDeriv cx) p xs
 
 -- Perhaps the trickiest part of the algorithm is in computing the derivative with respect to a start-tag open. For this, we need a helper function; applyAfter takes a function and applies it to the second operand of each After pattern.
 -- applyAfter :: (Pattern -> Pattern) -> Pattern -> Pattern
@@ -363,7 +384,7 @@ def startTagOpenDeriv : Pattern -> QName -> Pattern
 --   (nullable p && whitespace s) || nullable (textDeriv cx p s)
 def valueMatch : Context -> Pattern -> String -> Bool
   | cx, p, s =>
-    (Pattern.nullable p && whitespace s) || Pattern.nullable (textDeriv cx p s)
+    (Pattern.nullable p && whitespace s) || Pattern.nullable (Pattern.textDeriv cx p s)
 
 -- Computing the derivative with respect to an attribute done in a similar to computing the derivative with respect to a text node. The main difference is in the handling of Group, which has to deal with the fact that the order of attributes is not significant. Computing the derivative of a Group pattern with respect to an attribute node works the same as computing the derivative of an Interleave pattern.
 -- attDeriv :: Context -> Pattern -> AttributeNode -> Pattern
@@ -451,21 +472,27 @@ mutual
 
 -- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn, except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
-def childrenDeriv: Context -> Pattern -> List ChildNode -> Pattern
+def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
+  match children with
 -- The case where the list of children is empty is treated as if there were a text node whose value were the empty string. See rule (weak match 3) in the RELAX NG spec.
 -- childrenDeriv cx p [] = childrenDeriv cx p [(TextNode "")]
-  | cx, p, [] => childrenDeriv cx p [(ChildNode.TextNode "")]
+  | [] => childrenDeriv cx p [(ChildNode.TextNode "")]
 -- In the case where the list of children consists of a single text node and the value of the text node consists only of whitespace, the list of children matches if the list matches either with or without stripping the text node. Note the similarity with valueMatch.
 -- childrenDeriv cx p [(TextNode s)] =
 --   let p1 = childDeriv cx p (TextNode s)
 --   in if whitespace s then choice p p1 else p1
-  | cx, p, [(ChildNode.TextNode s)] =>
+  | [(ChildNode.TextNode s)] =>
     let p1 := childDeriv cx p (ChildNode.TextNode s)
     if whitespace s then choice p p1 else p1
 -- Otherwise, there must be one or more elements amongst the children, in which case any whitespace-only text nodes are stripped before the derivative is computed.
 -- childrenDeriv cx p children = stripChildrenDeriv cx p children
-  | cx, p, children =>
-    stripChildrenDeriv cx p children
+  | _ =>
+    List.foldl (fun p' node => if strip node then p' else (childDeriv cx p node)) p children
+  termination_by children.length
+  decreasing_by
+    · sorry
+    · sorry
+    · sorry
 
 -- The key concept used by this validation technique is the concept of a derivative. The derivative of a pattern p with respect to a node x is a pattern for what's left of p after matching x; in other words, it is a pattern that matches any sequence that when appended to x will match p.
 -- If we can compute derivatives, then we can determine whether a pattern matches a node: a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
@@ -486,14 +513,18 @@ def childrenDeriv: Context -> Pattern -> List ChildNode -> Pattern
 --       p3 = startTagCloseDeriv p2
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
-def childDeriv : Context -> Pattern -> ChildNode -> Pattern
-  | cx, p, ChildNode.TextNode s => textDeriv cx p s
-  | _ , p, ChildNode.ElementNode qn cx atts children =>
+def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
+  match node with
+  | ChildNode.TextNode s => Pattern.textDeriv cx p s
+  | ChildNode.ElementNode qn cx atts children =>
       let p1 := startTagOpenDeriv p qn
       let p2 := attsDeriv cx p1 atts
       let p3 := startTagCloseDeriv p2
       let p4 := childrenDeriv cx p3 children
       endTagDeriv p4
+  termination_by (sizeOf node)
+  decreasing_by
+    · sorry
 
 -- stripChildrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
 -- stripChildrenDeriv _ p [] = p
@@ -503,5 +534,8 @@ def stripChildrenDeriv : Context -> Pattern -> List ChildNode -> Pattern
   | _, p, [] => p
   | cx, p, (h::t) =>
     stripChildrenDeriv cx (if strip h then p else (childDeriv cx p h)) t
+
+def stripChildrenDeriv' : Context -> Pattern -> List ChildNode -> Pattern
+  | cx, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv cx p node)) p xs
 
 end
