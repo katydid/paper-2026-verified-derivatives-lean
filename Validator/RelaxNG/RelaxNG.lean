@@ -73,12 +73,12 @@ inductive Pattern where
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
 inductive QName where
-  | QName (u: Uri) (n: LocalName)
+  | mk (u: Uri) (n: LocalName)
 
 -- An AttributeNode consists of a QName and a String.
 -- data AttributeNode = AttributeNode QName String
 inductive AttributeNode where
-  | AttributeNode (n: QName) (v: String)
+  | mk (n: QName) (v: String)
 
 -- An XML document is represented as a ChildNode. There are two kinds of child node:
 --     a TextNode containing a string;
@@ -101,9 +101,9 @@ inductive ChildNode where
 def NameClass.contains: NameClass -> QName -> Bool
   | AnyName, _ => true
   | AnyNameExcept nc, n => not (contains nc n)
-  | NsName ns1, QName.QName ns2 _ => ns1 == ns2
-  | NsNameExcept ns1 nc, QName.QName ns2 ln => ns1 == ns2 && not (contains nc (QName.QName ns2 ln))
-  | Name ns1 ln1, QName.QName ns2 ln2 => (ns1 == ns2) && (ln1 == ln2)
+  | NsName ns1, QName.mk ns2 _ => ns1 == ns2
+  | NsNameExcept ns1 nc, QName.mk ns2 ln => ns1 == ns2 && not (contains nc (QName.mk ns2 ln))
+  | Name ns1 ln1, QName.mk ns2 ln2 => (ns1 == ns2) && (ln1 == ln2)
   | NameClassChoice nc1 nc2, n => (contains nc1 n) || (contains nc2 n)
 
 -- In Haskell, _ is an anonymous variable that matches any argument.
@@ -416,7 +416,7 @@ def attDeriv : Context -> Pattern -> AttributeNode -> Pattern
            (interleave p1 (attDeriv cx p2 att))
   | cx, (Pattern.OneOrMore p), att =>
     group (attDeriv cx p att) (choice (Pattern.OneOrMore p) Pattern.Empty)
-  | cx, (Pattern.Attribute nc p), (AttributeNode.AttributeNode qn s) =>
+  | cx, (Pattern.Attribute nc p), (AttributeNode.mk qn s) =>
     if NameClass.contains nc qn && valueMatch cx p s then Pattern.Empty else Pattern.NotAllowed
   | _, _, _ => Pattern.NotAllowed
 
@@ -427,8 +427,8 @@ def attDeriv : Context -> Pattern -> AttributeNode -> Pattern
 --   attsDeriv cx (attDeriv cx p (AttributeNode qn s)) t
 def attsDeriv : Context -> Pattern -> List AttributeNode -> Pattern
   | _, p, [] => p
-  | cx, p, ((AttributeNode.AttributeNode qn s)::t) =>
-     attsDeriv cx (attDeriv cx p (AttributeNode.AttributeNode qn s)) t
+  | cx, p, ((AttributeNode.mk qn s)::t) =>
+     attsDeriv cx (attDeriv cx p (AttributeNode.mk qn s)) t
 
 -- When we see a start-tag close, we know that there cannot be any further attributes. Therefore we can replace each Attribute pattern by NotAllowed.
 -- startTagCloseDeriv :: Pattern -> Pattern
@@ -473,26 +473,28 @@ mutual
 -- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn, except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
 def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
-  match children with
+  match h: children with
 -- The case where the list of children is empty is treated as if there were a text node whose value were the empty string. See rule (weak match 3) in the RELAX NG spec.
 -- childrenDeriv cx p [] = childrenDeriv cx p [(TextNode "")]
-  | [] => childrenDeriv cx p [(ChildNode.TextNode "")]
+  | [] =>
+    let p1 := Pattern.textDeriv cx p ""
+    if whitespace "" then choice p p1 else p1
 -- In the case where the list of children consists of a single text node and the value of the text node consists only of whitespace, the list of children matches if the list matches either with or without stripping the text node. Note the similarity with valueMatch.
 -- childrenDeriv cx p [(TextNode s)] =
 --   let p1 = childDeriv cx p (TextNode s)
 --   in if whitespace s then choice p p1 else p1
-  | [(ChildNode.TextNode s)] =>
-    let p1 := childDeriv cx p (ChildNode.TextNode s)
+  | [node@(ChildNode.TextNode s)] =>
+    let p1 :=  Pattern.textDeriv cx p s
     if whitespace s then choice p p1 else p1
 -- Otherwise, there must be one or more elements amongst the children, in which case any whitespace-only text nodes are stripped before the derivative is computed.
 -- childrenDeriv cx p children = stripChildrenDeriv cx p children
   | _ =>
-    List.foldl (fun p' node => if strip node then p' else (childDeriv cx p node)) p children
-  termination_by children.length
+    let children' := List.filter (not ∘ strip) children
+    List.foldl (childDeriv cx) p children'
+  termination_by sizeOf children
   decreasing_by
-    · sorry
-    · sorry
-    · sorry
+    · subst h
+      sorry
 
 -- The key concept used by this validation technique is the concept of a derivative. The derivative of a pattern p with respect to a node x is a pattern for what's left of p after matching x; in other words, it is a pattern that matches any sequence that when appended to x will match p.
 -- If we can compute derivatives, then we can determine whether a pattern matches a node: a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
@@ -514,7 +516,7 @@ def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
 def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
-  match node with
+  match h: node with
   | ChildNode.TextNode s => Pattern.textDeriv cx p s
   | ChildNode.ElementNode qn cx atts children =>
       let p1 := startTagOpenDeriv p qn
@@ -524,7 +526,8 @@ def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
       endTagDeriv p4
   termination_by (sizeOf node)
   decreasing_by
-    · sorry
+    · simp only [ChildNode.ElementNode.sizeOf_spec]
+      omega
 
 -- stripChildrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
 -- stripChildrenDeriv _ p [] = p
