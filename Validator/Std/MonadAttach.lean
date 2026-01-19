@@ -144,18 +144,18 @@ instance inst1 [Monad m] [MonadAttach m] : MonadAttach (StateT σ m) where
   CanReturn x a := Exists fun s => Exists fun s' => MonadAttach.CanReturn (x.run s) (a, s')
   attach x := fun s => (fun ⟨⟨a, s'⟩, h⟩ => ⟨⟨a, s, s', h⟩, s'⟩) <$> MonadAttach.attach (x.run s)
 
-instance inst2 [Monad m] [MonadAttach m] : MonadAttach (StateT σ m) where
-  CanReturn x a := Exists fun s => Exists fun s' => MonadAttach.CanReturn (x.run s) (a, s')
-  attach x := fun s => (fun ⟨⟨a, s'⟩, h⟩ => (Subtype.mk a (Exists.intro s (Exists.intro s' h)), s')) <$> MonadAttach.attach (x.run s)
+-- instance inst2 [Monad m] [MonadAttach m] : MonadAttach (StateT σ m) where
+--   CanReturn x a := Exists fun s => Exists fun s' => MonadAttach.CanReturn (x.run s) (a, s')
+--   attach x := fun s => (fun ⟨⟨a, s'⟩, h⟩ => (Subtype.mk a (Exists.intro s (Exists.intro s' h)), s')) <$> MonadAttach.attach (x.run s)
 
-instance instForAll : MonadAttach (StateM σ) where
-  -- CanReturn {α : Type u} : (x : m α) → (a : α) → Prop
-  CanReturn x a := ∀ s, (x.run s).1 = a
-  -- attach {α : Type u} (x : m α) : m (Subtype (CanReturn x))
-  attach x := fun s => by
-    refine pure (Subtype.mk (x.run s).1 rfl)
-    sorry
-  -- attach x := fun s => (fun ⟨⟨a, s'⟩, h⟩ => (Subtype.mk a (fun s s' => h), s')) <$> MonadAttach.attach (x.run s)
+-- instance instForAll : MonadAttach (StateM σ) where
+--   -- CanReturn {α : Type u} : (x : m α) → (a : α) → Prop
+--   CanReturn x a := ∀ s, (x.run s).1 = a
+--   -- attach {α : Type u} (x : m α) : m (Subtype (CanReturn x))
+--   attach x := fun s => by
+--     refine pure (Subtype.mk (x.run s).1 rfl)
+--     sorry
+--   -- attach x := fun s => (fun ⟨⟨a, s'⟩, h⟩ => (Subtype.mk a (fun s s' => h), s')) <$> MonadAttach.attach (x.run s)
 
 public instance [Monad m] [LawfulMonad m] [MonadAttach m] [WeaklyLawfulMonadAttach m] :
     WeaklyLawfulMonadAttach (StateT σ m) where

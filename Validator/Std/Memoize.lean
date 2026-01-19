@@ -216,3 +216,27 @@ private theorem fibM'_is_correct (table: MemTable fib) (n: Nat): fib n = (StateM
 private theorem fibM_is_correct (n: Nat): fib n = fibM n := by
   unfold fibM
   rw [<- fibM'_is_correct]
+
+def List_foldlMemoize
+  {α: Type}
+  [DecidableEq α] [Hashable α]
+  {β: Type}
+  [DecidableEq β] [Hashable β]
+  (f: (b: β) -> (a: α) -> β)
+  {σ: Type}
+  [Monad m]
+  (init: β) (xs: List α): m {b': β // b' = List.foldl f init xs} :=
+  match xs with
+  | [] => pure ⟨init, rfl⟩
+  | (x::xs) => do
+    let x': { b // b = f init x } := ⟨f init x, rfl⟩
+    let xs': { b' // b' = List.foldl f (↑x') xs } <- List_foldlMemoize (σ := σ) f x' xs
+    pure (Subtype.mk xs' (by
+      obtain ⟨x', hx'⟩ := x'
+      simp only at xs'
+      obtain ⟨xs', hxs'⟩ := xs'
+      simp only
+      rw [hx'] at hxs'
+      simp only [List.foldl]
+      exact hxs'
+    ))
