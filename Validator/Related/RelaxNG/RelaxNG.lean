@@ -794,3 +794,26 @@ def g := Grammar.mk (symbol ("<div>", 0)) #v[or (symbol ("<div>", 0)) emptystr]
 #guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv -- <div><div></div></div></div>
 #guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv) -- <div></div></div></div>
 #guard example_after_buildup_4.p1 = after (g.lookup 0) (after closeDiv (after closeDiv closeDiv)) -- </div></div></div>
+
+namespace keep_uncles_and_aunts
+
+def concat (p1 p2: Pattern n): Pattern n :=
+  Pattern.Group p1 p2
+
+def qn := QName.mkName "<head>"
+def cx := Context.empty
+def atts: List AttributeNode := []
+def children: List ChildNode := [ChildNode.ElementNode qn cx atts []]
+def childNode := ChildNode.ElementNode qn cx atts children
+
+def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[or (symbol ("<div>", 0)) emptystr]
+def o := (Options.mk (smartConstruction := true))
+def p0 := g.lookup 0
+-- continue recursively where the previous example left off
+def p: Pattern 1 := g.start
+
+-- let p1 := startTagOpenDeriv o g p qn
+def p1: Pattern 1 := after (or (symbol ("<div>", 0)) emptystr) (symbol ("<body>", 0))
+#guard p1 = startTagOpenDeriv o g p qn
+
+end keep_uncles_and_aunts
