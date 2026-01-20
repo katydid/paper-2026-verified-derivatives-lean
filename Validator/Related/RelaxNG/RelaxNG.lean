@@ -84,7 +84,7 @@ structure Grammar (n: Nat) where
   start: Pattern n
   prods: Vector (Pattern n) n
 
-def lookup (G: Grammar n) (ref: Fin n): Pattern n :=
+def Grammar.lookup (G: Grammar n) (ref: Fin n): Pattern n :=
   Vector.get G.prods ref
 
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
@@ -357,7 +357,7 @@ def startTagOpenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (qn: QName): Pa
 -- startTagOpenDeriv (Element nc p) qn =
 --   if contains nc qn then after p Empty else NotAllowed
   | Pattern.Element nc ref =>
-    if NameClass.contains nc qn then after' o (lookup g ref) Pattern.Empty else Pattern.NotAllowed
+    if NameClass.contains nc qn then after' o (g.lookup ref) Pattern.Empty else Pattern.NotAllowed
 -- For Interleave, OneOrMore Group or After we compute the derivative in a similar way to textDeriv but with an important twist.
 -- The twist is that instead of applying interleave, group and after directly to the result of recursively applying startTagOpenDeriv,
 -- we instead use applyAfter to push the interleave, group or after down into the second operand of After.
@@ -676,8 +676,8 @@ def childNode := ChildNode.ElementNode qn cx atts children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "<doc>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
-def p0 := lookup g 0
-def p := lookup g 0
+def p0 := g.lookup 0
+def p := g.lookup 0
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
@@ -716,7 +716,7 @@ def childNode := ChildNode.ElementNode qn cx atts children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
-def p0 := lookup g 0
+def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 
@@ -752,7 +752,7 @@ def childNode := ChildNode.ElementNode qn cx atts children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
-def p0 := lookup g 0
+def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 
@@ -786,11 +786,10 @@ abbrev or (p1 p2: Pattern n): Pattern n :=
 abbrev emptystr : Pattern n := Pattern.Empty
 abbrev after (p1 p2: Pattern n): Pattern n :=
   Pattern.After p1 p2
-abbrev close: Pattern n := Pattern.Empty
+abbrev closeDiv: Pattern n := Pattern.Empty
 
 -- With every call to startTagOpenDeriv the number of After expression accumulate.
 def g := Grammar.mk (symbol ("<doc>", 0)) #v[or (symbol ("<div>", 0)) emptystr]
-def p0 := lookup g 0
-#guard example_after_buildup_2.p1 = after p0 close
-#guard example_after_buildup_3.p1 = after p0 (after close close)
-#guard example_after_buildup_4.p1 = after p0 (after close (after close close))
+#guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv
+#guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv)
+#guard example_after_buildup_4.p1 = after (g.lookup 0) (after closeDiv (after closeDiv closeDiv))
