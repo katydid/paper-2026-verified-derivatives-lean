@@ -1,7 +1,7 @@
 import Mathlib.Tactic.NthRewrite
 
 -- Copied from https://relaxng.org/jclark/derivative.html and added translations for Lean
-import Validator.RelaxNG.StdHaskell
+import Validator.Related.RelaxNG.StdHaskell
 
 namespace RelaxNG
 
