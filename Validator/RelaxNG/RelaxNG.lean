@@ -54,27 +54,33 @@ inductive NameClass where
 --                | Attribute NameClass Pattern
 --                | Element NameClass Pattern
 --                | After Pattern Pattern
-inductive Pattern where
+inductive Pattern (n: Nat) where
   | Empty
   | NotAllowed
   | Text
-  | Choice (p1 p2: Pattern)
-  | Interleave (p1 p2: Pattern)
-  | Group (p1 p2: Pattern)
-  | OneOrMore (p1: Pattern)
-  | List (p1: Pattern)
+  | Choice (p1 p2: Pattern n)
+  | Interleave (p1 p2: Pattern n)
+  | Group (p1 p2: Pattern n)
+  | OneOrMore (p1: Pattern n)
+  | List (p1: Pattern n)
   | Data (d: Datatype) (ps: ParamList)
-  | DataExcept (d: Datatype) (ps: ParamList) (p1: Pattern)
+  | DataExcept (d: Datatype) (ps: ParamList) (p1: Pattern n)
   | Value (d: Datatype) (v: String) (c: Context)
-  | Attribute (n: NameClass) (p1: Pattern)
-  | Element (n: NameClass) (p1: Pattern)
-  | After (p1 p2: Pattern)
+  | Attribute (name: NameClass) (p1: Pattern n)
+  | Element (name: NameClass) (p1: Fin n)
+  | After (p1 p2: Pattern n)
   deriving Repr, DecidableEq
 -- The After pattern is used internally and will be explained later.
 -- Note that there is an Element pattern rather than a Ref pattern.
 -- In the simplified XML representation of patterns, every ref element refers to an element pattern.
 -- In the internal representation of patterns, we can replace each reference to a ref pattern by a reference to the element pattern that the ref pattern references,
 -- resulting in a cyclic data structure. (Note that even though Haskell is purely functional it can handle cyclic data structures because of its laziness.)
+structure Grammar (n: Nat) where
+  start: Pattern n
+  prods: Vector (Pattern n) n
+
+def lookup (G: Grammar n) (ref: Fin n): Pattern n :=
+  Vector.get G.prods ref
 
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
@@ -131,7 +137,7 @@ def NameClass.contains: NameClass -> QName -> Bool
 -- nullable Empty = True
 -- nullable Text = True
 -- nullable (After _ _) = False
-def Pattern.nullable : Pattern -> Bool
+def Pattern.nullable : Pattern n -> Bool
   | (Group p1 p2) => nullable p1 && nullable p2
   | (Interleave p1 p2) => nullable p1 && nullable p2
   | (Choice p1 p2) => nullable p1 || nullable p2
@@ -167,7 +173,7 @@ def strip : ChildNode -> Bool
 -- choice p NotAllowed = p
 -- choice NotAllowed p = p
 -- choice p1 p2 = Choice p1 p2
-def choice : Pattern -> Pattern -> Pattern
+def choice : Pattern n -> Pattern n -> Pattern n
   | p, Pattern.NotAllowed => p
   | Pattern.NotAllowed, p => p
   | p1, p2 => Pattern.Choice p1 p2
@@ -178,7 +184,7 @@ def choice : Pattern -> Pattern -> Pattern
 -- group p Empty = p
 -- group Empty p = p
 -- group p1 p2 = Group p1 p2
-def group : Pattern -> Pattern -> Pattern
+def group : Pattern n -> Pattern n -> Pattern n
   | _, Pattern.NotAllowed => Pattern.NotAllowed
   | Pattern.NotAllowed, _ => Pattern.NotAllowed
   | p, Pattern.Empty => p
@@ -191,7 +197,7 @@ def group : Pattern -> Pattern -> Pattern
 -- interleave p Empty = p
 -- interleave Empty p = p
 -- interleave p1 p2 = Interleave p1 p2
-def interleave : Pattern -> Pattern -> Pattern
+def interleave : Pattern n -> Pattern n -> Pattern n
   | _, Pattern.NotAllowed => Pattern.NotAllowed
   | Pattern.NotAllowed, _ => Pattern.NotAllowed
   | p, Pattern.Empty => p
@@ -202,7 +208,7 @@ def interleave : Pattern -> Pattern -> Pattern
 -- after p NotAllowed = NotAllowed
 -- after NotAllowed p = NotAllowed
 -- after p1 p2 = After p1 p2
-def after : Pattern -> Pattern -> Pattern
+def after : Pattern n -> Pattern n -> Pattern n
   | _, Pattern.NotAllowed => Pattern.NotAllowed
   | Pattern.NotAllowed, _ => Pattern.NotAllowed
   | p1, p2 => Pattern.After p1 p2
@@ -211,7 +217,7 @@ def after : Pattern -> Pattern -> Pattern
 -- oneOrMore :: Pattern -> Pattern
 -- oneOrMore NotAllowed = NotAllowed
 -- oneOrMore p = OneOrMore p
-def oneOrMore : Pattern -> Pattern
+def oneOrMore : Pattern n -> Pattern n
   | Pattern.NotAllowed => Pattern.NotAllowed
   | p => Pattern.OneOrMore p
 
@@ -241,7 +247,7 @@ def datatypeEqual : Datatype -> String -> Context -> String -> Context -> Bool
 
 -- textDeriv computes the derivative of a pattern with respect to a text node.
 -- textDeriv :: Context -> Pattern -> String -> Pattern
-def Pattern.textDeriv (cx: Context) (p: Pattern) (s: String): Pattern :=
+def Pattern.textDeriv (cx: Context) (p: Pattern n) (s: String): Pattern n :=
   match p with
 -- Choice is easy:
 -- textDeriv cx (Choice p1 p2) s =
@@ -326,11 +332,11 @@ def Pattern.textDeriv (cx: Context) (p: Pattern) (s: String): Pattern :=
 -- listDeriv :: Context -> Pattern -> [String] -> Pattern
 -- listDeriv _ p [] = p
 -- listDeriv cx p (h:t) = listDeriv cx (textDeriv cx p h) t
-def listDeriv : Context -> Pattern -> List String -> Pattern
+def listDeriv : Context -> Pattern n -> List String -> Pattern n
   | _, p, [] => p
   | cx, p, h::t => listDeriv cx (Pattern.textDeriv cx p h) t
 
-def listDeriv' : Context -> Pattern -> List String -> Pattern
+def listDeriv' : Context -> Pattern n -> List String -> Pattern n
   | cx, p, xs => List.foldl (Pattern.textDeriv cx) p xs
 
 -- Perhaps the trickiest part of the algorithm is in computing the derivative with respect to a start-tag open.
@@ -339,7 +345,7 @@ def listDeriv' : Context -> Pattern -> List String -> Pattern
 -- applyAfter f (After p1 p2) = after p1 (f p2)
 -- applyAfter f (Choice p1 p2) = choice (applyAfter f p1) (applyAfter f p2)
 -- applyAfter f NotAllowed = NotAllowed
-def applyAfter : (Pattern -> Pattern) -> Pattern -> Pattern
+def applyAfter : (Pattern n -> Pattern n) -> Pattern n -> Pattern n
   | f, (Pattern.After p1 p2) => after p1 (f p2)
   | f, (Pattern.Choice p1 p2) => choice (applyAfter f p1) (applyAfter f p2)
   | _, Pattern.NotAllowed => Pattern.NotAllowed
@@ -349,17 +355,18 @@ def applyAfter : (Pattern -> Pattern) -> Pattern -> Pattern
 -- Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern;
 -- also the first operand of an After pattern can neither be an After pattern nor contain any After pattern descendants.
 -- startTagOpenDeriv :: Pattern -> QName -> Pattern
-def startTagOpenDeriv : Pattern -> QName -> Pattern
+def startTagOpenDeriv (g: Grammar n) (p: Pattern n) (qn: QName): Pattern n :=
+  match p with
 -- The derivative of a Choice pattern is as usual.
 -- startTagOpenDeriv (Choice p1 p2) qn =
 --   choice (startTagOpenDeriv p1 qn) (startTagOpenDeriv p2 qn)
-  | Pattern.Choice p1 p2, qn =>
-    choice (startTagOpenDeriv p1 qn) (startTagOpenDeriv p2 qn)
+  | Pattern.Choice p1 p2 =>
+    choice (startTagOpenDeriv g p1 qn) (startTagOpenDeriv g p2 qn)
 -- To represent the derivative of a Element pattern, we introduce an After pattern.
 -- startTagOpenDeriv (Element nc p) qn =
 --   if contains nc qn then after p Empty else NotAllowed
-  | Pattern.Element nc p, qn =>
-    if NameClass.contains nc qn then after p Pattern.Empty else Pattern.NotAllowed
+  | Pattern.Element nc ref =>
+    if NameClass.contains nc qn then after (lookup g ref) Pattern.Empty else Pattern.NotAllowed
 -- For Interleave, OneOrMore Group or After we compute the derivative in a similar way to textDeriv but with an important twist.
 -- The twist is that instead of applying interleave, group and after directly to the result of recursively applying startTagOpenDeriv,
 -- we instead use applyAfter to push the interleave, group or after down into the second operand of After.
@@ -380,30 +387,30 @@ def startTagOpenDeriv : Pattern -> QName -> Pattern
 --        x
 -- startTagOpenDeriv (After p1 p2) qn =
 --   applyAfter (flip after p2) (startTagOpenDeriv p1 qn)
-  | Pattern.Interleave p1 p2, qn =>
-    choice (applyAfter (flip interleave p2) (startTagOpenDeriv p1 qn))
-           (applyAfter (interleave p1) (startTagOpenDeriv p2 qn))
-  | Pattern.OneOrMore p, qn =>
+  | Pattern.Interleave p1 p2 =>
+    choice (applyAfter (flip interleave p2) (startTagOpenDeriv g p1 qn))
+           (applyAfter (interleave p1) (startTagOpenDeriv g p2 qn))
+  | Pattern.OneOrMore p =>
     applyAfter (flip group (choice (Pattern.OneOrMore p) Pattern.Empty))
-               (startTagOpenDeriv p qn)
-  | Pattern.Group p1 p2, qn =>
-    let x := applyAfter (flip group p2) (startTagOpenDeriv p1 qn)
+               (startTagOpenDeriv g p qn)
+  | Pattern.Group p1 p2 =>
+    let x := applyAfter (flip group p2) (startTagOpenDeriv g p1 qn)
     if Pattern.nullable p1 then
-      choice x (startTagOpenDeriv p2 qn)
+      choice x (startTagOpenDeriv g p2 qn)
     else
       x
-  | Pattern.After p1 p2, qn =>
-    applyAfter (flip after p2) (startTagOpenDeriv p1 qn)
+  | Pattern.After p1 p2 =>
+    applyAfter (flip after p2) (startTagOpenDeriv g p1 qn)
 -- In any other case, the derivative is NotAllowed.
 -- startTagOpenDeriv _ qn = NotAllowed
-  | _, _ => Pattern.NotAllowed
+  | _ => Pattern.NotAllowed
 
 -- valueMatch is used for matching attribute values.
 -- It has to implement the RELAX NG rules on whitespace: see (weak match 2) in the RELAX NG spec.
 -- valueMatch :: Context -> Pattern -> String -> Bool
 -- valueMatch cx p s =
 --   (nullable p && whitespace s) || nullable (textDeriv cx p s)
-def valueMatch : Context -> Pattern -> String -> Bool
+def valueMatch : Context -> Pattern n -> String -> Bool
   | cx, p, s =>
     (Pattern.nullable p && whitespace s) || Pattern.nullable (Pattern.textDeriv cx p s)
 
@@ -426,7 +433,7 @@ def valueMatch : Context -> Pattern -> String -> Bool
 -- attDeriv cx (Attribute nc p) (AttributeNode qn s) =
 --   if contains nc qn && valueMatch cx p s then Empty else NotAllowed
 -- attDeriv _ _ _ = NotAllowed
-def attDeriv : Context -> Pattern -> AttributeNode -> Pattern
+def attDeriv : Context -> Pattern n -> AttributeNode -> Pattern n
   | cx, (Pattern.After p1 p2), att =>
     after (attDeriv cx p1 att) p2
   | cx, (Pattern.Choice p1 p2), att =>
@@ -448,7 +455,7 @@ def attDeriv : Context -> Pattern -> AttributeNode -> Pattern
 -- attsDeriv cx p [] = p
 -- attsDeriv cx p ((AttributeNode qn s):t) =
 --   attsDeriv cx (attDeriv cx p (AttributeNode qn s)) t
-def attsDeriv : Context -> Pattern -> List AttributeNode -> Pattern
+def attsDeriv : Context -> Pattern n -> List AttributeNode -> Pattern n
   | _, p, [] => p
   | cx, p, ((AttributeNode.mk qn s)::t) =>
      attsDeriv cx (attDeriv cx p (AttributeNode.mk qn s)) t
@@ -468,7 +475,7 @@ def attsDeriv : Context -> Pattern -> List AttributeNode -> Pattern
 --   oneOrMore (startTagCloseDeriv p)
 -- startTagCloseDeriv (Attribute _ _) = NotAllowed
 -- startTagCloseDeriv p = p
-def startTagCloseDeriv : Pattern -> Pattern
+def startTagCloseDeriv : Pattern n -> Pattern n
   | Pattern.After p1 p2 =>
     after (startTagCloseDeriv p1) p2
   | Pattern.Choice p1 p2 =>
@@ -488,7 +495,7 @@ def startTagCloseDeriv : Pattern -> Pattern
 -- endTagDeriv (Choice p1 p2) = choice (endTagDeriv p1) (endTagDeriv p2)
 -- endTagDeriv (After p1 p2) = if nullable p1 then p2 else NotAllowed
 -- endTagDeriv _ = NotAllowed
-def endTagDeriv : Pattern -> Pattern
+def endTagDeriv : Pattern n -> Pattern n
   | Pattern.Choice p1 p2 => choice (endTagDeriv p1) (endTagDeriv p2)
   | Pattern.After p1 p2 => if Pattern.nullable p1 then p2 else Pattern.NotAllowed
   | _ => Pattern.NotAllowed
@@ -498,7 +505,7 @@ mutual
 -- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn,
 -- except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
-partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
+partial def childrenDeriv (cx: Context) (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
   match h: children with
 -- The case where the list of children is empty is treated as if there were a text node whose value were the empty string.
 -- See rule (weak match 3) in the RELAX NG spec.
@@ -519,7 +526,7 @@ partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode):
 -- childrenDeriv cx p children = stripChildrenDeriv cx p children
   | _ =>
     let children' := List.filter (not ∘ strip) children
-    List.foldl (childDeriv cx) p children'
+    List.foldl (childDeriv cx g) p children'
   -- termination_by sizeOf children
   -- decreasing_by
   --   · subst h
@@ -550,14 +557,14 @@ partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode):
 --       p3 = startTagCloseDeriv p2
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
-partial def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
+partial def childDeriv (cx: Context) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match h: node with
   | ChildNode.TextNode s => Pattern.textDeriv cx p s
   | ChildNode.ElementNode qn cx atts children =>
-      let p1 := startTagOpenDeriv p qn
+      let p1 := startTagOpenDeriv g p qn
       let p2 := attsDeriv cx p1 atts
       let p3 := startTagCloseDeriv p2
-      let p4 := childrenDeriv cx p3 children
+      let p4 := childrenDeriv cx g p3 children
       endTagDeriv p4
   -- termination_by (sizeOf node)
   -- decreasing_by
@@ -570,19 +577,19 @@ end
 -- stripChildrenDeriv _ p [] = p
 -- stripChildrenDeriv cx p (h:t) =
 --   stripChildrenDeriv cx (if strip h then p else (childDeriv cx p h)) t
-def stripChildrenDeriv : Context -> Pattern -> List ChildNode -> Pattern
-  | _, p, [] => p
-  | cx, p, (h::t) =>
-    stripChildrenDeriv cx (if strip h then p else (childDeriv cx p h)) t
+def stripChildrenDeriv : Context -> Grammar n -> Pattern n -> List ChildNode -> Pattern n
+  | _, _, p, [] => p
+  | cx, g, p, (h::t) =>
+    stripChildrenDeriv cx g (if strip h then p else (childDeriv cx g p h)) t
 
-def stripChildrenDeriv' : Context -> Pattern -> List ChildNode -> Pattern
-  | cx, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv cx p node)) p xs
+def stripChildrenDeriv' : Context -> Grammar n -> Pattern n -> List ChildNode -> Pattern n
+  | cx, g, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv cx g p node)) p xs
 
-#guard childDeriv Context.empty Pattern.Text (ChildNode.TextNode "abc")
+#guard childDeriv Context.empty (Grammar.mk Pattern.Text #v[]) Pattern.Text (ChildNode.TextNode "abc")
   = Pattern.Text
 
-#guard childDeriv Context.empty Pattern.Empty (ChildNode.TextNode "abc")
+#guard childDeriv Context.empty (Grammar.mk Pattern.Empty #v[]) Pattern.Empty (ChildNode.TextNode "abc")
   = Pattern.NotAllowed
 
-#guard childDeriv Context.empty Pattern.NotAllowed (ChildNode.TextNode "abc")
+#guard childDeriv Context.empty (Grammar.mk Pattern.NotAllowed #v[]) Pattern.NotAllowed (ChildNode.TextNode "abc")
   = Pattern.NotAllowed
