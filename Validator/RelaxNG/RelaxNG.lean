@@ -585,11 +585,40 @@ def stripChildrenDeriv : Context -> Grammar n -> Pattern n -> List ChildNode -> 
 def stripChildrenDeriv' : Context -> Grammar n -> Pattern n -> List ChildNode -> Pattern n
   | cx, g, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv cx g p node)) p xs
 
-#guard childDeriv Context.empty (Grammar.mk Pattern.Text #v[]) Pattern.Text (ChildNode.TextNode "abc")
+-- Examples
+
+def childDerivStart (g: Grammar n) (node: ChildNode): Pattern n :=
+  childDeriv Context.empty g g.start node
+
+#guard childDerivStart (Grammar.mk Pattern.Text #v[]) (ChildNode.TextNode "abc")
   = Pattern.Text
 
-#guard childDeriv Context.empty (Grammar.mk Pattern.Empty #v[]) Pattern.Empty (ChildNode.TextNode "abc")
+#guard childDerivStart (Grammar.mk Pattern.Empty #v[]) (ChildNode.TextNode "abc")
   = Pattern.NotAllowed
 
-#guard childDeriv Context.empty (Grammar.mk Pattern.NotAllowed #v[]) Pattern.NotAllowed (ChildNode.TextNode "abc")
+#guard childDerivStart (Grammar.mk Pattern.NotAllowed #v[]) (ChildNode.TextNode "abc")
   = Pattern.NotAllowed
+
+def ChildNode.mkElement (name: String) (attrs: List AttributeNode) (children: List ChildNode): ChildNode :=
+  (ChildNode.ElementNode (QName.mk "" name) Context.empty attrs children)
+
+def NameClass.mk (name: String): NameClass :=
+  NameClass.Name "" name
+
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [] [])
+  = Pattern.Empty
+
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hello" [] [])
+  = Pattern.NotAllowed
+
+def node (name: String) (children: List ChildNode): ChildNode :=
+  ChildNode.mkElement name [] children
+
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Element (NameClass.mk "div") 1, Pattern.Empty]) (node "doc" [node "div" []])
+  = Pattern.Empty
+
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "div") 0) Pattern.Empty]) (node "doc" [node "div" []])
+  = Pattern.Empty
+
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "div") 0) Pattern.Empty]) (node "doc" [node "div" [node "div" []]])
+  = Pattern.Empty
