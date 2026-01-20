@@ -71,7 +71,10 @@ inductive Pattern where
   | After (p1 p2: Pattern)
   deriving Repr, DecidableEq
 -- The After pattern is used internally and will be explained later.
--- Note that there is an Element pattern rather than a Ref pattern. In the simplified XML representation of patterns, every ref element refers to an element pattern. In the internal representation of patterns, we can replace each reference to a ref pattern by a reference to the element pattern that the ref pattern references, resulting in a cyclic data structure. (Note that even though Haskell is purely functional it can handle cyclic data structures because of its laziness.)
+-- Note that there is an Element pattern rather than a Ref pattern.
+-- In the simplified XML representation of patterns, every ref element refers to an element pattern.
+-- In the internal representation of patterns, we can replace each reference to a ref pattern by a reference to the element pattern that the ref pattern references,
+-- resulting in a cyclic data structure. (Note that even though Haskell is purely functional it can handle cyclic data structures because of its laziness.)
 
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
@@ -83,9 +86,11 @@ inductive QName where
 inductive AttributeNode where
   | mk (n: QName) (v: String)
 
--- An XML document is represented as a ChildNode. There are two kinds of child node:
+-- An XML document is represented as a ChildNode.
+-- There are two kinds of child node:
 --     a TextNode containing a string;
---     an ElementNode containing a name (of type QName), a Context, a set of attributes (represented as a list of AttributeNodes, each of which will be an AttributeNode), and a list of children (represented as a list of ChildNodes).
+--     an ElementNode containing a name (of type QName), a Context, a set of attributes (represented as a list of AttributeNodes,
+--       each of which will be an AttributeNode), and a list of children (represented as a list of ChildNodes).
 -- data ChildNode = ElementNode QName Context [AttributeNode] [ChildNode]
 --                  | TextNode String
 inductive ChildNode where
@@ -156,7 +161,8 @@ def strip : ChildNode -> Bool
   | _ => false
 
 -- In Haskell, [] refers to the empty list.
--- When constructing Choice, Group, Interleave and After patterns while computing derivatives, we recognize the obvious algebraic identities for NotAllowed and Empty:
+-- When constructing Choice, Group, Interleave and After patterns while computing derivatives,
+-- we recognize the obvious algebraic identities for NotAllowed and Empty:
 -- choice :: Pattern -> Pattern -> Pattern
 -- choice p NotAllowed = p
 -- choice NotAllowed p = p
@@ -209,7 +215,8 @@ def oneOrMore : Pattern -> Pattern
   | Pattern.NotAllowed => Pattern.NotAllowed
   | p => Pattern.OneOrMore p
 
--- The datatypeAllows and datatypeEqual functions represent the semantics of datatype libraries. Here, we specify only the semantics of the builtin datatype library.
+-- The datatypeAllows and datatypeEqual functions represent the semantics of datatype libraries.
+-- Here, we specify only the semantics of the builtin datatype library.
 -- datatypeAllows :: Datatype -> ParamList -> String -> Context -> Bool
 -- datatypeAllows ("", "string") [] _ _ = True
 -- datatypeAllows ("", "token") [] _ _ = True
@@ -264,12 +271,14 @@ def Pattern.textDeriv (cx: Context) (p: Pattern) (s: String): Pattern :=
 --   group (textDeriv cx p s) (choice (OneOrMore p) Empty)
   | OneOrMore p =>
     group (textDeriv cx p s) (choice (OneOrMore p) Empty)
--- A text pattern matches zero or more text nodes. Thus the derivative of Text with respect to a text node is Text, not Empty.
+-- A text pattern matches zero or more text nodes.
+-- Thus the derivative of Text with respect to a text node is Text, not Empty.
 -- textDeriv cx Text _ = Text
   | Text =>
     Text
 -- The derivative of a value, data or list pattern with respect to a text node is Empty if the pattern matches and NotAllowed if it does not.
--- To determine whether a value or data pattern matches, we rely respectively on the datatypeEqual and datatypeAllows functions which implement the semantics of a datatype library.
+-- To determine whether a value or data pattern matches,
+-- we rely respectively on the datatypeEqual and datatypeAllows functions which implement the semantics of a datatype library.
 -- textDeriv cx1 (Value dt value cx2) s =
 --   if datatypeEqual dt value cx2 s cx1 then Empty else NotAllowed
 -- textDeriv cx (Data dt params) s =
@@ -288,7 +297,8 @@ def Pattern.textDeriv (cx: Context) (p: Pattern) (s: String): Pattern :=
       Empty
     else
       NotAllowed
--- To determine whether a pattern List p matches a text node, the value of the text node is split into a sequence of whitespace-delimited tokens, and the resulting sequence is matched against p:
+-- To determine whether a pattern List p matches a text node, the value of the text node is split into a sequence of whitespace-delimited tokens,
+-- and the resulting sequence is matched against p:
 -- textDeriv cx (List p) s =
 --   if nullable (listDeriv cx p (words s)) then Empty else NotAllowed
   | List p =>
@@ -323,7 +333,8 @@ def listDeriv : Context -> Pattern -> List String -> Pattern
 def listDeriv' : Context -> Pattern -> List String -> Pattern
   | cx, p, xs => List.foldl (Pattern.textDeriv cx) p xs
 
--- Perhaps the trickiest part of the algorithm is in computing the derivative with respect to a start-tag open. For this, we need a helper function; applyAfter takes a function and applies it to the second operand of each After pattern.
+-- Perhaps the trickiest part of the algorithm is in computing the derivative with respect to a start-tag open.
+-- For this, we need a helper function; applyAfter takes a function and applies it to the second operand of each After pattern.
 -- applyAfter :: (Pattern -> Pattern) -> Pattern -> Pattern
 -- applyAfter f (After p1 p2) = after p1 (f p2)
 -- applyAfter f (Choice p1 p2) = choice (applyAfter f p1) (applyAfter f p2)
@@ -334,7 +345,9 @@ def applyAfter : (Pattern -> Pattern) -> Pattern -> Pattern
   | _, Pattern.NotAllowed => Pattern.NotAllowed
   | _, _ => Pattern.NotAllowed -- only defined to make the function total for Lean's sake
 
--- We rely here on the fact that After patterns are restricted in where they can occur. Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern; also the first operand of an After pattern can neither be an After pattern nor contain any After pattern descendants.
+-- We rely here on the fact that After patterns are restricted in where they can occur.
+-- Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern;
+-- also the first operand of an After pattern can neither be an After pattern nor contain any After pattern descendants.
 -- startTagOpenDeriv :: Pattern -> QName -> Pattern
 def startTagOpenDeriv : Pattern -> QName -> Pattern
 -- The derivative of a Choice pattern is as usual.
@@ -347,8 +360,12 @@ def startTagOpenDeriv : Pattern -> QName -> Pattern
 --   if contains nc qn then after p Empty else NotAllowed
   | Pattern.Element nc p, qn =>
     if NameClass.contains nc qn then after p Pattern.Empty else Pattern.NotAllowed
--- For Interleave, OneOrMore Group or After we compute the derivative in a similar way to textDeriv but with an important twist. The twist is that instead of applying interleave, group and after directly to the result of recursively applying startTagOpenDeriv, we instead use applyAfter to push the interleave, group or after down into the second operand of After. Note that the following definitions ensure that the invariants on where After patterns can occur are maintained.
--- We make use of the standard Haskell function flip which flips the order of the arguments of a function of two arguments. Thus, flip applied to a function of two arguments f and an argument x returns a function of one argument g such that g(y) = f(y, x).
+-- For Interleave, OneOrMore Group or After we compute the derivative in a similar way to textDeriv but with an important twist.
+-- The twist is that instead of applying interleave, group and after directly to the result of recursively applying startTagOpenDeriv,
+-- we instead use applyAfter to push the interleave, group or after down into the second operand of After.
+-- Note that the following definitions ensure that the invariants on where After patterns can occur are maintained.
+-- We make use of the standard Haskell function flip which flips the order of the arguments of a function of two arguments.
+-- Thus, flip applied to a function of two arguments f and an argument x returns a function of one argument g such that g(y) = f(y, x).
 -- startTagOpenDeriv (Interleave p1 p2) qn =
 --   choice (applyAfter (flip interleave p2) (startTagOpenDeriv p1 qn))
 --          (applyAfter (interleave p1) (startTagOpenDeriv p2 qn))
@@ -381,7 +398,8 @@ def startTagOpenDeriv : Pattern -> QName -> Pattern
 -- startTagOpenDeriv _ qn = NotAllowed
   | _, _ => Pattern.NotAllowed
 
--- valueMatch is used for matching attribute values. It has to implement the RELAX NG rules on whitespace: see (weak match 2) in the RELAX NG spec.
+-- valueMatch is used for matching attribute values.
+-- It has to implement the RELAX NG rules on whitespace: see (weak match 2) in the RELAX NG spec.
 -- valueMatch :: Context -> Pattern -> String -> Bool
 -- valueMatch cx p s =
 --   (nullable p && whitespace s) || nullable (textDeriv cx p s)
@@ -389,7 +407,9 @@ def valueMatch : Context -> Pattern -> String -> Bool
   | cx, p, s =>
     (Pattern.nullable p && whitespace s) || Pattern.nullable (Pattern.textDeriv cx p s)
 
--- Computing the derivative with respect to an attribute done in a similar to computing the derivative with respect to a text node. The main difference is in the handling of Group, which has to deal with the fact that the order of attributes is not significant. Computing the derivative of a Group pattern with respect to an attribute node works the same as computing the derivative of an Interleave pattern.
+-- Computing the derivative with respect to an attribute done in a similar to computing the derivative with respect to a text node.
+-- The main difference is in the handling of Group, which has to deal with the fact that the order of attributes is not significant.
+-- Computing the derivative of a Group pattern with respect to an attribute node works the same as computing the derivative of an Interleave pattern.
 -- attDeriv :: Context -> Pattern -> AttributeNode -> Pattern
 -- attDeriv cx (After p1 p2) att =
 --   after (attDeriv cx p1 att) p2
@@ -433,7 +453,8 @@ def attsDeriv : Context -> Pattern -> List AttributeNode -> Pattern
   | cx, p, ((AttributeNode.mk qn s)::t) =>
      attsDeriv cx (attDeriv cx p (AttributeNode.mk qn s)) t
 
--- When we see a start-tag close, we know that there cannot be any further attributes. Therefore we can replace each Attribute pattern by NotAllowed.
+-- When we see a start-tag close, we know that there cannot be any further attributes.
+-- Therefore we can replace each Attribute pattern by NotAllowed.
 -- startTagCloseDeriv :: Pattern -> Pattern
 -- startTagCloseDeriv (After p1 p2) =
 --   after (startTagCloseDeriv p1) p2
@@ -461,7 +482,8 @@ def startTagCloseDeriv : Pattern -> Pattern
   | Pattern.Attribute _ _ => Pattern.NotAllowed
   | p => p
 
--- Computing the derivative of a pattern with respect to an end-tag is obvious. Note that we rely here on the invariants about where After patterns can occur.
+-- Computing the derivative of a pattern with respect to an end-tag is obvious.
+-- Note that we rely here on the invariants about where After patterns can occur.
 -- endTagDeriv :: Pattern -> Pattern
 -- endTagDeriv (Choice p1 p2) = choice (endTagDeriv p1) (endTagDeriv p2)
 -- endTagDeriv (After p1 p2) = if nullable p1 then p2 else NotAllowed
@@ -473,16 +495,20 @@ def endTagDeriv : Pattern -> Pattern
 
 mutual
 
--- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn, except that whitespace requires special treatment.
+-- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn,
+-- except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
 partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
   match h: children with
--- The case where the list of children is empty is treated as if there were a text node whose value were the empty string. See rule (weak match 3) in the RELAX NG spec.
+-- The case where the list of children is empty is treated as if there were a text node whose value were the empty string.
+-- See rule (weak match 3) in the RELAX NG spec.
 -- childrenDeriv cx p [] = childrenDeriv cx p [(TextNode "")]
   | [] =>
     let p1 := Pattern.textDeriv cx p ""
     if whitespace "" then choice p p1 else p1
--- In the case where the list of children consists of a single text node and the value of the text node consists only of whitespace, the list of children matches if the list matches either with or without stripping the text node. Note the similarity with valueMatch.
+-- In the case where the list of children consists of a single text node and the value of the text node consists only of whitespace,
+-- the list of children matches if the list matches either with or without stripping the text node.
+-- Note the similarity with valueMatch.
 -- childrenDeriv cx p [(TextNode s)] =
 --   let p1 = childDeriv cx p (TextNode s)
 --   in if whitespace s then choice p p1 else p1
@@ -500,16 +526,21 @@ partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode):
 
   --     sorry
 
--- The key concept used by this validation technique is the concept of a derivative. The derivative of a pattern p with respect to a node x is a pattern for what's left of p after matching x; in other words, it is a pattern that matches any sequence that when appended to x will match p.
--- If we can compute derivatives, then we can determine whether a pattern matches a node: a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
--- It is desirable to be able to compute the derivative of a node in a streaming fashion, making a single pass over the tree. In order to do this, we break down an element into a sequence of components:
+-- The key concept used by this validation technique is the concept of a derivative.
+-- The derivative of a pattern p with respect to a node x is a pattern for what's left of p after matching x; in other words,
+-- it is a pattern that matches any sequence that when appended to x will match p.
+-- If we can compute derivatives, then we can determine whether a pattern matches a node:
+-- a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
+-- It is desirable to be able to compute the derivative of a node in a streaming fashion, making a single pass over the tree.
+-- In order to do this, we break down an element into a sequence of components:
 --     a start-tag open containing a QName
 --     a sequence of zero or more attributes
 --     a start-tag close
 --     a sequence of zero or more children
 --     an end-tag
 -- We compute the derivative of a pattern with respect to an element by computing its derivative with respect to each component in turn.
--- We can now explain why we need the After pattern. A pattern After x y is a pattern that matches x followed by an end-tag followed by y. We need the After pattern in order to be able to express the derivative of a pattern with respect to a start-tag open.
+-- We can now explain why we need the After pattern. A pattern After x y is a pattern that matches x followed by an end-tag followed by y.
+-- We need the After pattern in order to be able to express the derivative of a pattern with respect to a start-tag open.
 -- The central function is childNode which computes the derivative of a pattern with respect to a ChildNode and a Context:
 -- childDeriv :: Context -> Pattern -> ChildNode -> Pattern
 -- childDeriv cx p (TextNode s) = textDeriv cx p s
