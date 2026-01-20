@@ -17,6 +17,7 @@ abbrev ParamList := List (LocalName × String)
 abbrev Prefix := String
 -- type Context = (Uri, [(Prefix, Uri)])
 abbrev Context := (Uri × List (Prefix × Uri))
+def Context.empty: Context := ("", [])
 
 -- A Datatype identifies a datatype by a datatype library name and a local name.
 -- type Datatype = (Uri, LocalName)
@@ -36,6 +37,7 @@ inductive NameClass where
   | NsName (u: Uri)
   | NsNameExcept (u: Uri) (n: NameClass)
   | NameClassChoice (n1 n2: NameClass)
+  deriving Repr, DecidableEq
 
 -- A Pattern represents a pattern after simplification.
 -- data Pattern = Empty
@@ -67,6 +69,7 @@ inductive Pattern where
   | Attribute (n: NameClass) (p1: Pattern)
   | Element (n: NameClass) (p1: Pattern)
   | After (p1 p2: Pattern)
+  deriving Repr, DecidableEq
 -- The After pattern is used internally and will be explained later.
 -- Note that there is an Element pattern rather than a Ref pattern. In the simplified XML representation of patterns, every ref element refers to an element pattern. In the internal representation of patterns, we can replace each reference to a ref pattern by a reference to the element pattern that the ref pattern references, resulting in a cyclic data structure. (Note that even though Haskell is purely functional it can handle cyclic data structures because of its laziness.)
 
@@ -472,7 +475,7 @@ mutual
 
 -- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn, except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
-def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
+partial def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern :=
   match h: children with
 -- The case where the list of children is empty is treated as if there were a text node whose value were the empty string. See rule (weak match 3) in the RELAX NG spec.
 -- childrenDeriv cx p [] = childrenDeriv cx p [(TextNode "")]
@@ -483,7 +486,7 @@ def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern
 -- childrenDeriv cx p [(TextNode s)] =
 --   let p1 = childDeriv cx p (TextNode s)
 --   in if whitespace s then choice p p1 else p1
-  | [node@(ChildNode.TextNode s)] =>
+  | [ChildNode.TextNode s] =>
     let p1 :=  Pattern.textDeriv cx p s
     if whitespace s then choice p p1 else p1
 -- Otherwise, there must be one or more elements amongst the children, in which case any whitespace-only text nodes are stripped before the derivative is computed.
@@ -491,10 +494,11 @@ def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern
   | _ =>
     let children' := List.filter (not ∘ strip) children
     List.foldl (childDeriv cx) p children'
-  termination_by sizeOf children
-  decreasing_by
-    · subst h
-      sorry
+  -- termination_by sizeOf children
+  -- decreasing_by
+  --   · subst h
+
+  --     sorry
 
 -- The key concept used by this validation technique is the concept of a derivative. The derivative of a pattern p with respect to a node x is a pattern for what's left of p after matching x; in other words, it is a pattern that matches any sequence that when appended to x will match p.
 -- If we can compute derivatives, then we can determine whether a pattern matches a node: a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
@@ -515,7 +519,7 @@ def childrenDeriv (cx: Context) (p: Pattern) (children: List ChildNode): Pattern
 --       p3 = startTagCloseDeriv p2
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
-def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
+partial def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
   match h: node with
   | ChildNode.TextNode s => Pattern.textDeriv cx p s
   | ChildNode.ElementNode qn cx atts children =>
@@ -524,10 +528,12 @@ def childDeriv (cx: Context) (p: Pattern) (node: ChildNode): Pattern :=
       let p3 := startTagCloseDeriv p2
       let p4 := childrenDeriv cx p3 children
       endTagDeriv p4
-  termination_by (sizeOf node)
-  decreasing_by
-    · simp only [ChildNode.ElementNode.sizeOf_spec]
-      omega
+  -- termination_by (sizeOf node)
+  -- decreasing_by
+  --   · simp only [ChildNode.ElementNode.sizeOf_spec]
+  --     omega
+
+end
 
 -- stripChildrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
 -- stripChildrenDeriv _ p [] = p
@@ -541,4 +547,11 @@ def stripChildrenDeriv : Context -> Pattern -> List ChildNode -> Pattern
 def stripChildrenDeriv' : Context -> Pattern -> List ChildNode -> Pattern
   | cx, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv cx p node)) p xs
 
-end
+#guard childDeriv Context.empty Pattern.Text (ChildNode.TextNode "abc")
+  = Pattern.Text
+
+#guard childDeriv Context.empty Pattern.Empty (ChildNode.TextNode "abc")
+  = Pattern.NotAllowed
+
+#guard childDeriv Context.empty Pattern.NotAllowed (ChildNode.TextNode "abc")
+  = Pattern.NotAllowed
