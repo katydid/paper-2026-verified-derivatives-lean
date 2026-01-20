@@ -674,7 +674,7 @@ def atts: List AttributeNode := []
 def children: List ChildNode := []
 def childNode := ChildNode.ElementNode qn cx atts children
 
-def g := (Grammar.mk (Pattern.Element (NameClass.mk "<doc>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
+def g := (Grammar.mk (Pattern.Element (NameClass.mk "<div>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 def p := g.lookup 0
@@ -714,7 +714,7 @@ def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn cx atts []]
 def childNode := ChildNode.ElementNode qn cx atts children
 
-def g := (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
+def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
@@ -750,7 +750,7 @@ def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn cx atts []]
 def childNode := ChildNode.ElementNode qn cx atts children
 
-def g := (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
+def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
@@ -789,7 +789,8 @@ abbrev after (p1 p2: Pattern n): Pattern n :=
 abbrev closeDiv: Pattern n := Pattern.Empty
 
 -- With every call to startTagOpenDeriv the number of After expression accumulate.
-def g := Grammar.mk (symbol ("<doc>", 0)) #v[or (symbol ("<div>", 0)) emptystr]
-#guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv
-#guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv)
-#guard example_after_buildup_4.p1 = after (g.lookup 0) (after closeDiv (after closeDiv closeDiv))
+def g := Grammar.mk (symbol ("<div>", 0)) #v[or (symbol ("<div>", 0)) emptystr]
+-- <div><div><div></div></div></div>
+#guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv -- <div><div></div></div></div>
+#guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv) -- <div></div></div></div>
+#guard example_after_buildup_4.p1 = after (g.lookup 0) (after closeDiv (after closeDiv closeDiv)) -- </div></div></div>
