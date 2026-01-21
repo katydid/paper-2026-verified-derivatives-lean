@@ -24,6 +24,8 @@ def Lang.compliment {α: Type} (R: Lang α): Lang α :=
 def Lang.derive (R: Lang α) (x: α): Lang α :=
   fun (xs: List α) => R (x :: xs)
 
+def Lang.null (R: Lang α): Prop := R []
+
 def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   ∃ (i: Fin (List.interleaves xs).length),
     P (List.get (List.interleaves xs) i).1
@@ -156,9 +158,6 @@ attribute [simp] emptyset emptystr onlyif or and
 example: Lang α := emptystr
 example: Lang α := emptyset
 example: Lang α := (star emptyset)
-
-def null {α: Type} (R: Lang α): Prop :=
-  R []
 
 def derives {α: Type} (R: Lang α) (xs: List α): Lang α :=
   λ ys => R (xs ++ ys)

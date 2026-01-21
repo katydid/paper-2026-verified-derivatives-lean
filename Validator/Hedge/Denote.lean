@@ -351,10 +351,9 @@ theorem denote_compliment {α: Type} {φ: Type} (G: Hedge.Grammar n φ) (Φ: φ 
   funext
   simp only [Rule.denote, Lang.compliment]
 
-theorem null_commutes {α: Type}
-  (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (x: Regex (φ × Ref n)):
-  ((Regex.null x) = true) = Lang.null (Rule.denote G Φ x) := by
-  induction x with
+theorem null_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] r:
+  ((Regex.null r) = true) = Lang.null (Rule.denote G Φ r) := by
+  induction r with
   | emptyset =>
     rw [denote_emptyset]
     rw [Lang.null_emptyset]

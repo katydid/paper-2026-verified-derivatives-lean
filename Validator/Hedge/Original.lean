@@ -167,9 +167,16 @@ def Grammar.Original.derive (G: Grammar n φ) (Φ: φ → α → Bool)
     · apply decreasing_and_r
     · apply decreasing_compliment
 
-def Grammar.Original.validate
-  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
-  Regex.null (List.foldl (derive G Φ) G.start nodes)
+namespace Grammar.Original
+
+def validate (G: Grammar n φ) (Φ: φ → α → Bool)
+  (nodes: Hedge α): Bool :=
+    Regex.null (List.foldl (derive G Φ) G.start nodes)
+def filter (G: Grammar n φ) (Φ: φ → α → Bool)
+  (hedges: List (Hedge α)): List (Hedge α) :=
+    List.filter (validate G Φ) hedges
+
+end Grammar.Original
 
 theorem Grammar.Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
   [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
