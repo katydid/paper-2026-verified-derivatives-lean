@@ -284,29 +284,27 @@ theorem list_elemof_drop_is_elem {xs: List α} (y: List.ElemOf (List.drop n xs))
   rw [List.mem_append]
   exact Or.inr hy
 
-def interleavesAcc (xs: List α) (acc: List (List α × List α)): List (List α × List α) :=
-  match xs with
+def interleaves (xs: List α) (acc: List (List α × List α) := [([], [])])
+  : List (List α × List α) := match xs with
   | [] => acc
-  | (x::xs) =>
-    let acc' := interleavesAcc xs acc
-    let fsts := List.map (fun (fst, snd) => (x::fst, snd)) acc'
-    let snds := List.map (fun (fst, snd) => (fst, x::snd)) acc'
-    fsts ++ snds
+  | (x::xs) => let acc' := interleaves xs acc
+    map (fun a => (x::a.1, a.2)) acc' ++ map (fun a => (a.1, x::a.2)) acc'
 
-def interleaves (xs: List α): List (List α × List α) :=
-  interleavesAcc xs [([], [])]
+#guard (interleaves [1,2,3,4]).contains ([1,3],[2,4])
+#guard (interleaves [1,2,3,4]).contains ([3],[1,2,4])
+#guard (interleaves [1,2,3,4]).contains ([3],[1,2,4])
 
 def interleavesAcc_length (xs: List α) (acc: List (List α × List α)): Nat :=
   acc.length * (2 ^ xs.length)
 
 theorem interleavesAcc_length_is_correct (xs: List α) (acc: List (List α × List α)):
-  (interleavesAcc xs acc).length = interleavesAcc_length xs acc := by
+  (interleaves xs acc).length = interleavesAcc_length xs acc := by
   unfold interleavesAcc_length
   induction xs with
   | nil =>
-    simp [interleavesAcc]
+    simp [interleaves]
   | cons x xs ih =>
-    simp [interleavesAcc]
+    simp [interleaves]
     rw [ih]
     simp +arith
     rw [Nat.mul_left_comm]
@@ -317,7 +315,6 @@ def interleaves_length (xs: List α): Nat := 2 ^ xs.length
 theorem interleaves_length_is_correct (xs: List α):
   (interleaves xs).length = interleaves_length xs := by
   unfold interleaves_length
-  unfold interleaves
   rw [interleavesAcc_length_is_correct]
   unfold interleavesAcc_length
   simp
@@ -327,15 +324,15 @@ theorem interleaves_mem_swap (xs: List α) :
   induction xs generalizing p with
   | nil =>
     intro hp
-    simp [interleaves, interleavesAcc] at *
+    simp [interleaves, interleaves] at *
     subst hp
     simp only [and_self]
   | cons x xs ih =>
     intro hp
-    simp [interleaves, interleavesAcc, List.mem_append] at hp
+    simp [interleaves, interleaves, List.mem_append] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨a, b, hab, heq⟩
-      simp [interleaves, interleavesAcc, List.mem_append]
+      simp [interleaves, interleaves, List.mem_append]
       right
       exists b
       exists a
@@ -344,7 +341,7 @@ theorem interleaves_mem_swap (xs: List α) :
       · rw [←heq]
       · rw [←heq]
     · rcases hp with ⟨a, b, hab, heq⟩
-      simp [interleaves, interleavesAcc, List.mem_append]
+      simp [interleaves, interleaves, List.mem_append]
       left
       exists b
       and_intros
@@ -359,11 +356,11 @@ theorem interleaves1_length_is_le (xs: List α):
   intro ys hys
   induction xs generalizing ys with
     | nil =>
-      simp [interleaves, interleavesAcc] at hys
+      simp [interleaves, interleaves] at hys
       rw [hys]
       simp
     | cons x xs ih =>
-      simp [interleaves, interleavesAcc, List.map_append] at hys
+      simp [interleaves, interleaves, List.map_append] at hys
       simp [List.mem_map] at ih
       rcases hys with hys | hys
       · rcases hys with ⟨fst, ⟨snd, hpair⟩, hys⟩
@@ -380,12 +377,12 @@ theorem interleaves_contains_itself_fst (xs: List α):
   ∃ p ∈ interleaves xs, p.1 = xs := by
   induction xs with
   | nil =>
-    simp only [interleaves, interleavesAcc, mem_cons, not_mem_nil, or_false, exists_eq_left]
+    simp only [interleaves, interleaves, mem_cons, not_mem_nil, or_false, exists_eq_left]
   | cons x xs ih =>
     rcases ih with ⟨p, hp_mem, p_fst_eq_xs⟩
     exists (x :: p.1, p.2)
     constructor
-    · simp [interleaves, interleavesAcc, List.mem_append, List.mem_map]
+    · simp [interleaves, interleaves, List.mem_append, List.mem_map]
       apply Or.inl
       apply hp_mem
     · simp only [cons.injEq, true_and]
@@ -405,12 +402,12 @@ theorem interleaves_sizeOf1 (xs: List α) [SizeOf α]:
   induction xs with
   | nil =>
     intro p hp
-    simp [interleaves, interleavesAcc] at hp
+    simp [interleaves, interleaves] at hp
     left
     rw [hp]
   | cons x xs ih =>
     intro p hp
-    simp [interleaves, interleavesAcc] at hp
+    simp [interleaves, interleaves] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
@@ -438,12 +435,12 @@ theorem interleaves_sizeOf2 [SizeOf α] (xs: List α):
   induction xs with
   | nil =>
     intro p hp
-    simp [interleaves, interleavesAcc] at hp
+    simp [interleaves, interleaves] at hp
     left
     rw [hp]
   | cons x xs ih =>
     intro p hp
-    simp [interleaves, interleavesAcc] at hp
+    simp [interleaves, interleaves] at hp
     rcases hp with hp | hp
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem

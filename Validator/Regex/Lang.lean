@@ -68,7 +68,7 @@ theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α)
     constructor
     all_goals
       intro h
-      simp [Lang.interleave_derive, Lang.interleave_mem, List.interleaves, List.interleavesAcc] at *
+      simp [Lang.interleave_derive, Lang.interleave_mem, List.interleaves, List.interleaves] at *
       exact h
   | cons x xs ih =>
     constructor
@@ -78,7 +78,7 @@ theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α)
         rcases hpq with ⟨hpqP, hpqQ⟩
         exists (x :: p.fst, p.snd)
         and_intros
-        · simp [List.interleaves, List.interleavesAcc]
+        · simp [List.interleaves, List.interleaves]
           left
           exact hp
         · exact hpqP
@@ -88,7 +88,7 @@ theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α)
         rcases hpq with ⟨hpqP, hpqQ⟩
         exists (p.snd, x :: p.fst)
         and_intros
-        · simp [List.interleaves, List.interleavesAcc]
+        · simp [List.interleaves, List.interleaves]
           right
           exact hp'
         · exact hpqQ
@@ -96,7 +96,7 @@ theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α)
     · intro h
       unfold Lang.interleave_derive at h
       rcases h with ⟨p, h, hp, hq⟩
-      simp [List.interleaves, List.interleavesAcc, List.mem_append] at h
+      simp [List.interleaves, List.interleaves, List.mem_append] at h
       rcases h with h | h
       · rcases h with ⟨fst, snd, hmem, heq⟩
         have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive P x p.1 ∧ Q p.2 := by
