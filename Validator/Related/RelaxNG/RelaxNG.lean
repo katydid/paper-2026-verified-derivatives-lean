@@ -787,9 +787,10 @@ abbrev emptystr : Pattern n := Pattern.Empty
 abbrev after (p1 p2: Pattern n): Pattern n :=
   Pattern.After p1 p2
 abbrev closeDiv: Pattern n := Pattern.Empty
+abbrev optional (p: Pattern n): Pattern n := Pattern.Choice p Pattern.Empty
 
 -- With every call to startTagOpenDeriv the number of After expression accumulate.
-def g := Grammar.mk (symbol ("<div>", 0)) #v[or (symbol ("<div>", 0)) emptystr]
+def g := Grammar.mk (symbol ("<div>", 0)) #v[optional (symbol ("<div>", 0))]
 -- <div><div><div></div></div></div>
 #guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv -- <div><div></div></div></div>
 #guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv) -- <div></div></div></div>
@@ -806,14 +807,14 @@ def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn cx atts []]
 def childNode := ChildNode.ElementNode qn cx atts children
 
-def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[or (symbol ("<div>", 0)) emptystr]
+def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[optional (symbol ("<div>", 0))]
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := g.start
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := after (or (symbol ("<div>", 0)) emptystr) (symbol ("<body>", 0))
+def p1: Pattern 1 := after (optional (symbol ("<div>", 0))) (symbol ("<body>", 0))
 #guard p1 = startTagOpenDeriv o g p qn
 
 end keep_uncles_and_aunts

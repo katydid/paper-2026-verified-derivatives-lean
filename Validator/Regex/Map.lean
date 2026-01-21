@@ -104,3 +104,21 @@ theorem map_null {σ} (Φ: σ → Bool) (r: Regex σ):
   | compliment r1 ih1 =>
     simp only [map, Regex.null]
     rw [ih1]
+
+instance: Functor Regex where
+  map f := Regex.map (f := f)
+
+instance: LawfulFunctor Regex where
+  map_const {α β}: (Functor.mapConst : α → Regex β → Regex α) = Functor.map ∘ Function.const β := by
+    unfold Functor.mapConst
+    unfold instFunctor
+    unfold Function.const
+    unfold Functor.map
+    simp only
+  id_map {α} (x : Regex α) : id <$> x = x := by apply map_id
+  comp_map {α β γ} (f : α → β) (g : β → γ) (r : Regex α) : (g ∘ f) <$> r = g <$> f <$> r := by
+    unfold Functor.map
+    unfold instFunctor
+    simp only
+    rw [map_map]
+    rfl
