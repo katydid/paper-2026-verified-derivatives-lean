@@ -178,10 +178,10 @@ def filter (G: Grammar n φ) (Φ: φ → α → Bool)
 
 end Grammar.Original
 
-theorem Grammar.Original.derive_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop)
-  [DecidableRel Φ] (r: Regex (φ × Ref n)) (node: Hedge.Node α):
-  Hedge.Grammar.Rule.denote G Φ (Grammar.Original.derive G (decideRel Φ) r node)
-  = Lang.derive (Hedge.Grammar.Rule.denote G Φ r) node := by
+theorem Grammar.Original.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
+  (r: Regex (φ × Ref n)) (node: Node α):
+  Rule.denote G Φ (Grammar.Original.derive G (decideRel Φ) r node)
+  = Lang.derive (Rule.denote G Φ r) node := by
   fun_induction (Grammar.Original.derive G (fun p a => Φ p a)) r node with
   | case1 => -- emptyset
     rw [Hedge.Grammar.denote_emptyset]
