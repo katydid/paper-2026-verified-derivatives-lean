@@ -17,9 +17,6 @@ abbrev ParamList := List (LocalName × String)
 -- A Context represents the context of an XML element. It consists of a base URI and a mapping from prefixes to namespace URIs.
 -- type Prefix = String
 
-structure Options where
-  smartConstruction : Bool -- enable smart construction
-
 -- A Datatype identifies a datatype by a datatype library name and a local name.
 -- type Datatype = (Uri, LocalName)
 inductive Datatype where
@@ -152,10 +149,10 @@ def Pattern.nullable : Pattern n -> Bool
 -- choice p NotAllowed = p
 -- choice NotAllowed p = p
 -- choice p1 p2 = Choice p1 p2
-def choice : Options -> Pattern n -> Pattern n -> Pattern n
-  | Options.mk (smartConstruction := true), p, Pattern.NotAllowed => p
-  | Options.mk (smartConstruction := true), Pattern.NotAllowed, p => p
-  | _, p1, p2 => Pattern.Choice p1 p2
+def choice : Pattern n -> Pattern n -> Pattern n
+  | p, Pattern.NotAllowed => p
+  | Pattern.NotAllowed, p => p
+  | p1, p2 => Pattern.Choice p1 p2
 
 -- group :: Pattern -> Pattern -> Pattern
 -- group p NotAllowed = NotAllowed
@@ -163,12 +160,12 @@ def choice : Options -> Pattern n -> Pattern n -> Pattern n
 -- group p Empty = p
 -- group Empty p = p
 -- group p1 p2 = Group p1 p2
-def group : Options -> Pattern n -> Pattern n -> Pattern n
-  | Options.mk (smartConstruction := true), _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Options.mk (smartConstruction := true), Pattern.NotAllowed, _ => Pattern.NotAllowed
-  | Options.mk (smartConstruction := true), p, Pattern.Empty => p
-  | Options.mk (smartConstruction := true), Pattern.Empty, p => p
-  | _, p1, p2 => Pattern.Group p1 p2
+def group : Pattern n -> Pattern n -> Pattern n
+  | _, Pattern.NotAllowed => Pattern.NotAllowed
+  | Pattern.NotAllowed, _ => Pattern.NotAllowed
+  | p, Pattern.Empty => p
+  | Pattern.Empty, p => p
+  | p1, p2 => Pattern.Group p1 p2
 
 -- interleave :: Pattern -> Pattern -> Pattern
 -- interleave p NotAllowed = NotAllowed
@@ -176,29 +173,29 @@ def group : Options -> Pattern n -> Pattern n -> Pattern n
 -- interleave p Empty = p
 -- interleave Empty p = p
 -- interleave p1 p2 = Interleave p1 p2
-def interleave : Options -> Pattern n -> Pattern n -> Pattern n
-  | Options.mk (smartConstruction := true), _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Options.mk (smartConstruction := true), Pattern.NotAllowed, _ => Pattern.NotAllowed
-  | Options.mk (smartConstruction := true), p, Pattern.Empty => p
-  | Options.mk (smartConstruction := true), Pattern.Empty, p => p
-  | _, p1, p2 => Pattern.Interleave p1 p2
+def interleave : Pattern n -> Pattern n -> Pattern n
+  | _, Pattern.NotAllowed => Pattern.NotAllowed
+  | Pattern.NotAllowed, _ => Pattern.NotAllowed
+  | p, Pattern.Empty => p
+  | Pattern.Empty, p => p
+  | p1, p2 => Pattern.Interleave p1 p2
 
 -- after :: Pattern -> Pattern -> Pattern
 -- after p NotAllowed = NotAllowed
 -- after NotAllowed p = NotAllowed
 -- after p1 p2 = After p1 p2
-def after' : Options -> Pattern n -> Pattern n -> Pattern n
-  | Options.mk (smartConstruction := true), _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Options.mk (smartConstruction := true), Pattern.NotAllowed, _ => Pattern.NotAllowed
-  | _, p1, p2 => Pattern.After p1 p2
+def after : Pattern n -> Pattern n -> Pattern n
+  | _, Pattern.NotAllowed => Pattern.NotAllowed
+  | Pattern.NotAllowed, _ => Pattern.NotAllowed
+  | p1, p2 => Pattern.After p1 p2
 
 -- When constructing a OneOrMore, we need to treat an operand of NotAllowed specially:
 -- oneOrMore :: Pattern -> Pattern
 -- oneOrMore NotAllowed = NotAllowed
 -- oneOrMore p = OneOrMore p
-def oneOrMore : Options -> Pattern n -> Pattern n
-  | Options.mk (smartConstruction := true), Pattern.NotAllowed => Pattern.NotAllowed
-  | _, p => Pattern.OneOrMore p
+def oneOrMore : Pattern n -> Pattern n
+  | Pattern.NotAllowed => Pattern.NotAllowed
+  | p => Pattern.OneOrMore p
 
 -- The datatypeAllows and datatypeEqual functions represent the semantics of datatype libraries.
 -- Here, we specify only the semantics of the builtin datatype library.
@@ -265,9 +262,9 @@ def oneOrMore : Options -> Pattern n -> Pattern n
 -- applyAfter f (After p1 p2) = after p1 (f p2)
 -- applyAfter f (Choice p1 p2) = choice (applyAfter f p1) (applyAfter f p2)
 -- applyAfter f NotAllowed = NotAllowed
-def applyAfter (o: Options): (Pattern n -> Pattern n) -> Pattern n -> Pattern n
-  | f, (Pattern.After p1 p2) => after' o p1 (f p2)
-  | f, (Pattern.Choice p1 p2) => choice o (applyAfter o f p1) (applyAfter o f p2)
+def applyAfter : (Pattern n -> Pattern n) -> Pattern n -> Pattern n
+  | f, (Pattern.After p1 p2) => after p1 (f p2)
+  | f, (Pattern.Choice p1 p2) => choice (applyAfter f p1) (applyAfter f p2)
   | _, Pattern.NotAllowed => Pattern.NotAllowed
   | _, _ => Pattern.NotAllowed -- only defined to make the function total for Lean's sake
 
@@ -275,18 +272,18 @@ def applyAfter (o: Options): (Pattern n -> Pattern n) -> Pattern n -> Pattern n
 -- Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern;
 -- also the first operand of an After pattern can neither be an After pattern nor contain any After pattern descendants.
 -- startTagOpenDeriv :: Pattern -> QName -> Pattern
-def startTagOpenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (qn: QName): Pattern n :=
+def startTagOpenDeriv (g: Grammar n) (p: Pattern n) (qn: QName): Pattern n :=
   match p with
 -- The derivative of a Choice pattern is as usual.
 -- startTagOpenDeriv (Choice p1 p2) qn =
 --   choice (startTagOpenDeriv p1 qn) (startTagOpenDeriv p2 qn)
   | Pattern.Choice p1 p2 =>
-    choice o (startTagOpenDeriv o g p1 qn) (startTagOpenDeriv o g p2 qn)
+    choice (startTagOpenDeriv g p1 qn) (startTagOpenDeriv g p2 qn)
 -- To represent the derivative of a Element pattern, we introduce an After pattern.
 -- startTagOpenDeriv (Element nc p) qn =
 --   if contains nc qn then after p Empty else NotAllowed
   | Pattern.Element nc ref =>
-    if NameClass.contains nc qn then after' o (g.lookup ref) Pattern.Empty else Pattern.NotAllowed
+    if NameClass.contains nc qn then after (g.lookup ref) Pattern.Empty else Pattern.NotAllowed
 -- For Interleave, OneOrMore Group or After we compute the derivative in a similar way to textDeriv but with an important twist.
 -- The twist is that instead of applying interleave, group and after directly to the result of recursively applying startTagOpenDeriv,
 -- we instead use applyAfter to push the interleave, group or after down into the second operand of After.
@@ -308,19 +305,19 @@ def startTagOpenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (qn: QName): Pa
 -- startTagOpenDeriv (After p1 p2) qn =
 --   applyAfter (flip after p2) (startTagOpenDeriv p1 qn)
   | Pattern.Interleave p1 p2 =>
-    choice o (applyAfter o (flip (interleave o) p2) (startTagOpenDeriv o g p1 qn))
-           (applyAfter o (interleave o p1) (startTagOpenDeriv o g p2 qn))
+    choice (applyAfter (flip interleave p2) (startTagOpenDeriv g p1 qn))
+           (applyAfter (interleave p1) (startTagOpenDeriv g p2 qn))
   | Pattern.OneOrMore p =>
-    applyAfter o (flip (group o) (choice o (Pattern.OneOrMore p) Pattern.Empty))
-               (startTagOpenDeriv o g p qn)
+    applyAfter (flip group (choice (Pattern.OneOrMore p) Pattern.Empty))
+               (startTagOpenDeriv g p qn)
   | Pattern.Group p1 p2 =>
-    let x := applyAfter o (flip (group o) p2) (startTagOpenDeriv o g p1 qn)
+    let x := applyAfter (flip group p2) (startTagOpenDeriv g p1 qn)
     if Pattern.nullable p1 then
-      choice o x (startTagOpenDeriv o g p2 qn)
+      choice x (startTagOpenDeriv g p2 qn)
     else
       x
   | Pattern.After p1 p2 =>
-    applyAfter o (flip (after' o) p2) (startTagOpenDeriv o g p1 qn)
+    applyAfter (flip after p2) (startTagOpenDeriv g p1 qn)
 -- In any other case, the derivative is NotAllowed.
 -- startTagOpenDeriv _ qn = NotAllowed
   | _ => Pattern.NotAllowed
@@ -379,8 +376,8 @@ def startTagOpenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (qn: QName): Pa
 -- endTagDeriv (Choice p1 p2) = choice (endTagDeriv p1) (endTagDeriv p2)
 -- endTagDeriv (After p1 p2) = if nullable p1 then p2 else NotAllowed
 -- endTagDeriv _ = NotAllowed
-def endTagDeriv (o: Options): Pattern n -> Pattern n
-  | Pattern.Choice p1 p2 => choice o (endTagDeriv o p1) (endTagDeriv o p2)
+def endTagDeriv: Pattern n -> Pattern n
+  | Pattern.Choice p1 p2 => choice (endTagDeriv p1) (endTagDeriv p2)
   | Pattern.After p1 p2 => if Pattern.nullable p1 then p2 else Pattern.NotAllowed
   | _ => Pattern.NotAllowed
 
@@ -427,23 +424,20 @@ def endTagDeriv (o: Options): Pattern n -> Pattern n
 --       p3 = startTagCloseDeriv p2
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
-def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
+def childDeriv (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match node with
   | Hedge.Node.mk qn children =>
-      let p1 := startTagOpenDeriv o g p qn
-      let p4 := List.foldl (childDeriv o g) p1 children
-      endTagDeriv o p4
+      let p1 := startTagOpenDeriv g p qn
+      let p4 := List.foldl (childDeriv g) p1 children
+      endTagDeriv p4
 
-def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
-   List.foldl (childDeriv o g) p children
+def childrenDeriv (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
+   List.foldl (childDeriv g) p children
 
 -- Examples
 
 def childDerivStart (g: Grammar n) (node: ChildNode): Pattern n :=
-  childDeriv (Options.mk (smartConstruction := true)) g g.start node
-
-def childDerivStupidStart (g: Grammar n) (node: ChildNode): Pattern n :=
-  childDeriv (Options.mk (smartConstruction := false)) g g.start node
+  childDeriv g g.start node
 
 def Pattern.optional (p: Pattern n): Pattern n :=
   Pattern.Choice p Pattern.Empty
@@ -478,11 +472,6 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 #guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "div") 0) Pattern.Empty]) (node "doc" [node "div" [node "div" []]])
   = Pattern.Empty
 
--- no smart constructors
-
-#guard childDerivStupidStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [])
-  = Pattern.Empty
-
 -- after_buildup
 
 namespace example_after_buildup_1
@@ -492,20 +481,19 @@ def children: List ChildNode := []
 def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty])
-def o := (Options.mk (smartConstruction := true))
 def p := g.start
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p1 = startTagOpenDeriv o g p qn
+#guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p4 = childrenDeriv o g p1 children
+#guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := Pattern.Empty
-#guard p5 = endTagDeriv o p4
+#guard p5 = endTagDeriv p4
 
 end example_after_buildup_1
 
@@ -516,21 +504,20 @@ def children: List ChildNode := []
 def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "<div>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
-def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 def p := g.lookup 0
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
-#guard p1 = startTagOpenDeriv o g p qn
+#guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
-#guard p4 = childrenDeriv o g p1 children
+#guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := Pattern.Empty
-#guard p5 = endTagDeriv o p4
+#guard p5 = endTagDeriv p4
 
 end example_after_buildup_2
 
@@ -546,22 +533,21 @@ def children: List ChildNode := [Hedge.Node.mk qn []]
 def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
-def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
-#guard p1 = startTagOpenDeriv o g p qn
+#guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After Pattern.Empty (Pattern.After Pattern.Empty Pattern.Empty)
-#guard p4 = childrenDeriv o g p1 children
+#guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := (Pattern.After (Pattern.Empty) (Pattern.Empty))
-#guard p5 = endTagDeriv o p4
+#guard p5 = endTagDeriv p4
 
 end example_after_buildup_3
 
@@ -572,22 +558,21 @@ def children: List ChildNode := [Hedge.Node.mk qn []]
 def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
-def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
-#guard p1 = startTagOpenDeriv o g p qn
+#guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
-#guard p4 = childrenDeriv o g p1 children
+#guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
-#guard p5 = endTagDeriv o p4
+#guard p5 = endTagDeriv p4
 
 end example_after_buildup_4
 
@@ -597,8 +582,6 @@ abbrev symbol (s: String × Fin n): Pattern n :=
 abbrev or (p1 p2: Pattern n): Pattern n :=
   Pattern.Choice p1 p2
 abbrev emptystr : Pattern n := Pattern.Empty
-abbrev after (p1 p2: Pattern n): Pattern n :=
-  Pattern.After p1 p2
 abbrev closeDiv: Pattern n := Pattern.Empty
 abbrev optional (p: Pattern n): Pattern n := Pattern.Choice p Pattern.Empty
 
@@ -619,13 +602,12 @@ def children: List ChildNode := [Hedge.Node.mk qn []]
 def childNode := Hedge.Node.mk qn children
 
 def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[optional (symbol ("<div>", 0))]
-def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern 1 := g.start
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := after (optional (symbol ("<div>", 0))) (symbol ("<body>", 0))
-#guard p1 = startTagOpenDeriv o g p qn
+#guard p1 = startTagOpenDeriv g p qn
 
 end keep_uncles_and_aunts
