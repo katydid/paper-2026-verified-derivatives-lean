@@ -98,7 +98,7 @@ inductive AttributeNode where
 -- data ChildNode = ElementNode QName Context [AttributeNode] [ChildNode]
 --                  | TextNode String
 inductive ChildNode where
-  | ElementNode (n: QName) (attrs: List AttributeNode) (children: List ChildNode)
+  | ElementNode (n: QName) (children: List ChildNode)
 
 -- Now we're ready to define our first function: contains tests whether a NameClass contains a particular QName.
 -- contains :: NameClass -> QName -> Bool
@@ -409,32 +409,12 @@ def valueMatch (o: Options): Pattern n -> String -> Bool
 -- attDeriv cx (Attribute nc p) (AttributeNode qn s) =
 --   if contains nc qn && valueMatch cx p s then Empty else NotAllowed
 -- attDeriv _ _ _ = NotAllowed
-def attDeriv (o: Options): Pattern n -> AttributeNode -> Pattern n
-  | (Pattern.After p1 p2), att =>
-    after' o (attDeriv o p1 att) p2
-  | (Pattern.Choice p1 p2), att =>
-    choice o (attDeriv o p1 att) (attDeriv o p2 att)
-  | (Pattern.Group p1 p2), att =>
-    choice o (group o (attDeriv o p1 att) p2)
-           (group o p1 (attDeriv o p2 att))
-  | (Pattern.Interleave p1 p2), att =>
-    choice o (interleave o (attDeriv o p1 att) p2)
-           (interleave o p1 (attDeriv o p2 att))
-  | (Pattern.OneOrMore p), att =>
-    group o (attDeriv o p att) (choice o (Pattern.OneOrMore p) Pattern.Empty)
-  | (Pattern.Attribute nc p), (AttributeNode.mk qn s) =>
-    if NameClass.contains nc qn && valueMatch o p s then Pattern.Empty else Pattern.NotAllowed
-  | _, _ => Pattern.NotAllowed
 
 -- To compute the derivative of a pattern with respect to a sequence of attributes, simply compute the derivative with respect to each attribute in turn.
 -- attsDeriv :: Context -> Pattern -> [AttributeNode] -> Pattern
 -- attsDeriv cx p [] = p
 -- attsDeriv cx p ((AttributeNode qn s):t) =
 --   attsDeriv cx (attDeriv cx p (AttributeNode qn s)) t
-def attsDeriv (o: Options): Pattern n -> List AttributeNode -> Pattern n
-  | p, [] => p
-  | p, ((AttributeNode.mk qn s)::t) =>
-     attsDeriv o (attDeriv o p (AttributeNode.mk qn s)) t
 
 -- When we see a start-tag close, we know that there cannot be any further attributes.
 -- Therefore we can replace each Attribute pattern by NotAllowed.
@@ -530,10 +510,9 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 --   in endTagDeriv p4
 partial def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match node with
-  | ChildNode.ElementNode qn atts children =>
+  | ChildNode.ElementNode qn children =>
       let p1 := startTagOpenDeriv o g p qn
-      let p2 := attsDeriv o p1 atts
-      let p3 := startTagCloseDeriv o p2
+      let p3 := startTagCloseDeriv o p1
       let p4 := childrenDeriv o g p3 children
       endTagDeriv o p4
   -- termination_by (sizeOf node)
@@ -556,22 +535,22 @@ def Pattern.optional (p: Pattern n): Pattern n :=
 
 -- basics
 
-def ChildNode.mkElement (name: String) (attrs: List AttributeNode) (children: List ChildNode): ChildNode :=
-  (ChildNode.ElementNode name attrs children)
+def ChildNode.mkElement (name: String) (children: List ChildNode): ChildNode :=
+  (ChildNode.ElementNode name children)
 
 def NameClass.mk (name: String): NameClass :=
   NameClass.Name name
 
 -- element
 
-#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [] [])
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [])
   = Pattern.Empty
 
-#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hello" [] [])
+#guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hello" [])
   = Pattern.NotAllowed
 
 def node (name: String) (children: List ChildNode): ChildNode :=
-  ChildNode.mkElement name [] children
+  ChildNode.mkElement name children
 
 -- recursive
 
@@ -586,7 +565,7 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 
 -- no smart constructors
 
-#guard childDerivStupidStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [] [])
+#guard childDerivStupidStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [])
   = Pattern.Choice Pattern.Empty Pattern.NotAllowed
 
 -- after_buildup
@@ -594,9 +573,8 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 namespace example_after_buildup_1
 
 def qn := "hey"
-def atts: List AttributeNode := []
 def children: List ChildNode := []
-def childNode := ChildNode.ElementNode qn atts children
+def childNode := ChildNode.ElementNode qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -606,13 +584,9 @@ def p := g.start
 def p1: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p2 = attsDeriv o p1 atts
-
 -- let p3 := startTagCloseDeriv o p2
 def p3: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p3 = startTagCloseDeriv o p2
+#guard p3 = startTagCloseDeriv o p1
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
@@ -627,9 +601,8 @@ end example_after_buildup_1
 namespace example_after_buildup_2
 
 def qn := "<div>"
-def atts: List AttributeNode := []
 def children: List ChildNode := []
-def childNode := ChildNode.ElementNode qn atts children
+def childNode := ChildNode.ElementNode qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "<div>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -640,13 +613,9 @@ def p := g.lookup 0
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) Pattern.Empty
-#guard p2 = attsDeriv o p1 atts
-
 -- let p3 := startTagCloseDeriv o p2
 def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
-#guard p3 = startTagCloseDeriv o p2
+#guard p3 = startTagCloseDeriv o p1
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
@@ -666,9 +635,8 @@ namespace example_after_buildup_3
 -- childrenDeriv o cx g [child] ~= childDeriv o cx g p child
 
 def qn := "<div>"
-def atts: List AttributeNode := []
-def children: List ChildNode := [ChildNode.ElementNode qn atts []]
-def childNode := ChildNode.ElementNode qn atts children
+def children: List ChildNode := [ChildNode.ElementNode qn []]
+def childNode := ChildNode.ElementNode qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -680,13 +648,9 @@ def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Na
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
-#guard p2 = attsDeriv o p1 atts
-
 -- let p3 := startTagCloseDeriv o p2
 def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
-#guard p3 = startTagCloseDeriv o p2
+#guard p3 = startTagCloseDeriv o p1
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After Pattern.Empty (Pattern.After Pattern.Empty Pattern.Empty)
@@ -701,9 +665,8 @@ end example_after_buildup_3
 namespace example_after_buildup_4
 
 def qn := "<div>"
-def atts: List AttributeNode := []
-def children: List ChildNode := [ChildNode.ElementNode qn atts []]
-def childNode := ChildNode.ElementNode qn atts children
+def children: List ChildNode := [ChildNode.ElementNode qn []]
+def childNode := ChildNode.ElementNode qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -715,13 +678,9 @@ def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Na
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
-#guard p2 = attsDeriv o p1 atts
-
 -- let p3 := startTagCloseDeriv o p2
 def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
-#guard p3 = startTagCloseDeriv o p2
+#guard p3 = startTagCloseDeriv o p1
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
@@ -757,9 +716,8 @@ def concat (p1 p2: Pattern n): Pattern n :=
   Pattern.Group p1 p2
 
 def qn := "<head>"
-def atts: List AttributeNode := []
-def children: List ChildNode := [ChildNode.ElementNode qn atts []]
-def childNode := ChildNode.ElementNode qn atts children
+def children: List ChildNode := [ChildNode.ElementNode qn []]
+def childNode := ChildNode.ElementNode qn children
 
 def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[optional (symbol ("<div>", 0))]
 def o := (Options.mk (smartConstruction := true))
