@@ -74,9 +74,9 @@ lemma Grammar.Room.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   repeat rw [Regex.Room.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Room.derive_or {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
-  Grammar.Room.derive G Φ (Regex.or r1 r2) a
-  = Regex.or (Grammar.Room.derive G Φ r1 a) (Grammar.Room.derive G Φ r2 a) := by
+lemma Grammar.Room.derive_or {α: Type} (G: Grammar n φ) Φ r1 r2 (node: Node α):
+  Grammar.Room.derive G Φ (Regex.or r1 r2) node
+  = Regex.or (Grammar.Room.derive G Φ r1 node) (Grammar.Room.derive G Φ r2 node) := by
   unfold Grammar.Room.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Room.derive_is_Regex_derive]
