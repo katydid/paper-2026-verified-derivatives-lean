@@ -21,8 +21,7 @@ def Lang.and {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
 def Lang.compliment {α: Type} (R: Lang α): Lang α :=
   fun xs => (Not (R xs))
 
-def Lang.derive (R: Lang α) (x: α): Lang α :=
-  fun (xs: List α) => R (x :: xs)
+def Lang.derive (R: Lang α) (x: α): Lang α := fun (xs: List α) => R (x :: xs)
 
 def Lang.null (R: Lang α): Prop := R []
 
