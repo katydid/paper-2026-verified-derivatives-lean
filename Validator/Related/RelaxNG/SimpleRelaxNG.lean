@@ -1,5 +1,7 @@
 import Mathlib.Tactic.NthRewrite
 
+import Validator.Std.Hedge
+
 -- Copied from https://relaxng.org/jclark/derivative.html and added translations for Lean
 import Validator.Related.RelaxNG.StdHaskell
 
@@ -97,8 +99,7 @@ inductive AttributeNode where
 --       each of which will be an AttributeNode), and a list of children (represented as a list of ChildNodes).
 -- data ChildNode = ElementNode QName Context [AttributeNode] [ChildNode]
 --                  | TextNode String
-inductive ChildNode where
-  | ElementNode (n: QName) (children: List ChildNode)
+abbrev ChildNode := Hedge.Node String
 
 -- Now we're ready to define our first function: contains tests whether a NameClass contains a particular QName.
 -- contains :: NameClass -> QName -> Bool
@@ -510,14 +511,14 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 --   in endTagDeriv p4
 partial def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match node with
-  | ChildNode.ElementNode qn children =>
+  | Hedge.Node.mk qn children =>
       let p1 := startTagOpenDeriv o g p qn
       let p3 := startTagCloseDeriv o p1
       let p4 := childrenDeriv o g p3 children
       endTagDeriv o p4
   -- termination_by (sizeOf node)
   -- decreasing_by
-  --   · simp only [ChildNode.ElementNode.sizeOf_spec]
+  --   · simp only [Hedge.Node.mk.sizeOf_spec]
   --     omega
 
 end
@@ -536,7 +537,7 @@ def Pattern.optional (p: Pattern n): Pattern n :=
 -- basics
 
 def ChildNode.mkElement (name: String) (children: List ChildNode): ChildNode :=
-  (ChildNode.ElementNode name children)
+  (Hedge.Node.mk name children)
 
 def NameClass.mk (name: String): NameClass :=
   NameClass.Name name
@@ -574,7 +575,7 @@ namespace example_after_buildup_1
 
 def qn := "hey"
 def children: List ChildNode := []
-def childNode := ChildNode.ElementNode qn children
+def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -602,7 +603,7 @@ namespace example_after_buildup_2
 
 def qn := "<div>"
 def children: List ChildNode := []
-def childNode := ChildNode.ElementNode qn children
+def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "<div>") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -635,8 +636,8 @@ namespace example_after_buildup_3
 -- childrenDeriv o cx g [child] ~= childDeriv o cx g p child
 
 def qn := "<div>"
-def children: List ChildNode := [ChildNode.ElementNode qn []]
-def childNode := ChildNode.ElementNode qn children
+def children: List ChildNode := [Hedge.Node.mk qn []]
+def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -665,8 +666,8 @@ end example_after_buildup_3
 namespace example_after_buildup_4
 
 def qn := "<div>"
-def children: List ChildNode := [ChildNode.ElementNode qn []]
-def childNode := ChildNode.ElementNode qn children
+def children: List ChildNode := [Hedge.Node.mk qn []]
+def childNode := Hedge.Node.mk qn children
 
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def o := (Options.mk (smartConstruction := true))
@@ -716,8 +717,8 @@ def concat (p1 p2: Pattern n): Pattern n :=
   Pattern.Group p1 p2
 
 def qn := "<head>"
-def children: List ChildNode := [ChildNode.ElementNode qn []]
-def childNode := ChildNode.ElementNode qn children
+def children: List ChildNode := [Hedge.Node.mk qn []]
+def childNode := Hedge.Node.mk qn children
 
 def g := Grammar.mk (concat (symbol ("<head>", 0)) (symbol ("<body>", 0))) #v[optional (symbol ("<div>", 0))]
 def o := (Options.mk (smartConstruction := true))
