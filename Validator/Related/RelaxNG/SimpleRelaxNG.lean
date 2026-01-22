@@ -63,11 +63,6 @@ inductive Pattern (n: Nat) where
   | Interleave (p1 p2: Pattern n)
   | Group (p1 p2: Pattern n)
   | OneOrMore (p1: Pattern n)
-  | List (p1: Pattern n)
-  | Data (d: Datatype) (ps: ParamList)
-  | DataExcept (d: Datatype) (ps: ParamList) (p1: Pattern n)
-  | Value (d: Datatype) (v: String)
-  | Attribute (name: NameClass) (p1: Pattern n)
   | Element (name: NameClass) (p1: Fin n)
   | After (p1 p2: Pattern n)
   deriving Repr, DecidableEq
@@ -89,8 +84,6 @@ abbrev QName := LocalName
 
 -- An AttributeNode consists of a QName and a String.
 -- data AttributeNode = AttributeNode QName String
-inductive AttributeNode where
-  | mk (n: QName) (v: String)
 
 -- An XML document is represented as a ChildNode.
 -- There are two kinds of child node:
@@ -139,11 +132,6 @@ def Pattern.nullable : Pattern n -> Bool
   | (Choice p1 p2) => nullable p1 || nullable p2
   | (OneOrMore p) => nullable p
   | (Element _ _) => false
-  | (Attribute _ _) => false
-  | (List _) => false
-  | (Value _ _) => false
-  | (Data _ _) => false
-  | (DataExcept _ _ _) => false
   | NotAllowed => false
   | Empty => true
   | Text => true
@@ -152,8 +140,6 @@ def Pattern.nullable : Pattern n -> Bool
 -- whitespace tests whether a string is contains only whitespace.
 -- whitespace :: String -> Bool
 -- whitespace s = all isSpace s
-def whitespace : String -> Bool
-  | s => List.all s.toList isSpace
 
 -- strip :: ChildNode -> Bool
 -- strip (TextNode s) = whitespace s
@@ -219,23 +205,14 @@ def oneOrMore : Options -> Pattern n -> Pattern n
 -- datatypeAllows :: Datatype -> ParamList -> String -> Context -> Bool
 -- datatypeAllows ("", "string") [] _ _ = True
 -- datatypeAllows ("", "token") [] _ _ = True
-def datatypeAllows : Datatype -> ParamList -> String -> Bool
-  | Datatype.DataString, [], _ => true
-  | Datatype.DataToken, [], _ => true
-  | _, _, _ => false -- only defined to make the function total for Lean's sake
 
 -- normalizeWhitespace :: String -> String
 -- normalizeWhitespace s = unwords (words s)
-def normalizeWhitespace : String -> String
-  | s => unwords (words s)
 
 -- datatypeEqual :: Datatype -> String -> Context -> String -> Context -> Bool
 -- datatypeEqual ("", "string") s1 _ s2 _ = (s1 == s2)
 -- datatypeEqual ("", "token") s1 _ s2 _ =
 --   (normalizeWhitespace s1) == (normalizeWhitespace s2)
-def datatypeEqual : Datatype -> String -> String -> Bool
-  | Datatype.DataString, s1, s2 => (s1 == s2)
-  | Datatype.DataToken, s1, s2 => (normalizeWhitespace s1) == (normalizeWhitespace s2)
 
 -- textDeriv computes the derivative of a pattern with respect to a text node.
 -- textDeriv :: Context -> Pattern -> String -> Pattern
@@ -406,7 +383,6 @@ def startTagCloseDeriv (o: Options): Pattern n -> Pattern n
     interleave o (startTagCloseDeriv o p1) (startTagCloseDeriv o p2)
   | Pattern.OneOrMore p =>
     oneOrMore o (startTagCloseDeriv o p)
-  | Pattern.Attribute _ _ => Pattern.NotAllowed
   | p => p
 
 -- Computing the derivative of a pattern with respect to an end-tag is obvious.
