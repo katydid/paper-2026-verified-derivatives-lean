@@ -340,7 +340,7 @@ def applyAfter (o: Options): (Pattern n -> Pattern n) -> Pattern n -> Pattern n
   | f, (Pattern.After p1 p2) => after' o p1 (f p2)
   | f, (Pattern.Choice p1 p2) => choice o (applyAfter o f p1) (applyAfter o f p2)
   | _, Pattern.NotAllowed => Pattern.NotAllowed
-  | _, _ => Pattern.NotAllowed -- only defined to make the function total for Lean's sake
+  | _, p => p -- only defined to make the function total for Lean's sake
 
 -- We rely here on the fact that After patterns are restricted in where they can occur.
 -- Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern;
