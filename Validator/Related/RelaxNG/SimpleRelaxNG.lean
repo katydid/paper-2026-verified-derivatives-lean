@@ -99,7 +99,6 @@ inductive AttributeNode where
 --                  | TextNode String
 inductive ChildNode where
   | ElementNode (n: QName) (attrs: List AttributeNode) (children: List ChildNode)
-  | TextNode (v: String)
 
 -- Now we're ready to define our first function: contains tests whether a NameClass contains a particular QName.
 -- contains :: NameClass -> QName -> Bool
@@ -158,9 +157,6 @@ def whitespace : String -> Bool
 -- strip :: ChildNode -> Bool
 -- strip (TextNode s) = whitespace s
 -- strip _ = False
-def strip : ChildNode -> Bool
-  | (ChildNode.TextNode s) => whitespace s
-  | _ => false
 
 -- In Haskell, [] refers to the empty list.
 -- When constructing Choice, Group, Interleave and After patterns while computing derivatives,
@@ -499,14 +495,10 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 -- childrenDeriv cx p [(TextNode s)] =
 --   let p1 = childDeriv cx p (TextNode s)
 --   in if whitespace s then choice p p1 else p1
-  | [ChildNode.TextNode s] =>
-    let p1 :=  Pattern.textDeriv o p s
-    if whitespace s then choice o p p1 else p1
 -- Otherwise, there must be one or more elements amongst the children, in which case any whitespace-only text nodes are stripped before the derivative is computed.
 -- childrenDeriv cx p children = stripChildrenDeriv cx p children
   | _ =>
-    let children' := List.filter (not ∘ strip) children
-    List.foldl (childDeriv o g) p children'
+    List.foldl (childDeriv o g) p children
   -- termination_by sizeOf children
   -- decreasing_by
   --   · subst h
@@ -538,7 +530,6 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 --   in endTagDeriv p4
 partial def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match node with
-  | ChildNode.TextNode s => Pattern.textDeriv o p s
   | ChildNode.ElementNode qn atts children =>
       let p1 := startTagOpenDeriv o g p qn
       let p2 := attsDeriv o p1 atts
@@ -552,18 +543,6 @@ partial def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNo
 
 end
 
--- stripChildrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
--- stripChildrenDeriv _ p [] = p
--- stripChildrenDeriv cx p (h:t) =
---   stripChildrenDeriv cx (if strip h then p else (childDeriv cx p h)) t
-def stripChildrenDeriv (o: Options): Grammar n -> Pattern n -> List ChildNode -> Pattern n
-  | _, p, [] => p
-  | g, p, (h::t) =>
-    stripChildrenDeriv o g (if strip h then p else (childDeriv o g p h)) t
-
-def stripChildrenDeriv' (o: Options): Grammar n -> Pattern n -> List ChildNode -> Pattern n
-  | g, p, xs => List.foldl (fun p' node => if strip node then p' else (childDeriv o g p node)) p xs
-
 -- Examples
 
 def childDerivStart (g: Grammar n) (node: ChildNode): Pattern n :=
@@ -576,15 +555,6 @@ def Pattern.optional (p: Pattern n): Pattern n :=
   Pattern.Choice p Pattern.Empty
 
 -- basics
-
-#guard childDerivStart (Grammar.mk Pattern.Text #v[]) (ChildNode.TextNode "abc")
-  = Pattern.Text
-
-#guard childDerivStart (Grammar.mk Pattern.Empty #v[]) (ChildNode.TextNode "abc")
-  = Pattern.NotAllowed
-
-#guard childDerivStart (Grammar.mk Pattern.NotAllowed #v[]) (ChildNode.TextNode "abc")
-  = Pattern.NotAllowed
 
 def ChildNode.mkElement (name: String) (attrs: List AttributeNode) (children: List ChildNode): ChildNode :=
   (ChildNode.ElementNode name attrs children)
