@@ -9,19 +9,14 @@ namespace SimpleRelaxNG
 
 -- First, we define the datatypes we will be using. URIs and local names are just strings.
 -- type LocalName = String
-abbrev LocalName := String
 
 -- A ParamList represents a list of parameters; each parameter is a pair consisting of a local name and a value.
 -- type ParamList = [(LocalName, String)]
-abbrev ParamList := List (LocalName × String)
 -- A Context represents the context of an XML element. It consists of a base URI and a mapping from prefixes to namespace URIs.
 -- type Prefix = String
 
 -- A Datatype identifies a datatype by a datatype library name and a local name.
 -- type Datatype = (Uri, LocalName)
-inductive Datatype where
-  | DataToken | DataString
-  deriving Repr, DecidableEq
 
 -- A NameClass represents a name class.
 -- data NameClass = AnyName
@@ -33,7 +28,7 @@ inductive Datatype where
 inductive NameClass where
   | AnyName
   | AnyNameExcept (n: NameClass)
-  | Name (n: LocalName)
+  | Name (n: String)
   | NameClassChoice (n1 n2: NameClass)
   deriving Repr, DecidableEq
 
@@ -77,7 +72,6 @@ def Grammar.lookup (G: Grammar n) (ref: Fin n): Pattern n :=
 
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
-abbrev QName := LocalName
 
 -- An AttributeNode consists of a QName and a String.
 -- data AttributeNode = AttributeNode QName String
@@ -100,7 +94,7 @@ abbrev ChildNode := Hedge.Node String
 --   ns1 == ns2 && not (contains nc (QName ns2 ln))
 -- contains (Name ns1 ln1) (QName ns2 ln2) = (ns1 == ns2) && (ln1 == ln2)
 -- contains (NameClassChoice nc1 nc2) n = (contains nc1 n) || (contains nc2 n)
-def NameClass.contains: NameClass -> QName -> Bool
+def NameClass.contains: NameClass -> String -> Bool
   | AnyName, _ => true
   | AnyNameExcept nc, n => not (contains nc n)
   | Name ln1, ln2 => (ln1 == ln2)
@@ -272,7 +266,7 @@ def applyAfter : (Pattern n -> Pattern n) -> Pattern n -> Pattern n
 -- Specifically, an After pattern cannot be the descendant of any pattern other than a Choice pattern or another After pattern;
 -- also the first operand of an After pattern can neither be an After pattern nor contain any After pattern descendants.
 -- startTagOpenDeriv :: Pattern -> QName -> Pattern
-def startTagOpenDeriv (g: Grammar n) (p: Pattern n) (qn: QName): Pattern n :=
+def startTagOpenDeriv (g: Grammar n) (p: Pattern n) (qn: String): Pattern n :=
   match p with
 -- The derivative of a Choice pattern is as usual.
 -- startTagOpenDeriv (Choice p1 p2) qn =
