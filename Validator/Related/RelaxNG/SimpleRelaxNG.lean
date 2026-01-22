@@ -457,19 +457,12 @@ def endTagDeriv (o: Options): Pattern n -> Pattern n
   | Pattern.After p1 p2 => if Pattern.nullable p1 then p2 else Pattern.NotAllowed
   | _ => Pattern.NotAllowed
 
-mutual
-
 -- Computing the derivative of a pattern with respect to a list of children involves computing the derivative with respect to each pattern in turn,
 -- except that whitespace requires special treatment.
 -- childrenDeriv :: Context -> Pattern -> [ChildNode] -> Pattern
-partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
-  match children with
 -- The case where the list of children is empty is treated as if there were a text node whose value were the empty string.
 -- See rule (weak match 3) in the RELAX NG spec.
 -- childrenDeriv cx p [] = childrenDeriv cx p [(TextNode "")]
-  | [] =>
-    let p1 := Pattern.textDeriv o p ""
-    if whitespace "" then choice o p p1 else p1
 -- In the case where the list of children consists of a single text node and the value of the text node consists only of whitespace,
 -- the list of children matches if the list matches either with or without stripping the text node.
 -- Note the similarity with valueMatch.
@@ -478,8 +471,6 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 --   in if whitespace s then choice p p1 else p1
 -- Otherwise, there must be one or more elements amongst the children, in which case any whitespace-only text nodes are stripped before the derivative is computed.
 -- childrenDeriv cx p children = stripChildrenDeriv cx p children
-  | _ =>
-    List.foldl (childDeriv o g) p children
   -- termination_by sizeOf children
   -- decreasing_by
   --   · subst h
@@ -509,19 +500,16 @@ partial def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: 
 --       p3 = startTagCloseDeriv p2
 --       p4 = childrenDeriv cx p3 children
 --   in endTagDeriv p4
-partial def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
+def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pattern n :=
   match node with
   | Hedge.Node.mk qn children =>
       let p1 := startTagOpenDeriv o g p qn
       let p3 := startTagCloseDeriv o p1
-      let p4 := childrenDeriv o g p3 children
+      let p4 := List.foldl (childDeriv o g) p3 children
       endTagDeriv o p4
-  -- termination_by (sizeOf node)
-  -- decreasing_by
-  --   · simp only [Hedge.Node.mk.sizeOf_spec]
-  --     omega
 
-end
+def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
+   List.foldl (childDeriv o g) p children
 
 -- Examples
 
@@ -567,7 +555,7 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 -- no smart constructors
 
 #guard childDerivStupidStart (Grammar.mk (Pattern.Element (NameClass.mk "hey") 0) #v[Pattern.Empty]) (ChildNode.mkElement "hey" [])
-  = Pattern.Choice Pattern.Empty Pattern.NotAllowed
+  = Pattern.Empty
 
 -- after_buildup
 
