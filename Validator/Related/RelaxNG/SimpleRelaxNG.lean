@@ -21,7 +21,9 @@ structure Options where
 
 -- A Datatype identifies a datatype by a datatype library name and a local name.
 -- type Datatype = (Uri, LocalName)
-abbrev Datatype := LocalName
+inductive Datatype where
+  | DataToken | DataString
+  deriving Repr, DecidableEq
 
 -- A NameClass represents a name class.
 -- data NameClass = AnyName
@@ -223,8 +225,8 @@ def oneOrMore : Options -> Pattern n -> Pattern n
 -- datatypeAllows ("", "string") [] _ _ = True
 -- datatypeAllows ("", "token") [] _ _ = True
 def datatypeAllows : Datatype -> ParamList -> String -> Bool
-  | "string", [], _ => true
-  | "token", [], _ => true
+  | Datatype.DataString, [], _ => true
+  | Datatype.DataToken, [], _ => true
   | _, _, _ => false -- only defined to make the function total for Lean's sake
 
 -- normalizeWhitespace :: String -> String
@@ -237,9 +239,8 @@ def normalizeWhitespace : String -> String
 -- datatypeEqual ("", "token") s1 _ s2 _ =
 --   (normalizeWhitespace s1) == (normalizeWhitespace s2)
 def datatypeEqual : Datatype -> String -> String -> Bool
-  | "string", s1, s2 => (s1 == s2)
-  | "token", s1, s2 => (normalizeWhitespace s1) == (normalizeWhitespace s2)
-  | _, _, _ => false -- only defined to make the function total for Lean's sake
+  | Datatype.DataString, s1, s2 => (s1 == s2)
+  | Datatype.DataToken, s1, s2 => (normalizeWhitespace s1) == (normalizeWhitespace s2)
 
 -- textDeriv computes the derivative of a pattern with respect to a text node.
 -- textDeriv :: Context -> Pattern -> String -> Pattern
