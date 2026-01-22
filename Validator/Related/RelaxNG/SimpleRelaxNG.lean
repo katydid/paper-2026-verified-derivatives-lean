@@ -372,18 +372,6 @@ def startTagOpenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (qn: QName): Pa
 --   oneOrMore (startTagCloseDeriv p)
 -- startTagCloseDeriv (Attribute _ _) = NotAllowed
 -- startTagCloseDeriv p = p
-def startTagCloseDeriv (o: Options): Pattern n -> Pattern n
-  | Pattern.After p1 p2 =>
-    after' o (startTagCloseDeriv o p1) p2
-  | Pattern.Choice p1 p2 =>
-    choice o (startTagCloseDeriv o p1) (startTagCloseDeriv o p2)
-  | Pattern.Group p1 p2 =>
-    group o (startTagCloseDeriv o p1) (startTagCloseDeriv o p2)
-  | Pattern.Interleave p1 p2 =>
-    interleave o (startTagCloseDeriv o p1) (startTagCloseDeriv o p2)
-  | Pattern.OneOrMore p =>
-    oneOrMore o (startTagCloseDeriv o p)
-  | p => p
 
 -- Computing the derivative of a pattern with respect to an end-tag is obvious.
 -- Note that we rely here on the invariants about where After patterns can occur.
@@ -443,8 +431,7 @@ def childDeriv (o: Options) (g: Grammar n) (p: Pattern n) (node: ChildNode): Pat
   match node with
   | Hedge.Node.mk qn children =>
       let p1 := startTagOpenDeriv o g p qn
-      let p3 := startTagCloseDeriv o p1
-      let p4 := List.foldl (childDeriv o g) p3 children
+      let p4 := List.foldl (childDeriv o g) p1 children
       endTagDeriv o p4
 
 def childrenDeriv (o: Options) (g: Grammar n) (p: Pattern n) (children: List ChildNode): Pattern n :=
@@ -512,13 +499,9 @@ def p := g.start
 def p1: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p3 = startTagCloseDeriv o p1
-
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.Empty)
-#guard p4 = childrenDeriv o g p3 children
+#guard p4 = childrenDeriv o g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := Pattern.Empty
@@ -541,13 +524,9 @@ def p := g.lookup 0
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
-#guard p3 = startTagCloseDeriv o p1
-
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
-#guard p4 = childrenDeriv o g p3 children
+#guard p4 = childrenDeriv o g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := Pattern.Empty
@@ -576,13 +555,9 @@ def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Na
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
-#guard p3 = startTagCloseDeriv o p1
-
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After Pattern.Empty (Pattern.After Pattern.Empty Pattern.Empty)
-#guard p4 = childrenDeriv o g p3 children
+#guard p4 = childrenDeriv o g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := (Pattern.After (Pattern.Empty) (Pattern.Empty))
@@ -606,13 +581,9 @@ def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Na
 def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
 #guard p1 = startTagOpenDeriv o g p qn
 
--- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
-#guard p3 = startTagCloseDeriv o p1
-
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
-#guard p4 = childrenDeriv o g p3 children
+#guard p4 = childrenDeriv o g p1 children
 
 -- endTagDeriv o p4
 def p5: Pattern 1 := (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
