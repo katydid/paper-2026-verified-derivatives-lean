@@ -38,39 +38,39 @@ def applyAfter : (Pattern φ n -> Pattern φ n) -> Pattern φ n -> Pattern φ n
   | _, Pattern.EmptySet => Pattern.EmptySet
   | _, p => p -- only defined to make the function total for Lean's sake
 
-def startTagOpenDeriv (g: Grammar φ n) (Φ: φ -> α -> Bool) (p: Pattern φ n) (qn: α): Pattern φ n :=
+def openDeriv (g: Grammar φ n) (Φ: φ -> α -> Bool) (p: Pattern φ n) (label: α): Pattern φ n :=
   match p with
+  | Pattern.EmptySet => Pattern.EmptySet
+  | Pattern.EmptyStr => Pattern.EmptySet
+  | Pattern.Element nc ref => if Φ nc label
+    then Pattern.After (g.lookup ref) Pattern.EmptyStr
+    else Pattern.EmptySet
   | Pattern.Or p1 p2 =>
-    Pattern.Or (startTagOpenDeriv g Φ p1 qn) (startTagOpenDeriv g Φ p2 qn)
-  | Pattern.Element nc ref =>
-    if Φ nc qn then Pattern.After (g.lookup ref) Pattern.EmptyStr else Pattern.EmptySet
-  | Pattern.Interleave p1 p2 =>
-    Pattern.Or (applyAfter (flip Pattern.Interleave p2) (startTagOpenDeriv g Φ p1 qn))
-           (applyAfter (Pattern.Interleave p1) (startTagOpenDeriv g Φ p2 qn))
-  | Pattern.OneOrMore p =>
-    applyAfter (flip Pattern.Concat (Pattern.Or (Pattern.OneOrMore p) Pattern.EmptyStr))
-               (startTagOpenDeriv g Φ p qn)
+    Pattern.Or (openDeriv g Φ p1 label) (openDeriv g Φ p2 label)
   | Pattern.Concat p1 p2 =>
-    let x := applyAfter (flip Pattern.Concat p2) (startTagOpenDeriv g Φ p1 qn)
-    if Pattern.nullable p1 then
-      Pattern.Or x (startTagOpenDeriv g Φ p2 qn)
-    else
-      x
+    let x := applyAfter (flip Pattern.Concat p2) (openDeriv g Φ p1 label)
+    if Pattern.nullable p1
+    then Pattern.Or x (openDeriv g Φ p2 label)
+    else x
+  | Pattern.OneOrMore p => let zeroOrMore := Pattern.Or (Pattern.OneOrMore p) Pattern.EmptyStr
+    applyAfter (flip Pattern.Concat zeroOrMore) (openDeriv g Φ p label)
+  | Pattern.Interleave p1 p2 => Pattern.Or
+      (applyAfter (Pattern.Interleave p2) (openDeriv g Φ p1 label))
+      (applyAfter (Pattern.Interleave p1) (openDeriv g Φ p2 label))
   | Pattern.After p1 p2 =>
-    applyAfter (flip Pattern.After p2) (startTagOpenDeriv g Φ p1 qn)
-  | _ => Pattern.EmptySet
+    applyAfter (flip Pattern.After p2) (openDeriv g Φ p1 label)
 
-def endTagDeriv: Pattern φ n -> Pattern φ n
-  | Pattern.Or p1 p2 => Pattern.Or (endTagDeriv p1) (endTagDeriv p2)
+def closeDeriv: Pattern φ n -> Pattern φ n
+  | Pattern.Or p1 p2 => Pattern.Or (closeDeriv p1) (closeDeriv p2)
   | Pattern.After p1 p2 => if Pattern.nullable p1 then p2 else Pattern.EmptySet
   | _ => Pattern.EmptySet
 
 def childDeriv (g: Grammar φ n) (Φ: φ -> α -> Bool) (p: Pattern φ n) (node: Hedge.Node α): Pattern φ n :=
   match node with
-  | Hedge.Node.mk qn children =>
-      let p1 := startTagOpenDeriv g Φ p qn
-      let p4 := List.foldl (childDeriv g Φ) p1 children
-      endTagDeriv p4
+  | Hedge.Node.mk label children =>
+    let opened := openDeriv g Φ p label
+    let p' := List.foldl (childDeriv g Φ) opened children
+    closeDeriv p'
 
 def childrenDeriv (g: Grammar φ n) (Φ: φ -> α -> Bool) (p: Pattern φ n) (children: Hedge α): Pattern φ n :=
    List.foldl (childDeriv g Φ) p children
@@ -118,17 +118,17 @@ def childNode := Hedge.Node.mk qn children
 def g := (Grammar.mk (Pattern.Element "hey" 0) #v[Pattern.EmptyStr])
 def p := g.start
 
--- let p1 := startTagOpenDeriv o g p qn
+-- let p1 := openDeriv o g p qn
 def p1: Pattern String 1 := Pattern.After (Pattern.EmptyStr) (Pattern.EmptyStr)
-#guard p1 = startTagOpenDeriv g (· == ·) p qn
+#guard p1 = openDeriv g (· == ·) p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern String 1 := Pattern.After (Pattern.EmptyStr) (Pattern.EmptyStr)
 #guard p4 = childrenDeriv g (· == ·) p1 children
 
--- endTagDeriv o p4
+-- closeDeriv o p4
 def p5: Pattern String 1 := Pattern.EmptyStr
-#guard p5 = endTagDeriv p4
+#guard p5 = closeDeriv p4
 
 end example_after_buildup_1
 
@@ -142,17 +142,17 @@ def g := (Grammar.mk (Pattern.Element "<div>" 0) #v[Pattern.Or (Pattern.Element 
 def p0 := g.lookup 0
 def p := g.lookup 0
 
--- let p1 := startTagOpenDeriv o g p qn
+-- let p1 := openDeriv o g p qn
 def p1: Pattern String 1 := Pattern.Or (Pattern.After (Pattern.Or (Pattern.Element "<div>" 0) (Pattern.EmptyStr)) (Pattern.EmptyStr)) (Pattern.EmptySet)
-#guard p1 = startTagOpenDeriv g (· == ·) p qn
+#guard p1 = openDeriv g (· == ·) p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern String 1 := Pattern.Or (Pattern.After (Pattern.Or (Pattern.Element "<div>" 0) (Pattern.EmptyStr)) (Pattern.EmptyStr)) (Pattern.EmptySet)
 #guard p4 = childrenDeriv g (· == ·) p1 children
 
--- endTagDeriv o p4
+-- closeDeriv o p4
 def p5: Pattern String 1 := Pattern.Or (Pattern.EmptyStr) (Pattern.EmptySet)
-#guard p5 = endTagDeriv p4
+#guard p5 = closeDeriv p4
 
 #guard p5.nullable
 
@@ -174,7 +174,7 @@ def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern String 1 := Pattern.Or (Pattern.After (Pattern.Or (Pattern.Element "<div>" 0) (Pattern.EmptyStr)) (Pattern.EmptyStr)) (Pattern.EmptySet)
 
--- let p1 := startTagOpenDeriv o g p qn
+-- let p1 := openDeriv o g p qn
 -- def p1: Pattern 1 := Pattern.After (Pattern.Or (Pattern.Element "<div>" 0) (Pattern.EmptyStr)) (Pattern.After (Pattern.EmptyStr) (Pattern.EmptyStr))
 def p1: Pattern String 1 := Pattern.Or
   (Pattern.Or
@@ -185,7 +185,7 @@ def p1: Pattern String 1 := Pattern.Or
       (Pattern.After (Pattern.EmptyStr) (Pattern.EmptyStr)))
     (Pattern.EmptySet))
   (Pattern.EmptySet)
-#guard p1 = startTagOpenDeriv g (· == ·) p qn
+#guard p1 = openDeriv g (· == ·) p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern String 1 := Pattern.Or
@@ -199,7 +199,7 @@ def p4: Pattern String 1 := Pattern.Or
   (Pattern.EmptySet)
 #guard p4 = childrenDeriv g (· == ·) p1 children
 
--- endTagDeriv o p4
+-- closeDeriv o p4
 def p5: Pattern String 1 := Pattern.Or
   (Pattern.Or
     (Pattern.Or
@@ -207,9 +207,9 @@ def p5: Pattern String 1 := Pattern.Or
       (Pattern.EmptySet))
     (Pattern.EmptySet))
   (Pattern.EmptySet)
-#guard p5 = endTagDeriv p4
+#guard p5 = closeDeriv p4
 
-#guard (endTagDeriv p5).nullable
+#guard (closeDeriv p5).nullable
 
 end example_after_buildup_3
 
@@ -232,7 +232,7 @@ def p: Pattern String 1 := Pattern.Or
     (Pattern.EmptySet))
   (Pattern.EmptySet)
 
--- let p1 := startTagOpenDeriv o g p qn
+-- let p1 := openDeriv o g p qn
 def p1: Pattern String 1 := Pattern.Or
   (Pattern.Or
     (Pattern.Or
@@ -246,7 +246,7 @@ def p1: Pattern String 1 := Pattern.Or
       (Pattern.EmptySet))
     (Pattern.EmptySet))
   (Pattern.EmptySet)
-#guard p1 = startTagOpenDeriv g (· == ·) p qn
+#guard p1 = openDeriv g (· == ·) p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
 def p4: Pattern String 1 := Pattern.Or
@@ -264,7 +264,7 @@ def p4: Pattern String 1 := Pattern.Or
   (Pattern.EmptySet)
 #guard p4 = childrenDeriv g (· == ·) p1 children
 
--- endTagDeriv o p4
+-- closeDeriv o p4
 def p5: Pattern String 1 := Pattern.Or
   (Pattern.Or
     (Pattern.Or
@@ -276,9 +276,9 @@ def p5: Pattern String 1 := Pattern.Or
       (Pattern.EmptySet))
     (Pattern.EmptySet))
   (Pattern.EmptySet)
-#guard p5 = endTagDeriv p4
+#guard p5 = closeDeriv p4
 
-#guard (endTagDeriv (endTagDeriv p5)).nullable
+#guard (closeDeriv (closeDeriv p5)).nullable
 
 end example_after_buildup_4
 
@@ -306,7 +306,7 @@ def p0 := g.lookup 0
 -- continue recursively where the previous example left off
 def p: Pattern String 1 := g.start
 
--- let p1 := startTagOpenDeriv o g p qn
+-- let p1 := openDeriv o g p qn
 def p1: Pattern String 1 := SimpleRelaxNG.Pattern.After
   (SimpleRelaxNG.Pattern.Or
     (SimpleRelaxNG.Pattern.Element "<div>" 0)
@@ -314,6 +314,6 @@ def p1: Pattern String 1 := SimpleRelaxNG.Pattern.After
   (SimpleRelaxNG.Pattern.Concat
     (SimpleRelaxNG.Pattern.EmptyStr)
     (SimpleRelaxNG.Pattern.Element "<body>" 0))
-#guard p1 = startTagOpenDeriv g (· == ·) p qn
+#guard p1 = openDeriv g (· == ·) p qn
 
 end keep_uncles_and_aunts
