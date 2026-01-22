@@ -14,7 +14,6 @@ abbrev LocalName := String
 abbrev ParamList := List (LocalName × String)
 -- A Context represents the context of an XML element. It consists of a base URI and a mapping from prefixes to namespace URIs.
 -- type Prefix = String
-abbrev Prefix := String
 
 structure Options where
   smartConstruction : Bool -- enable smart construction
@@ -84,8 +83,7 @@ def Grammar.lookup (G: Grammar n) (ref: Fin n): Pattern n :=
 
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
-inductive QName where
-  | mk (n: LocalName)
+abbrev QName := LocalName
 
 -- An AttributeNode consists of a QName and a String.
 -- data AttributeNode = AttributeNode QName String
@@ -115,7 +113,7 @@ inductive ChildNode where
 def NameClass.contains: NameClass -> QName -> Bool
   | AnyName, _ => true
   | AnyNameExcept nc, n => not (contains nc n)
-  | Name ln1, QName.mk ln2 => (ln1 == ln2)
+  | Name ln1, ln2 => (ln1 == ln2)
   | NameClassChoice nc1 nc2, n => (contains nc1 n) || (contains nc2 n)
 
 -- In Haskell, _ is an anonymous variable that matches any argument.
@@ -589,7 +587,7 @@ def Pattern.optional (p: Pattern n): Pattern n :=
   = Pattern.NotAllowed
 
 def ChildNode.mkElement (name: String) (attrs: List AttributeNode) (children: List ChildNode): ChildNode :=
-  (ChildNode.ElementNode (QName.mk name) attrs children)
+  (ChildNode.ElementNode name attrs children)
 
 def NameClass.mk (name: String): NameClass :=
   NameClass.Name name
@@ -625,7 +623,7 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 
 namespace example_after_buildup_1
 
-def qn := QName.mk "hey"
+def qn := "hey"
 def atts: List AttributeNode := []
 def children: List ChildNode := []
 def childNode := ChildNode.ElementNode qn atts children
@@ -658,7 +656,7 @@ end example_after_buildup_1
 
 namespace example_after_buildup_2
 
-def qn := QName.mk "<div>"
+def qn := "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := []
 def childNode := ChildNode.ElementNode qn atts children
@@ -697,7 +695,7 @@ namespace example_after_buildup_3
 -- So for a single recursive element (not an empty list or single text node) this would be:
 -- childrenDeriv o cx g [child] ~= childDeriv o cx g p child
 
-def qn := QName.mk "<div>"
+def qn := "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
@@ -732,7 +730,7 @@ end example_after_buildup_3
 
 namespace example_after_buildup_4
 
-def qn := QName.mk "<div>"
+def qn := "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
@@ -788,7 +786,7 @@ namespace keep_uncles_and_aunts
 def concat (p1 p2: Pattern n): Pattern n :=
   Pattern.Group p1 p2
 
-def qn := QName.mk "<head>"
+def qn := "<head>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
