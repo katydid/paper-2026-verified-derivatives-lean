@@ -1,6 +1,8 @@
 import Mathlib.Tactic.NthRewrite
 
 import Validator.Std.Hedge
+import Validator.Std.Decidable
+import Validator.Hedge.Lang
 
 namespace SimpleRelaxNG
 
@@ -317,3 +319,52 @@ def p1: Pattern String 1 := SimpleRelaxNG.Pattern.After
 #guard p1 = openDeriv g (· == ·) p qn
 
 end keep_uncles_and_aunts
+
+-- Proofs
+
+def Pattern.denote (G: Grammar φ n) (Φ: φ → α → Prop)
+  (r: Pattern φ n) (nodes: Hedge α): Prop :=
+  match r with
+  | Pattern.EmptySet => False
+  | Pattern.EmptyStr => nodes = []
+  | Pattern.Element pred ref => match nodes with
+    | [node] => (Φ pred node.getLabel)
+                /\ denote G Φ (G.lookup ref) node.getChildren
+    | _ => False
+  | Pattern.Or r1 r2 => (denote G Φ r1 nodes) \/ (denote G Φ r2 nodes)
+  | Pattern.Concat r1 r2 => ∃ (i: Fin (nodes.length + 1)),
+      (denote G Φ r1 (List.take i nodes)) /\ (denote G Φ r2 (List.drop i nodes))
+  | Pattern.OneOrMore r1 => match nodes with
+    | [] => False
+    | (node::nodes') => ∃ (i: Fin nodes.length),
+                        (denote G Φ r1 (node::List.take i nodes'))
+                        /\ (denote G Φ (Pattern.Or (Pattern.OneOrMore r1) Pattern.EmptyStr) (List.drop i nodes'))
+  | Pattern.Interleave r1 r2 => ∃ (i: Fin (List.interleaves nodes).length),
+        (denote G Φ r1 (List.get (List.interleaves nodes) i).1)
+     /\ (denote G Φ r2 (List.get (List.interleaves nodes) i).2)
+  | Pattern.After p1 p2 => False
+  termination_by (nodes, r)
+  decreasing_by
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+    · sorry
+
+theorem derive_commutes (G: Grammar φ n) Φ [DecidableRel Φ]
+  (r: Pattern φ n) (node: Hedge.Node α):
+  Pattern.denote G Φ (childDeriv G (decideRel Φ) r node)
+  = Lang.derive (Pattern.denote G Φ r) node := by
+  induction r with
+  | EmptyStr => sorry
+  | EmptySet => sorry
+  | Or => sorry
+  | Interleave => sorry
+  | Concat => sorry
+  | OneOrMore => sorry
+  | Element => sorry
+  | After => sorry
