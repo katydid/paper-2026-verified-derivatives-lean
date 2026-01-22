@@ -142,8 +142,6 @@ def Pattern.nullable : Pattern n -> Bool
 -- choice NotAllowed p = p
 -- choice p1 p2 = Choice p1 p2
 def choice : Pattern n -> Pattern n -> Pattern n
-  | p, Pattern.NotAllowed => p
-  | Pattern.NotAllowed, p => p
   | p1, p2 => Pattern.Choice p1 p2
 
 -- group :: Pattern -> Pattern -> Pattern
@@ -153,10 +151,6 @@ def choice : Pattern n -> Pattern n -> Pattern n
 -- group Empty p = p
 -- group p1 p2 = Group p1 p2
 def group : Pattern n -> Pattern n -> Pattern n
-  | _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Pattern.NotAllowed, _ => Pattern.NotAllowed
-  | p, Pattern.Empty => p
-  | Pattern.Empty, p => p
   | p1, p2 => Pattern.Group p1 p2
 
 -- interleave :: Pattern -> Pattern -> Pattern
@@ -166,10 +160,6 @@ def group : Pattern n -> Pattern n -> Pattern n
 -- interleave Empty p = p
 -- interleave p1 p2 = Interleave p1 p2
 def interleave : Pattern n -> Pattern n -> Pattern n
-  | _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Pattern.NotAllowed, _ => Pattern.NotAllowed
-  | p, Pattern.Empty => p
-  | Pattern.Empty, p => p
   | p1, p2 => Pattern.Interleave p1 p2
 
 -- after :: Pattern -> Pattern -> Pattern
@@ -177,8 +167,6 @@ def interleave : Pattern n -> Pattern n -> Pattern n
 -- after NotAllowed p = NotAllowed
 -- after p1 p2 = After p1 p2
 def after : Pattern n -> Pattern n -> Pattern n
-  | _, Pattern.NotAllowed => Pattern.NotAllowed
-  | Pattern.NotAllowed, _ => Pattern.NotAllowed
   | p1, p2 => Pattern.After p1 p2
 
 -- When constructing a OneOrMore, we need to treat an operand of NotAllowed specially:
@@ -186,7 +174,6 @@ def after : Pattern n -> Pattern n -> Pattern n
 -- oneOrMore NotAllowed = NotAllowed
 -- oneOrMore p = OneOrMore p
 def oneOrMore : Pattern n -> Pattern n
-  | Pattern.NotAllowed => Pattern.NotAllowed
   | p => Pattern.OneOrMore p
 
 -- The datatypeAllows and datatypeEqual functions represent the semantics of datatype libraries.
@@ -459,10 +446,12 @@ def node (name: String) (children: List ChildNode): ChildNode :=
   = Pattern.Empty
 
 #guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "div") 0) Pattern.Empty]) (node "doc" [node "div" []])
-  = Pattern.Empty
+ = Pattern.Choice (Pattern.Empty) (Pattern.NotAllowed)
+  -- = Pattern.Empty
 
 #guard childDerivStart (Grammar.mk (Pattern.Element (NameClass.mk "doc") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "div") 0) Pattern.Empty]) (node "doc" [node "div" [node "div" []]])
-  = Pattern.Empty
+ = Pattern.Choice (Pattern.Choice (Pattern.Empty) (Pattern.NotAllowed)) (Pattern.NotAllowed)
+  -- = Pattern.Empty
 
 -- after_buildup
 
@@ -500,16 +489,18 @@ def p0 := g.lookup 0
 def p := g.lookup 0
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p1: Pattern 1 := Pattern.Choice (Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)) (Pattern.NotAllowed)
 #guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
-def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p4: Pattern 1 := Pattern.Choice (Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)) (Pattern.NotAllowed)
 #guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
-def p5: Pattern 1 := Pattern.Empty
+def p5: Pattern 1 := Pattern.Choice (Pattern.Empty) (Pattern.NotAllowed)
 #guard p5 = endTagDeriv p4
+
+#guard p5.nullable
 
 end example_after_buildup_2
 
@@ -527,19 +518,44 @@ def childNode := Hedge.Node.mk qn children
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
-def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p: Pattern 1 := Pattern.Choice (Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)) (Pattern.NotAllowed)
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+-- def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p1: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.After
+      (Pattern.Choice
+        (Pattern.Element (NameClass.Name "<div>") 0)
+        (Pattern.Empty))
+      (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
-def p4: Pattern 1 := Pattern.After Pattern.Empty (Pattern.After Pattern.Empty Pattern.Empty)
+def p4: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.Choice
+      (Pattern.After
+        (Pattern.Empty)
+        (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+      (Pattern.NotAllowed))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
-def p5: Pattern 1 := (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p5: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.Choice
+      (Pattern.After (Pattern.Empty) (Pattern.Empty))
+      (Pattern.NotAllowed))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p5 = endTagDeriv p4
+
+#guard (endTagDeriv p5).nullable
 
 end example_after_buildup_3
 
@@ -552,19 +568,63 @@ def childNode := Hedge.Node.mk qn children
 def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice (Pattern.Element (NameClass.mk "<div>") 0) Pattern.Empty])
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
-def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.After
+      (Pattern.Choice
+        (Pattern.Element (NameClass.Name "<div>") 0)
+        (Pattern.Empty))
+      (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+def p1: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.Choice
+      (Pattern.After
+        (Pattern.Choice
+          (Pattern.Element (NameClass.Name "<div>") 0)
+          (Pattern.Empty))
+        (Pattern.After
+          (Pattern.Empty)
+          (Pattern.After (Pattern.Empty) (Pattern.Empty))))
+      (Pattern.NotAllowed))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p1 = startTagOpenDeriv g p qn
 
 -- let p4 := childrenDeriv o cx g p3 children
-def p4: Pattern 1 := Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
+def p4: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.Choice
+      (Pattern.Choice
+        (Pattern.After
+          (Pattern.Empty)
+          (Pattern.After
+            (Pattern.Empty)
+            (Pattern.After (Pattern.Empty) (Pattern.Empty))))
+        (Pattern.NotAllowed))
+      (Pattern.NotAllowed))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p4 = childrenDeriv g p1 children
 
 -- endTagDeriv o p4
-def p5: Pattern 1 := (Pattern.After (Pattern.Empty) ((Pattern.After (Pattern.Empty) (Pattern.Empty))))
+def p5: Pattern 1 := Pattern.Choice
+  (Pattern.Choice
+    (Pattern.Choice
+      (Pattern.Choice
+        (Pattern.After
+          (Pattern.Empty)
+          (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+        (Pattern.NotAllowed))
+      (Pattern.NotAllowed))
+    (Pattern.NotAllowed))
+  (Pattern.NotAllowed)
 #guard p5 = endTagDeriv p4
+
+#guard (endTagDeriv (endTagDeriv p5)).nullable
 
 end example_after_buildup_4
 
@@ -600,6 +660,7 @@ def p: Pattern 1 := g.start
 
 -- let p1 := startTagOpenDeriv o g p qn
 def p1: Pattern 1 := after (optional (symbol ("<div>", 0))) (symbol ("<body>", 0))
-#guard p1 = startTagOpenDeriv g p qn
+#eval startTagOpenDeriv g p qn
+-- #guard p1 = startTagOpenDeriv g p qn
 
 end keep_uncles_and_aunts
