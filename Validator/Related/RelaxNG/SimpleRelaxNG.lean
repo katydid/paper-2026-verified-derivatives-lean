@@ -2,9 +2,6 @@ import Mathlib.Tactic.NthRewrite
 
 import Validator.Std.Hedge
 
--- Copied from https://relaxng.org/jclark/derivative.html and added translations for Lean
-import Validator.Related.RelaxNG.StdHaskell
-
 namespace SimpleRelaxNG
 
 inductive Pattern (φ: Type) (n: Nat) where
@@ -39,7 +36,7 @@ def applyAfter : (Pattern φ n -> Pattern φ n) -> Pattern φ n -> Pattern φ n
   | f, (Pattern.After p1 p2) => Pattern.After p1 (f p2)
   | f, (Pattern.Or p1 p2) => Pattern.Or (applyAfter f p1) (applyAfter f p2)
   | _, Pattern.EmptySet => Pattern.EmptySet
-  | _, _ => Pattern.EmptySet -- only defined to make the function total for Lean's sake
+  | _, p => p -- only defined to make the function total for Lean's sake
 
 def startTagOpenDeriv (g: Grammar φ n) (Φ: φ -> α -> Bool) (p: Pattern φ n) (qn: α): Pattern φ n :=
   match p with
