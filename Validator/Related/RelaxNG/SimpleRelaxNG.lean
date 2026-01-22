@@ -6,8 +6,6 @@ import Validator.Related.RelaxNG.StdHaskell
 namespace SimpleRelaxNG
 
 -- First, we define the datatypes we will be using. URIs and local names are just strings.
--- type Uri = String
-abbrev Uri := String
 -- type LocalName = String
 abbrev LocalName := String
 
@@ -23,21 +21,19 @@ structure Options where
 
 -- A Datatype identifies a datatype by a datatype library name and a local name.
 -- type Datatype = (Uri, LocalName)
-abbrev Datatype := (Uri × LocalName)
+abbrev Datatype := LocalName
 
 -- A NameClass represents a name class.
 -- data NameClass = AnyName
 --                  | AnyNameExcept NameClass
---                  | Name Uri LocalName
+--                  | Name LocalName
 --                  | NsName Uri
 --                  | NsNameExcept Uri NameClass
 --                  | NameClassChoice NameClass NameClass
 inductive NameClass where
   | AnyName
   | AnyNameExcept (n: NameClass)
-  | Name (u: Uri) (n: LocalName)
-  | NsName (u: Uri)
-  | NsNameExcept (u: Uri) (n: NameClass)
+  | Name (n: LocalName)
   | NameClassChoice (n1 n2: NameClass)
   deriving Repr, DecidableEq
 
@@ -87,8 +83,7 @@ def Grammar.lookup (G: Grammar n) (ref: Fin n): Pattern n :=
 -- In the instance, elements and attributes are labelled with QNames; a QName is a URI/local name pair.
 -- data QName = QName Uri LocalName
 inductive QName where
-  | mk (u: Uri) (n: LocalName)
-def QName.mkName (n: LocalName): QName := QName.mk "" n
+  | mk (n: LocalName)
 
 -- An AttributeNode consists of a QName and a String.
 -- data AttributeNode = AttributeNode QName String
@@ -118,9 +113,7 @@ inductive ChildNode where
 def NameClass.contains: NameClass -> QName -> Bool
   | AnyName, _ => true
   | AnyNameExcept nc, n => not (contains nc n)
-  | NsName ns1, QName.mk ns2 _ => ns1 == ns2
-  | NsNameExcept ns1 nc, QName.mk ns2 ln => ns1 == ns2 && not (contains nc (QName.mk ns2 ln))
-  | Name ns1 ln1, QName.mk ns2 ln2 => (ns1 == ns2) && (ln1 == ln2)
+  | Name ln1, QName.mk ln2 => (ln1 == ln2)
   | NameClassChoice nc1 nc2, n => (contains nc1 n) || (contains nc2 n)
 
 -- In Haskell, _ is an anonymous variable that matches any argument.
@@ -230,8 +223,8 @@ def oneOrMore : Options -> Pattern n -> Pattern n
 -- datatypeAllows ("", "string") [] _ _ = True
 -- datatypeAllows ("", "token") [] _ _ = True
 def datatypeAllows : Datatype -> ParamList -> String -> Bool
-  | ("", "string"), [], _ => true
-  | ("", "token"), [], _ => true
+  | "string", [], _ => true
+  | "token", [], _ => true
   | _, _, _ => false -- only defined to make the function total for Lean's sake
 
 -- normalizeWhitespace :: String -> String
@@ -244,8 +237,8 @@ def normalizeWhitespace : String -> String
 -- datatypeEqual ("", "token") s1 _ s2 _ =
 --   (normalizeWhitespace s1) == (normalizeWhitespace s2)
 def datatypeEqual : Datatype -> String -> String -> Bool
-  | ("", "string"), s1, s2 => (s1 == s2)
-  | ("", "token"), s1, s2 => (normalizeWhitespace s1) == (normalizeWhitespace s2)
+  | "string", s1, s2 => (s1 == s2)
+  | "token", s1, s2 => (normalizeWhitespace s1) == (normalizeWhitespace s2)
   | _, _, _ => false -- only defined to make the function total for Lean's sake
 
 -- textDeriv computes the derivative of a pattern with respect to a text node.
@@ -595,10 +588,10 @@ def Pattern.optional (p: Pattern n): Pattern n :=
   = Pattern.NotAllowed
 
 def ChildNode.mkElement (name: String) (attrs: List AttributeNode) (children: List ChildNode): ChildNode :=
-  (ChildNode.ElementNode (QName.mkName name) attrs children)
+  (ChildNode.ElementNode (QName.mk name) attrs children)
 
 def NameClass.mk (name: String): NameClass :=
-  NameClass.Name "" name
+  NameClass.Name name
 
 -- element
 
@@ -631,7 +624,7 @@ def node (name: String) (children: List ChildNode): ChildNode :=
 
 namespace example_after_buildup_1
 
-def qn := QName.mkName "hey"
+def qn := QName.mk "hey"
 def atts: List AttributeNode := []
 def children: List ChildNode := []
 def childNode := ChildNode.ElementNode qn atts children
@@ -664,7 +657,7 @@ end example_after_buildup_1
 
 namespace example_after_buildup_2
 
-def qn := QName.mkName "<div>"
+def qn := QName.mk "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := []
 def childNode := ChildNode.ElementNode qn atts children
@@ -675,19 +668,19 @@ def p0 := g.lookup 0
 def p := g.lookup 0
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 #guard p1 = startTagOpenDeriv o g p qn
 
 -- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) Pattern.Empty
+def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) Pattern.Empty
 #guard p2 = attsDeriv o p1 atts
 
 -- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 #guard p3 = startTagCloseDeriv o p2
 
 -- let p4 := childrenDeriv o cx g p3 children
-def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p4: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 #guard p4 = childrenDeriv o g p3 children
 
 -- endTagDeriv o p4
@@ -703,7 +696,7 @@ namespace example_after_buildup_3
 -- So for a single recursive element (not an empty list or single text node) this would be:
 -- childrenDeriv o cx g [child] ~= childDeriv o cx g p child
 
-def qn := QName.mkName "<div>"
+def qn := QName.mk "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
@@ -712,18 +705,18 @@ def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice 
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
-def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
+def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.Empty)
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 #guard p1 = startTagOpenDeriv o g p qn
 
 -- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 #guard p2 = attsDeriv o p1 atts
 
 -- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 #guard p3 = startTagCloseDeriv o p2
 
 -- let p4 := childrenDeriv o cx g p3 children
@@ -738,7 +731,7 @@ end example_after_buildup_3
 
 namespace example_after_buildup_4
 
-def qn := QName.mkName "<div>"
+def qn := QName.mk "<div>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
@@ -747,18 +740,18 @@ def g := (Grammar.mk (Pattern.Element (NameClass.mk "div") 0) #v[Pattern.Choice 
 def o := (Options.mk (smartConstruction := true))
 def p0 := g.lookup 0
 -- continue recursively where the previous example left off
-def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
+def p: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.Empty))
 
 -- let p1 := startTagOpenDeriv o g p qn
-def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+def p1: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
 #guard p1 = startTagOpenDeriv o g p qn
 
 -- let p2 := attsDeriv o cx p1 atts
-def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+def p2: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
 #guard p2 = attsDeriv o p1 atts
 
 -- let p3 := startTagCloseDeriv o p2
-def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "" "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
+def p3: Pattern 1 := Pattern.After (Pattern.Choice (Pattern.Element (NameClass.Name "<div>") 0) (Pattern.Empty)) (Pattern.After (Pattern.Empty) (Pattern.After (Pattern.Empty) (Pattern.Empty)))
 #guard p3 = startTagCloseDeriv o p2
 
 -- let p4 := childrenDeriv o cx g p3 children
@@ -794,7 +787,7 @@ namespace keep_uncles_and_aunts
 def concat (p1 p2: Pattern n): Pattern n :=
   Pattern.Group p1 p2
 
-def qn := QName.mkName "<head>"
+def qn := QName.mk "<head>"
 def atts: List AttributeNode := []
 def children: List ChildNode := [ChildNode.ElementNode qn atts []]
 def childNode := ChildNode.ElementNode qn atts children
