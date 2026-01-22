@@ -50,7 +50,6 @@ inductive NameClass where
 inductive Pattern (n: Nat) where
   | Empty
   | NotAllowed
-  | Text
   | Choice (p1 p2: Pattern n)
   | Interleave (p1 p2: Pattern n)
   | Group (p1 p2: Pattern n)
@@ -125,7 +124,6 @@ def Pattern.nullable : Pattern n -> Bool
   | (Element _ _) => false
   | NotAllowed => false
   | Empty => true
-  | Text => true
   | (After _ _) => false
 
 -- whitespace tests whether a string is contains only whitespace.
