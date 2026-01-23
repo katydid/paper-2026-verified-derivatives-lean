@@ -88,15 +88,32 @@ theorem eq (xs ys: Vector α n) (h: Vector.toList xs = Vector.toList ys): xs = y
 
 theorem take_toList (xs: Vector α l):
   (Vector.take xs n).toList = List.take n xs.toList := by
-  sorry
+  -- exact?
+  exact Vector.toList_take
 
 theorem push_toList (xs: Vector α n) (x: α):
   (Vector.push xs x).toList = xs.toList ++ [x] := by
-  sorry
+  -- exact?
+  exact Vector.toList_push
+
+theorem size_eq_one:
+  (xs: Vector α (0 + 1)) -> ∃ x, xs = #v[x] := by
+  exact fun xs => Vector.size_eq_one
+
+theorem asdfasdfas (xs: List α) (hxs: (Vector.size (Vector.mk (Array.mk xs) rfl)) = n + 1) (hget : k < n + 1) (hget': k < xs.length):
+  (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hget'⟩ := by
+  exact rfl
 
 theorem take1_toList (xs: Vector α (n + 1)) (h: k <= n):
   (List.take (k + 1) xs.toList) = (List.take k (xs.toList)) ++ [xs.get ⟨k, by omega⟩] := by
-  sorry
+  obtain ⟨⟨xs⟩, hxs⟩ := xs
+  simp
+  generalize_proofs hget
+  have hk : k < xs.length := by
+    simp at hxs
+    omega
+  rw [asdfasdfas (hget' := hk)]
+  simp_all only [List.size_toArray, List.get_eq_getElem, List.take_append_getElem]
 
 def Vec.mapM' [Monad m] (g: α -> β) (f: (a: α) -> m {res // res = g a}) (xs : Vector α n)
   : m {ys: (Vector β n) // ys = Vector.map g xs } := do
@@ -164,15 +181,36 @@ def pureNodePred (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α) (sym
     let childr := if Φ symbol.1 label then G.lookup symbol.2 else Regex.emptyset
     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
 
-def List.foldlM' [Monad m] (g: β -> α -> β) (f: (acc: β) -> (a: α) -> m {res: β // res = g acc a } ) (init: β) (xs: List α)
-  : m {res': β // res' = List.foldl g init xs } := by
-  sorry
-
 def List.foldlM'' [Monad m] (g: β -> α -> β) (xs: List α)
   (f: (acc: β) -> (a: {a': α // a' ∈ xs}) -> m {res: β // res = g acc a } )
   (init: β)
-  : m {res': β // res' = List.foldl g init xs } := by
-  sorry
+  : m {res': β // res' = List.foldl g init xs } :=
+  match xs with
+  | [] => pure ⟨init, rfl⟩
+  | (x::xs') => do
+    let fx <- f init (Subtype.mk x (by simp))
+    let fxs <- List.foldlM'' g xs' (fun acc a => do
+      let ⟨b, hb⟩ := a
+      let a'': { a' // a' ∈ x :: xs' } := Subtype.mk b (by
+        aesop
+      )
+      let f': { res // res = g acc a''.val } <- f acc a''
+      let f'': { res // res = g acc b } := by
+        subst a''
+        simp only at f'
+        assumption
+      pure f''
+    ) fx.val
+    pure (Subtype.mk fxs.val (by
+      obtain ⟨fxs, hfxs⟩ := fxs
+      simp only
+      obtain ⟨fx, hfx⟩ := fx
+      simp only at hfxs
+      rw [hfxs]
+      rw [hfx]
+      simp only
+      simp only [List.foldl]
+    ))
 
 def Grammar.Room.derive'' (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
