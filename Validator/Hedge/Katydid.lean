@@ -74,9 +74,9 @@ lemma Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_or {α: Type} (G: Grammar n φ) Φ r1 r2 (node: Node α):
-  Grammar.Katydid.derive G Φ (Regex.or r1 r2) node
-  = Regex.or (Grammar.Katydid.derive G Φ r1 node) (Grammar.Katydid.derive G Φ r2 node) := by
+lemma Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
+  Grammar.Katydid.derive G Φ (Regex.or r1 r2) node = Regex.or
+    (Grammar.Katydid.derive G Φ r1 node) (Grammar.Katydid.derive G Φ r2 node) := by
   unfold Grammar.Katydid.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Katydid.derive_is_Regex_derive]

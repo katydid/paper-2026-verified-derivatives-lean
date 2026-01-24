@@ -15,7 +15,7 @@ def Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
 def Regex.Katydid.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
   null (List.foldl (fun dr x => Regex.Katydid.derive (flip Φ x) dr) r xs)
 
-lemma Regex.Katydid.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
+lemma Regex.Katydid.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) a:
   Regex.Katydid.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Katydid.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
   rw [<- Regex.extract_replace_is_map]

@@ -13,7 +13,7 @@ import Validator.Regex.Memoize.Leave
 
 namespace Regex.Memoize
 
-class MemoizeKatydid (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] where
+class MemoizeKatydid (m: Type -> Type u) σ [DecidableEq σ] [Hashable σ] where
   enterM : (a: enterParam σ) -> m { b: enterResult a // b = enter a }
   leaveM : (a: leaveParam σ) -> m { b: leaveResult a // b = leave a }
 
