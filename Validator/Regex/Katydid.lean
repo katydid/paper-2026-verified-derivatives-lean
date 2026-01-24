@@ -7,69 +7,69 @@ import Validator.Regex.Leave
 import Validator.Regex.Num
 import Validator.Regex.Regex
 
--- room, since we enter and leave
+-- Katydid, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
-def Regex.Room.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
+def Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> Vector.map Φ |> leave r
 
-def Regex.Room.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
-  null (List.foldl (fun dr x => Regex.Room.derive (flip Φ x) dr) r xs)
+def Regex.Katydid.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
+  null (List.foldl (fun dr x => Regex.Katydid.derive (flip Φ x) dr) r xs)
 
-lemma Regex.Room.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
-  Regex.Room.derive (flip Φ a) r = Regex.derive Φ r a := by
-  simp only [Room.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
+lemma Regex.Katydid.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
+  Regex.Katydid.derive (flip Φ a) r = Regex.derive Φ r a := by
+  simp only [Katydid.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip]
   rw [<- Regex.extract_replace_is_map]
   rw [Regex.Point.regex_derive_is_point_derive]
 
-namespace Regex.Room
+namespace Regex.Katydid
 
 theorem derive_emptyset {α: Type} {σ: Type} (Φ: σ → α → Bool) (a: α):
-  Room.derive (flip Φ a) emptyset = emptyset := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+  Katydid.derive (flip Φ a) emptyset = emptyset := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_emptyset]
 
 theorem derive_emptystr {α: Type} {σ: Type} (Φ: σ → α → Bool) (a: α):
-  Room.derive (flip Φ a) emptystr = emptyset := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+  Katydid.derive (flip Φ a) emptystr = emptyset := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_emptystr]
 
 theorem derive_symbol {α: Type} {σ: Type} (Φ: σ → α → Bool) (s: σ) (a: α):
-  Room.derive (flip Φ a) (symbol s) = onlyif (Φ s a) emptystr := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+  Katydid.derive (flip Φ a) (symbol s) = onlyif (Φ s a) emptystr := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_symbol]
 
 theorem derive_or {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1 r2: Regex σ) (a: α):
-  Room.derive (flip Φ a) (or r1 r2) = or (Room.derive (flip Φ a) r1) (Room.derive (flip Φ a) r2) := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+  Katydid.derive (flip Φ a) (or r1 r2) = or (Katydid.derive (flip Φ a) r1) (Katydid.derive (flip Φ a) r2) := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_or]
 
 theorem derive_concat {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1 r2: Regex σ) (a: α):
-  Room.derive (flip Φ a) (concat r1 r2)
+  Katydid.derive (flip Φ a) (concat r1 r2)
     = or
-      (concat (Room.derive (flip Φ a) r1) r2)
-      (onlyif (null r1) (Room.derive (flip Φ a) r2)) := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+      (concat (Katydid.derive (flip Φ a) r1) r2)
+      (onlyif (null r1) (Katydid.derive (flip Φ a) r2)) := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_concat]
 
 theorem derive_star {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1: Regex σ) (a: α):
-  Room.derive (flip Φ a) (star r1) = concat (Room.derive (flip Φ a) r1) (star r1) := by
-  repeat rw [Regex.Room.derive_is_Regex_derive]
+  Katydid.derive (flip Φ a) (star r1) = concat (Katydid.derive (flip Φ a) r1) (star r1) := by
+  repeat rw [Regex.Katydid.derive_is_Regex_derive]
   rw [Regex.derive_star]
 
 theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Regex σ) (a: α):
-  Regex.denote (fun s a => Φ s a) (Room.derive (flip Φ a) r)
+  Regex.denote (fun s a => Φ s a) (Katydid.derive (flip Φ a) r)
   = Lang.derive (Regex.denote (fun s a => Φ s a) r) a := by
-  rw [Regex.Room.derive_is_Regex_derive]
+  rw [Regex.Katydid.derive_is_Regex_derive]
   rw [<- Regex.derive_commutesb]
 
 theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (a: α):
-  denote Φ (Room.derive (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
-  rw [Regex.Room.derive_is_Regex_derive]
+  denote Φ (Katydid.derive (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
+  rw [Regex.Katydid.derive_is_Regex_derive]
   rw [<- Regex.derive_commutes]
   congr
 
 theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
-  denote Φ ((List.foldl (fun dr x => Regex.Room.derive (flip (decideRel Φ) x) dr)) r xs) = Lang.derives (denote Φ r) xs := by
+  denote Φ ((List.foldl (fun dr x => Regex.Katydid.derive (flip (decideRel Φ) x) dr)) r xs) = Lang.derives (denote Φ r) xs := by
   rw [Lang.derives_foldl]
   induction xs generalizing r with
   | nil =>
@@ -82,7 +82,7 @@ theorem derives_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (
     exact ih'
 
 theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
-  (Room.validate (decideRel Φ) r xs = true) = (denote Φ r) xs := by
+  (Katydid.validate (decideRel Φ) r xs = true) = (denote Φ r) xs := by
   rw [<- Lang.validate (denote Φ r) xs]
   unfold validate
   rw [<- derives_commutes]

@@ -12,7 +12,7 @@ import Validator.Regex.IfExpr.IfExpr
 
 namespace Regex.IfExpr
 
--- room, since we enter and leave
+-- Katydid, since we enter and leave
 -- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.IfExpr.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> IfExpr.eval Φ |> leave r
@@ -20,10 +20,10 @@ def Regex.IfExpr.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
 def Regex.IfExpr.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
   null (List.foldl (fun dr x => Regex.IfExpr.derive (flip Φ x) dr) r xs)
 
-lemma Regex.Room.derive_is_Regex.Room.derive (Φ: σ → Bool) (r: Regex σ):
-  Regex.IfExpr.derive Φ r = Regex.Room.derive Φ r := by
+lemma Regex.Katydid.derive_is_Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ):
+  Regex.IfExpr.derive Φ r = Regex.Katydid.derive Φ r := by
   unfold Regex.IfExpr.derive
-  unfold Regex.Room.derive
+  unfold Regex.Katydid.derive
   unfold Regex.IfExpr.enter
   unfold Regex.enter
   rw [IfExpr.eval_is_map]

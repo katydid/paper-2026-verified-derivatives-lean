@@ -13,7 +13,7 @@ import Validator.Regex.Memoize.Leave
 
 namespace Regex.Memoize
 
-class MemoizeRoom (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] where
+class MemoizeKatydid (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] where
   enterM : (a: enterParam σ) -> m { b: enterResult a // b = enter a }
   leaveM : (a: leaveParam σ) -> m { b: leaveResult a // b = leave a }
 
@@ -24,15 +24,15 @@ instance (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
   [DecidableEq (leaveParam σ)] [Hashable (leaveParam σ)]
   [Memoize (α := leaveParam σ) (β := leaveResult) leave m]
   [leaveState: MonadState (leaveMemTable σ) m]
-  : MemoizeRoom m σ where
+  : MemoizeKatydid m σ where
   enterM param := MemTable.enter (monadState := enterState) param
   leaveM param := MemTable.leave (monadState := leaveState) param
 
-def Regex.Memoize.derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
-  (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Room.derive Φ r } := do
-  let ⟨symbols, hsymbols⟩ <- MemoizeRoom.enterM r
-  let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, Vector.map Φ symbols⟩
-  let h: res = Regex.Room.derive Φ r := by
+def Regex.Memoize.derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
+  (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Katydid.derive Φ r } := do
+  let ⟨symbols, hsymbols⟩ <- MemoizeKatydid.enterM r
+  let ⟨res, hres⟩ <- MemoizeKatydid.leaveM ⟨r, Vector.map Φ symbols⟩
+  let h: res = Regex.Katydid.derive Φ r := by
     unfold leave at hres
     simp only at hres
     rw [hsymbols] at hres
@@ -58,7 +58,7 @@ def StateMemoize.Regex.derive.run {σ: Type} [DecidableEq σ] [Hashable σ]
   (· == 'a') (Regex.or (Regex.symbol 'a') (Regex.symbol 'b'))
   = Regex.or Regex.emptystr Regex.emptyset
 
-def validate [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
+def validate [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
   (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): m Bool :=
   null <$> (List.foldlM (fun dr x => Regex.Memoize.derive (flip Φ x) dr) r xs)
 
@@ -74,7 +74,7 @@ def StateMemoize.Regex.validate.run {σ: Type} [DecidableEq σ] [Hashable σ]
   (· == ·) (Regex.or (Regex.symbol 'a') (Regex.symbol 'b')) ['a']
   = true
 
-def filter  [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
+def filter  [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
   (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): m (List (List α)) :=
   List.filterM (validate Φ r) xss
 
@@ -95,7 +95,7 @@ lemma StateMemoize.Regex.derive.run_unfold [DecidableEq σ] [Hashable σ]
 theorem StateMemoize.Regex.derive.run_is_sound [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ)
   (Φ: σ → Bool) (r: Regex σ):
-  StateMemoize.Regex.derive.run state Φ r = Regex.Room.derive Φ r := by
+  StateMemoize.Regex.derive.run state Φ r = Regex.Katydid.derive Φ r := by
   rw [StateMemoize.Regex.derive.run_unfold]
   generalize StateMemoize.run state (Regex.Memoize.derive Φ r) = x
   obtain ⟨dr, hdr⟩ := x
@@ -106,4 +106,4 @@ theorem Regex.StateMemoize.derive_commutes {σ: Type} {α: Type} [DecidableEq σ
   (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (a: α):
   denote Φ (StateMemoize.Regex.derive.run state (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
   rw [StateMemoize.Regex.derive.run_is_sound]
-  rw [<- Regex.Room.derive_commutes]
+  rw [<- Regex.Katydid.derive_commutes]
