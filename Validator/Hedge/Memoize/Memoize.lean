@@ -20,50 +20,6 @@ open Regex.Memoize
 
 namespace Hedge
 
--- def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
---   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
---   let nodePred := (fun ((labelPred, ref): (φ × Ref n)) =>
---     let ⟨label, children⟩ := node
---     let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
---     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
---   )
---   Regex.Room.derive nodePred r
-
--- def Regex.Memoize.derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeRoom m σ]
---   (Φ: σ → Bool) (r: Regex σ): m {dr: Regex σ // dr = Regex.Room.derive Φ r } := do
---   let ⟨symbols, hsymbols⟩ <- MemoizeRoom.enterM r
---   let ⟨res, hres⟩ <- MemoizeRoom.leaveM ⟨r, Vector.map Φ symbols⟩
---   let h: res = Regex.Room.derive Φ r := by
---     unfold leave at hres
---     simp only at hres
---     rw [hsymbols] at hres
---     assumption
---   pure (Subtype.mk res h)
-
--- def List_foldlMemoize
---   {α: Type}
---   [DecidableEq α] [Hashable α]
---   {β: Type}
---   [DecidableEq β] [Hashable β]
---   (f: (b: β) -> (a: α) -> m β)
---   {σ: Type}
---   [Monad m]
---   (init: β) (xs: List α): m {b': m β // b' = List.foldlM f init xs} :=
---   match xs with
---   | [] => pure ⟨init, rfl⟩
---   | (x::xs) => do
---     let x': { b // b = f init x } := ⟨f init x, rfl⟩
---     let xs': { b' // b' = List.foldl f (↑x') xs } <- List_foldlMemoize (σ := σ) f x' xs
---     pure (Subtype.mk xs' (by
---       obtain ⟨x', hx'⟩ := x'
---       simp only at xs'
---       obtain ⟨xs', hxs'⟩ := xs'
---       simp only
---       rw [hx'] at hxs'
---       simp only [List.foldl]
---       exact hxs'
---     ))
-
 def Vec.mapM [Monad m] (g: α -> β) (f: (a: α) -> m {res // res = g a})  (xs: Vector α n)
   : m (Vector β n) :=
   Vector.mapM (fun a => (·.1) <$> (f a)) xs
