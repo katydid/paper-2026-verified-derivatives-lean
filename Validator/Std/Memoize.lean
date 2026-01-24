@@ -3,6 +3,7 @@ import Std
 import Mathlib.Tactic.Linarith
 
 import Validator.Std.State
+import Validator.Std.Vec
 
 abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: (a: α) → β a) :=
   Std.ExtDHashMap
@@ -218,3 +219,77 @@ private theorem fibM'_is_correct (table: MemTable fib) (n: Nat): fib n = (StateM
 private theorem fibM_is_correct (n: Nat): fib n = fibM n := by
   unfold fibM
   rw [<- fibM'_is_correct]
+
+def Vector.mapMemoize [Monad m]
+  (puref: α -> β) (memf: (a: α) -> m {res // res = puref a}) (xs : Vector α n)
+  : m {ys: (Vector β n) // ys = Vector.map puref xs } := do
+  go 0 (Nat.zero_le n) ⟨#v[], by simp⟩
+where
+  go (k : Nat) (h : k ≤ n) (acc : {ys: (Vector β k) // ys = Vector.cast (by omega) (Vector.map puref (Vector.take xs k)) })
+    : m {ys: (Vector β n) // ys = Vector.map puref xs } := do
+      if h' : k < n then
+        memf xs[k] >>=
+          fun xsk =>
+            go (k+1) (by omega) (Subtype.mk (acc.val.push xsk) (by
+              obtain ⟨acc, hacc⟩ := acc
+              simp only
+              rw [hacc]
+              obtain ⟨xsk, hxsk⟩ := xsk
+              simp only
+              rw [hxsk]
+              apply Vector.eq
+              rw [Vector.cast_toList]
+              rw [Vector.map_toList]
+              rw [Vector.toList_take]
+              rw [Vector.toList_push]
+              rw [Vector.cast_toList]
+              rw [Vector.map_toList]
+              rw [Vector.toList_take]
+              rw [<- hxsk]
+              cases n with
+              | zero =>
+                contradiction
+              | succ n' =>
+                rw [Vector.take_succ_toList (h := by omega)]
+                rw [List.map_append]
+                congr
+            ))
+      else
+        return ⟨Vector.cast (by omega) acc.val, by
+          generalize_proofs h1 h2
+          obtain ⟨acc, hacc⟩ := acc
+          simp only
+          rw [hacc]
+          aesop
+        ⟩
+
+def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List α)
+  (memf: (acc: β) -> (a: {a': α // a' ∈ xs}) -> m {res: β // res = puref acc a } )
+  (init: β)
+  : m {res': β // res' = List.foldl puref init xs } :=
+  match xs with
+  | [] => pure ⟨init, rfl⟩
+  | (x::xs') => do
+    let fx <- memf init (Subtype.mk x (by simp))
+    let fxs <- List.foldlMemoizeWithMembership puref xs' (fun acc a => do
+      let ⟨b, hb⟩ := a
+      let a'': { a' // a' ∈ x :: xs' } := Subtype.mk b (by
+        aesop
+      )
+      let f': { res // res = puref acc a''.val } <- memf acc a''
+      let f'': { res // res = puref acc b } := by
+        subst a''
+        simp only at f'
+        assumption
+      pure f''
+    ) fx.val
+    pure (Subtype.mk fxs.val (by
+      obtain ⟨fxs, hfxs⟩ := fxs
+      simp only
+      obtain ⟨fx, hfx⟩ := fx
+      simp only at hfxs
+      rw [hfxs]
+      rw [hfx]
+      simp only
+      simp only [List.foldl]
+    ))
