@@ -92,7 +92,7 @@ lemma StateMemoize.Regex.derive.run_unfold [DecidableEq σ] [Hashable σ]
   (StateMemoize.Regex.derive.run state Φ r) = StateMemoize.run state (Regex.Memoize.derive Φ r) :=
   rfl
 
-theorem StateMemoize.Regex.derive.run_is_correct [DecidableEq σ] [Hashable σ]
+theorem StateMemoize.Regex.derive.run_is_sound [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ)
   (Φ: σ → Bool) (r: Regex σ):
   StateMemoize.Regex.derive.run state Φ r = Regex.Room.derive Φ r := by
@@ -105,5 +105,5 @@ theorem StateMemoize.Regex.derive.run_is_correct [DecidableEq σ] [Hashable σ]
 theorem Regex.StateMemoize.derive_commutes {σ: Type} {α: Type} [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (a: α):
   denote Φ (StateMemoize.Regex.derive.run state (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
-  rw [StateMemoize.Regex.derive.run_is_correct]
+  rw [StateMemoize.Regex.derive.run_is_sound]
   rw [<- Regex.Room.derive_commutes]

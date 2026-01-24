@@ -174,21 +174,21 @@ def Grammar.Memoize.derive' [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoo
       simp only
       apply Node.sizeOf_children hnode
 
-def Grammar.Memoize.derive [DecidableEq α] [Hashable α] [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
+def Grammar.Memoize.derive [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
   (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): m { dr: (Regex (φ × Ref n)) // dr = Grammar.Room.derive G Φ r node } :=
   Grammar.Memoize.derive' G Φ r [node] (Subtype.mk node (by simp))
 
-def StateMemoize.Grammar.derive.run {φ: Type} [DecidableEq φ] [Hashable φ] [DecidableEq α] [Hashable α]
+def StateMemoize.Grammar.derive.run {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
   StateMemoize.run state (Grammar.Memoize.derive G Φ r node)
 
-lemma StateMemoize.Grammar.derive.run_unfold {φ: Type} [DecidableEq φ] [Hashable φ] [DecidableEq α] [Hashable α]
+lemma StateMemoize.Grammar.derive.run_unfold {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α):
   (StateMemoize.Grammar.derive.run state G Φ r node) = StateMemoize.run state (Grammar.Memoize.derive G Φ r node) :=
   rfl
 
-theorem StateMemoize.Grammar.derive.run_is_sound [DecidableEq φ] [Hashable φ] [DecidableEq α] [Hashable α]
+theorem StateMemoize.Grammar.derive.run_is_sound [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n))
   (Φ: φ → α → Bool) (G: Grammar n φ) (r: Regex (φ × Ref n)) (node: Node α):
   StateMemoize.Grammar.derive.run state G Φ r node = Grammar.Room.derive G Φ r node := by
@@ -198,7 +198,7 @@ theorem StateMemoize.Grammar.derive.run_is_sound [DecidableEq φ] [Hashable φ] 
   simp only
   rw [hdr]
 
-theorem StateMemoize.Grammar.derive_commutes [DecidableEq φ] [Hashable φ] [DecidableEq α] [Hashable α]
+theorem StateMemoize.Grammar.derive_commutes [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n))
   (Φ: φ → α → Prop) [DecidableRel Φ]
   (G: Grammar n φ) (r: Regex (φ × Ref n)) (node: Node α):
