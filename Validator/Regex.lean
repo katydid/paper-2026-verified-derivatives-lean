@@ -3,6 +3,7 @@ import Validator.Regex.Drawer
 import Validator.Regex.Enter
 import Validator.Regex.Extract
 import Validator.Regex.IfExpr
+import Validator.Regex.Katydid
 import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Map
@@ -12,4 +13,3 @@ import Validator.Regex.Point
 import Validator.Regex.Regex
 import Validator.Regex.RegexID
 import Validator.Regex.Replace
-import Validator.Regex.Room

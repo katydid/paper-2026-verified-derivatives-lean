@@ -5,12 +5,12 @@ import Validator.Std.Hedge
 import Validator.Std.Vec
 
 import Validator.Regex.Lang
-import Validator.Regex.Room
+import Validator.Regex.Katydid
 import Validator.Regex.Enter
 import Validator.Regex.Memoize.Memoize
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
-import Validator.Hedge.Room
+import Validator.Hedge.Katydid
 import Validator.Hedge.Lang
 import Validator.Hedge.Denote
 

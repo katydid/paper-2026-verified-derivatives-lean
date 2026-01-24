@@ -4,7 +4,7 @@ import Validator.Std.Decidable
 import Validator.Std.Hedge
 
 import Validator.Regex.Lang
-import Validator.Regex.Room
+import Validator.Regex.Katydid
 
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar

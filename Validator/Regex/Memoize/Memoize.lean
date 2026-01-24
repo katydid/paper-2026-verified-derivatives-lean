@@ -6,7 +6,7 @@ import Validator.Regex.Lang
 import Validator.Regex.Leave
 import Validator.Regex.Num
 import Validator.Regex.Regex
-import Validator.Regex.Room
+import Validator.Regex.Katydid
 
 import Validator.Regex.Memoize.Enter
 import Validator.Regex.Memoize.Leave
