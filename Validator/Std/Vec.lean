@@ -260,3 +260,16 @@ theorem map_zip_is_zip_map {α: Type u} {β: Type v} (f: α → β) (xs: Vector 
   ext i h : 2
   · simp_all only [Vector.getElem_map, Vector.getElem_zip]
   · simp_all only [Vector.getElem_map, Vector.getElem_zip]
+
+theorem take_succ_toList (xs: Vector α (n + 1)) (h: k <= n):
+  (List.take (k + 1) xs.toList) = (List.take k (xs.toList)) ++ [xs.get ⟨k, by omega⟩] := by
+  obtain ⟨⟨xs⟩, hxs⟩ := xs
+  simp
+  generalize_proofs hget
+  have hk : k < xs.length := by
+    simp at hxs
+    omega
+  have h: (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hk⟩ := rfl
+  rw [h]
+  -- aesop?
+  simp_all only [List.get_eq_getElem, List.take_append_getElem]

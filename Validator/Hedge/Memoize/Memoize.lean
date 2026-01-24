@@ -19,19 +19,6 @@ open Regex.Memoize
 
 namespace Hedge
 
-theorem take_succ_toList (xs: Vector α (n + 1)) (h: k <= n):
-  (List.take (k + 1) xs.toList) = (List.take k (xs.toList)) ++ [xs.get ⟨k, by omega⟩] := by
-  obtain ⟨⟨xs⟩, hxs⟩ := xs
-  simp
-  generalize_proofs hget
-  have hk : k < xs.length := by
-    simp at hxs
-    omega
-  have h: (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hk⟩ := rfl
-  rw [h]
-  -- aesop?
-  simp_all only [List.get_eq_getElem, List.take_append_getElem]
-
 def Vec.mapM' [Monad m] (g: α -> β) (f: (a: α) -> m {res // res = g a}) (xs : Vector α n)
   : m {ys: (Vector β n) // ys = Vector.map g xs } := do
   go 0 (Nat.zero_le n) ⟨#v[], by simp⟩
@@ -62,7 +49,7 @@ where
               | zero =>
                 contradiction
               | succ n' =>
-                rw [take_succ_toList (h := by omega)]
+                rw [Vector.take_succ_toList (h := by omega)]
                 rw [List.map_append]
                 congr
           ⟩)
@@ -92,11 +79,6 @@ def Regex.Memoize.deriveM [DecidableEq σ] [Hashable σ] [Monad m] [MemoizeRoom 
     rw [hbools]
     rfl
   pure (Subtype.mk res h)
-
-def pureNodePred (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α) (symbol: (φ × Ref n)) :=
-    let ⟨label, children⟩ := node
-    let childr := if Φ symbol.1 label then G.lookup symbol.2 else Regex.emptyset
-    Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
 
 def List.foldlM'' [Monad m] (g: β -> α -> β) (xs: List α)
   (f: (acc: β) -> (a: {a': α // a' ∈ xs}) -> m {res: β // res = g acc a } )
@@ -129,14 +111,10 @@ def List.foldlM'' [Monad m] (g: β -> α -> β) (xs: List α)
       simp only [List.foldl]
     ))
 
-def Grammar.Room.derive'' (G: Grammar n φ) (Φ: φ → α → Bool)
-  (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  let nodePred: (param: φ × Ref n) → Bool := (fun ((labelPred, ref): (φ × Ref n)) =>
+def pureNodePred (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α) (symbol: (φ × Ref n)) :=
     let ⟨label, children⟩ := node
-    let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
-    Regex.null (List.foldl (Grammar.Room.derive'' G Φ) childr children)
-  )
-  Regex.Room.derive nodePred r
+    let childr := if Φ symbol.1 label then G.lookup symbol.2 else Regex.emptyset
+    Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
 
 def Grammar.Memoize.derive' [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
   (G: Grammar n φ) (Φ: φ → α → Bool)
