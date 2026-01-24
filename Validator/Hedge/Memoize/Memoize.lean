@@ -20,47 +20,7 @@ open Regex.Memoize
 
 namespace Hedge
 
-def Vec.mapM [Monad m] (g: α -> β) (f: (a: α) -> m {res // res = g a})  (xs: Vector α n)
-  : m (Vector β n) :=
-  Vector.mapM (fun a => (·.1) <$> (f a)) xs
-
-def List.mappyM [Monad m] {g: α -> β} (f: (a: α) -> m {res // res = g a}) (xs: List α)
-  : m {ys: (List β) // ys = List.map g xs } :=
-  match xs with
-  | [] => pure ⟨[], rfl⟩
-  | (x::xs') => do
-    let ⟨fx, hfx⟩ <- f x
-    let ⟨fxs, hfxs⟩ <- List.mappyM f xs'
-    pure (Subtype.mk (fx::fxs) (by
-      simp only [List.map]
-      rw [hfx]
-      rw [hfxs]
-    ))
-
-theorem eq (xs ys: Vector α n) (h: Vector.toList xs = Vector.toList ys): xs = ys := by
-  obtain ⟨⟨xs⟩, hxs⟩ := xs
-  obtain ⟨⟨ys⟩, hxs⟩ := ys
-  simp_all
-
-theorem take_toList (xs: Vector α l):
-  (Vector.take xs n).toList = List.take n xs.toList := by
-  -- exact?
-  exact Vector.toList_take
-
-theorem push_toList (xs: Vector α n) (x: α):
-  (Vector.push xs x).toList = xs.toList ++ [x] := by
-  -- exact?
-  exact Vector.toList_push
-
-theorem size_eq_one:
-  (xs: Vector α (0 + 1)) -> ∃ x, xs = #v[x] := by
-  exact fun xs => Vector.size_eq_one
-
-theorem asdfasdfas (xs: List α) (hxs: (Vector.size (Vector.mk (Array.mk xs) rfl)) = n + 1) (hget : k < n + 1) (hget': k < xs.length):
-  (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hget'⟩ := by
-  exact rfl
-
-theorem take1_toList (xs: Vector α (n + 1)) (h: k <= n):
+theorem take_succ_toList (xs: Vector α (n + 1)) (h: k <= n):
   (List.take (k + 1) xs.toList) = (List.take k (xs.toList)) ++ [xs.get ⟨k, by omega⟩] := by
   obtain ⟨⟨xs⟩, hxs⟩ := xs
   simp
@@ -68,8 +28,10 @@ theorem take1_toList (xs: Vector α (n + 1)) (h: k <= n):
   have hk : k < xs.length := by
     simp at hxs
     omega
-  rw [asdfasdfas (hget' := hk)]
-  simp_all only [List.size_toArray, List.get_eq_getElem, List.take_append_getElem]
+  have h: (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hk⟩ := rfl
+  rw [h]
+  -- aesop?
+  simp_all only [List.get_eq_getElem, List.take_append_getElem]
 
 def Vec.mapM' [Monad m] (g: α -> β) (f: (a: α) -> m {res // res = g a}) (xs : Vector α n)
   : m {ys: (Vector β n) // ys = Vector.map g xs } := do
@@ -87,21 +49,21 @@ where
               obtain ⟨xsk, hxsk⟩ := xsk
               simp only
               rw [hxsk]
-              apply eq
+              apply Vector.eq
               rw [Vector.cast_toList]
               rw [Vector.map_toList]
-              rw [take_toList]
-              rw [push_toList]
+              rw [Vector.toList_take]
+              rw [Vector.toList_push]
               rw [Vector.cast_toList]
               rw [Vector.map_toList]
-              rw [take_toList]
+              rw [Vector.toList_take]
               rw [<- hxsk]
               -- generalize (xs.toList) = xs'
               cases n with
               | zero =>
                 contradiction
               | succ n' =>
-                rw [take1_toList (h := by omega)]
+                rw [take_succ_toList (h := by omega)]
                 rw [List.map_append]
                 congr
           ⟩)
