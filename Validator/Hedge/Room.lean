@@ -17,7 +17,7 @@ namespace Hedge
 
 def Grammar.Room.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  let nodePred := (fun ((labelPred, ref): (φ × Ref n)) =>
+  let nodePred: (param: φ × Ref n) → Bool := (fun ((labelPred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
     let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
     Regex.null (List.foldl (Grammar.Room.derive G Φ) childr children)
