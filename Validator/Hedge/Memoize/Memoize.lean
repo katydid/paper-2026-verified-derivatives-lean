@@ -84,6 +84,23 @@ def Grammar.Memoize.derive [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom
   (r: Regex (φ × Ref n)) (node: Node α): m { dr: (Regex (φ × Ref n)) // dr = Grammar.Room.derive G Φ r node } :=
   Grammar.Memoize.derive' G Φ r [node] (Subtype.mk node (by simp))
 
+def Grammar.Memoize.validate [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
+  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α)
+  : m { valid: Bool // valid = Grammar.Room.validate G Φ nodes } := do
+  let dr <- List.foldlMemoize (Grammar.Room.derive G Φ) (Grammar.Memoize.derive G Φ) G.start nodes
+  pure (Subtype.mk (Regex.null dr.val) (by
+    obtain ⟨dr, hdr⟩ := dr
+    simp only
+    rw [hdr]
+    unfold Room.validate
+    rfl
+  ))
+
+def Grammar.Memoize.filter [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
+  (G: Grammar n φ) (Φ: φ → α → Bool) (hedges: List (Hedge α))
+  : m { hedges': List (Hedge α) // hedges' = Grammar.Room.filter G Φ hedges } :=
+  List.filterMemoize (Grammar.Room.validate G Φ) (Grammar.Memoize.validate G Φ) hedges
+
 def StateMemoize.Grammar.derive.run {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
   StateMemoize.run state (Grammar.Memoize.derive G Φ r node)

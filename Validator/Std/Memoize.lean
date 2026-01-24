@@ -293,3 +293,63 @@ def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List 
       simp only
       simp only [List.foldl]
     ))
+
+def List.foldlMemoize [Monad m] (puref: β -> α -> β)
+  (memf: (acc: β) -> (a: α) -> m {res: β // res = puref acc a } ) (init: β) (xs: List α)
+  : m {res': β // res' = List.foldl puref init xs } :=
+  match xs with
+  | [] => pure ⟨init, rfl⟩
+  | (x::xs') => do
+    let fx <- memf init x
+    let fxs <- List.foldlMemoizeWithMembership puref xs' (fun acc a => do
+      let ⟨b, hb⟩ := a
+      let a'': { a' // a' ∈ x :: xs' } := Subtype.mk b (by
+        aesop
+      )
+      let f': { res // res = puref acc a''.val } <- memf acc a''
+      let f'': { res // res = puref acc b } := by
+        subst a''
+        simp only at f'
+        assumption
+      pure f''
+    ) fx.val
+    pure (Subtype.mk fxs.val (by
+      obtain ⟨fxs, hfxs⟩ := fxs
+      simp only
+      obtain ⟨fx, hfx⟩ := fx
+      simp only at hfxs
+      rw [hfxs]
+      rw [hfx]
+      simp only [List.foldl]
+    ))
+
+def List.filterMemoize [Monad m] (puref: α -> Bool)
+  (memf: (a: α) -> m {res: Bool // res = puref a } ) (xs: List α)
+  : m {res': List α // res' = List.filter puref xs } :=
+  match xs with
+  | [] => pure ⟨[], rfl⟩
+  | (x::xs) => do
+    let fx <- memf x
+    let fxs <- List.filterMemoize puref memf xs
+    if hfx1: fx.1
+    then pure (Subtype.mk (x :: fxs.val) (by
+      obtain ⟨fxs, hfxs⟩ := fxs
+      obtain ⟨fx, hfx⟩ := fx
+      obtain ⟨fx1, hfx1⟩ := hfx1
+      simp only
+      simp only [List.filter]
+      rw [<- hfx]
+      simp only
+      rw [hfxs]
+    ))
+    else pure (Subtype.mk (fxs.val) (by
+      obtain ⟨fxs, hfxs⟩ := fxs
+      obtain ⟨fx, hfx⟩ := fx
+      simp only at hfx1
+      simp only [Bool.not_eq_true] at hfx1
+      simp only
+      simp only [List.filter]
+      rw [<- hfx]
+      rw [hfx1]
+      rw [<- hfxs]
+    ))
