@@ -55,8 +55,8 @@ private theorem MemTable.StateM.call_is_correct {α: Type} {β: α -> Type}
   rw [hx]
 
 -- consider {β: α -> outParam Type}
-class Memoize {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a) (m: Type -> Type u) where
-  call : (a: α) -> m { b: β a // b = f a }
+class Memoize [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a)
+  (m: Type -> Type u) where call: (a: α) -> m { b: β a // b = f a }
   -- An alternative would be to create a separate property from the call function, which would then be call : (a: α) -> m (β a)
   -- prop : (a: α) -> m Prop := fun a => (fun b => b = f a) <$> (call a)
 

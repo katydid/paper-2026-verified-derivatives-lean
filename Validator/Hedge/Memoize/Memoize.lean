@@ -97,9 +97,8 @@ def Grammar.Memoize.validate [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRo
   ))
 
 def Grammar.Memoize.filter [DecidableEq φ] [Hashable φ] [Monad m] [MemoizeRoom m (φ × Ref n)]
-  (G: Grammar n φ) (Φ: φ → α → Bool) (hedges: List (Hedge α))
-  : m { hedges': List (Hedge α) // hedges' = Grammar.Room.filter G Φ hedges } :=
-  List.filterMemoize (Grammar.Room.validate G Φ) (Grammar.Memoize.validate G Φ) hedges
+  (G: Grammar n φ) (Φ: φ → α → Bool) (xs: List (Hedge α)) : m { xs' // xs' = Grammar.Room.filter G Φ xs } :=
+  List.filterMemoize (Grammar.Room.validate G Φ) (Grammar.Memoize.validate G Φ) xs
 
 def StateMemoize.Grammar.derive.run {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
