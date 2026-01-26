@@ -1,14 +1,14 @@
 # Verified Derivatives for Fast Filtering and Schema Validation of Semi-Structured Data 
 
-Proofs written in [Lean4](https://leanprover.github.io/) for the core [katydid](https://katydid.github.io/) validation algorithm.
+Proofs written in [Lean4](https://leanprover.github.io/) for the core [katydid](http://katydid.org.za/) validation algorithm.
 
-![Check Proofs](https://github.com/katydid/paper-2026-verified-derivatives/workflows/Check%20Proofs/badge.svg)
+![Check Proofs](https://github.com/katydid/paper-2026-verified-filter/workflows/Check%20Proofs/badge.svg)
 
 ## Goal
 
-The goal is to formalize the core [katydid](https://katydid.github.io/) validation algorithm.
+The goal is to formalize the core [katydid](http://katydid.org.za/) validation algorithm.
 This algorithm allows us to validate millions of serialized data structures per second on a single core.
-You can play around with the validation language on its [playground](http://katydid.github.io/play/).
+You can play around with the validation language on its [playground](http://katydid.org.za/play/).
 
 ## Setup
 
