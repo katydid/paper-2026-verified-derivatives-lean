@@ -90,7 +90,7 @@ theorem replaceLE_regexid_add (r: RegexID n) (xs: Vector σ (n + l)):
     simp only [replaceLE, RegexID.cast_add, Regex.map]
   | symbol s =>
     generalize_proofs h1 h2 at *
-    simp only [replaceLE, RegexID.cast_add, Regex.map, Fin.coe_castLE]
+    simp only [replaceLE, RegexID.cast_add, Regex.map, Fin.val_castLE]
   | or r1 r2 ih1 ih2 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.or.injEq]
     generalize_proofs h1 h2 at *

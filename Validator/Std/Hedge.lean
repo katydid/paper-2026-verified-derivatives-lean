@@ -212,7 +212,11 @@ def Node.hasDecEqs [DecidableEq α]: (as bs : Hedge α) → Decidable (Eq as bs)
       )
     | isTrue hab =>
       match Node.hasDecEqs as bs with
-      | isFalse nabs => isFalse (fun h => List.noConfusion h (fun _ habs => absurd habs nabs))
+      | isFalse nabs => isFalse (by
+          intro h
+          cases h
+          contradiction
+        )
       | isTrue habs => isTrue (hab ▸ habs ▸ rfl)
 end
 
