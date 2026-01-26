@@ -1,5 +1,5 @@
 import Validator.Std.Vec
-import Validator.Std.Memoize
+import Validator.Std.Memoize.StateMemoize
 
 import Validator.Regex.Drawer
 import Validator.Regex.Lang

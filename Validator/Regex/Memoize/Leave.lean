@@ -1,5 +1,5 @@
 import Validator.Std.Hashable
-import Validator.Std.Memoize
+import Validator.Std.Memoize.Memoize
 
 import Validator.Regex.Regex
 import Validator.Regex.Leave

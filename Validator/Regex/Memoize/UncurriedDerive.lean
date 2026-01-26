@@ -1,4 +1,4 @@
-import Validator.Std.Memoize
+import Validator.Std.Memoize.Memoize
 
 import Validator.Regex.Enter
 import Validator.Regex.Regex
