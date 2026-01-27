@@ -50,4 +50,4 @@ def validate [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
 
 def filter  [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
   (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): m (List (List α)) :=
-  List.filterMemoize (Katydid.validate Φ r) (validate Φ r) xss
+  List.filterMemoize (Katydid.validate Φ r) (Regex.Memoize.validate Φ r) xss
