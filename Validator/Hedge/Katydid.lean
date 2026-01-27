@@ -26,12 +26,10 @@ def Grammar.Katydid.derive (G: Grammar n φ) (Φ: φ → α → Bool)
 
 namespace Grammar.Katydid
 
-def validate (G: Grammar n φ) (Φ: φ → α → Bool)
-  (nodes: Hedge α): Bool :=
-    Regex.null (List.foldl (derive G Φ) G.start nodes)
+def validate (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
+  Regex.null (List.foldl (derive G Φ) G.start nodes)
 def filter (G: Grammar n φ) (Φ: φ → α → Bool)
-  (hedges: List (Hedge α)): List (Hedge α) :=
-    List.filter (validate G Φ) hedges
+  (hedges: List (Hedge α)): List (Hedge α) := List.filter (validate G Φ) hedges
 end Grammar.Katydid
 
 lemma Grammar.Katydid.unapply_hedge_param_and_flip
@@ -305,10 +303,10 @@ theorem validate_commutes (G: Grammar n φ) Φ [DecidableRel Φ] (nodes: Hedge �
   (validate G (decideRel Φ) nodes = true) = Grammar.denote G Φ nodes := by
   apply Grammar.Katydid.validate_commutes
 
-end Grammar.Katydid.Paper
+def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: List (Hedge α)): List (Hedge α) :=
+  List.filter (validate G Φ) nodes
 
-def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (xss: List (Hedge α)): List (Hedge α) :=
-  List.filter (Hedge.Grammar.Katydid.validate G Φ) xss
+end Grammar.Katydid.Paper
 
 theorem mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :
   ∀ xs, (xs ∈ Hedge.Grammar.Katydid.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
