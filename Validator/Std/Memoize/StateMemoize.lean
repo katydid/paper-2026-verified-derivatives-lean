@@ -20,7 +20,7 @@ private theorem MemTable.StateM.call_is_correct {α: Type} {β: α -> Type}
   simp only
   rw [hx]
 
-def Memoize.StateM.call
+def StateMemoize.call
   {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
@@ -29,7 +29,7 @@ def Memoize.StateM.call
   (a: α): StateM σ {b: β a // b = f a} :=
   memf.call a
 
-theorem Memoize.StateM.call_is_correct
+theorem StateMemoize.call_is_correct
   {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
@@ -37,13 +37,14 @@ theorem Memoize.StateM.call_is_correct
   {σ: Type}
   [memf: Memoize f (StateM σ)]
   (a: α) (state: σ):
-  (Memoize.StateM.call f a state).1 = f a := by
+  (StateM.run (StateMemoize.call f a) state).1 = f a := by
+  unfold StateM.run
   generalize ((call f a state)) = x
   obtain ⟨⟨val, property⟩⟩ := x
   subst property
   simp only
 
-def Memoize.StateM.run
+def StateMemoize.run
   {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
@@ -51,9 +52,9 @@ def Memoize.StateM.run
   {σ: Type}
   [memf: Memoize f (StateM σ)]
   (a: α) (state: σ): {b: β a // b = f a} × σ :=
-  Memoize.StateM.call f a state
+  StateMemoize.call f a state
 
-def Memoize.StateM.run'
+def StateMemoize.run'
   {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
@@ -61,68 +62,20 @@ def Memoize.StateM.run'
   {σ: Type}
   [memf: Memoize f (StateM σ)]
   (a: α) (state: σ): {b: β a // b = f a} :=
-  (Memoize.StateM.run f a state).1
+  (StateMemoize.run f a state).1
 
-theorem Memoize.StateM.run'_is_correct {α: Type}
+theorem StateMemoize.run'_is_correct {α: Type}
   [DecidableEq α] [Hashable α]
   {β: α -> Type}
   (f: (a: α) -> β a)
   {σ: Type}
   [Memoize f (StateM σ)]
   (a: α) (state: σ):
-  (Memoize.StateM.run' f a state) = f a := by
+  (StateMemoize.run' f a state) = f a := by
   generalize ((run' f a state)) = x
   obtain ⟨val, property⟩ := x
   subst property
   simp only
-
-class MemoizeStateM {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → StateM σ (β a)) where
-  call : (a: α) -> StateM σ { b: β a // ∀ state', b = (f a state').1 }
-
-def MemoizeStateM.call'
-  {α: Type}
-  [DecidableEq α] [Hashable α]
-  {β: α -> Type}
-  (f: (a: α) -> StateM σ (β a))
-  [memf: MemoizeStateM f]
-  (a: α): StateM σ {b: β a // ∀ state', b = (f a state').1} :=
-  memf.call a
-
-theorem MemoizeStateM.call_is_correct
-  {α: Type}
-  [DecidableEq α] [Hashable α]
-  {β: α -> Type}
-  {σ: Type}
-  (f: (a: α) -> StateM σ (β a))
-  [memf: MemoizeStateM f]
-  (a: α) (state: σ):
-  (MemoizeStateM.call' f a state).1 = (f a state).1 := by
-  generalize ((call' f a state)) = x
-  obtain ⟨⟨val, property⟩⟩ := x
-  rw [<- property]
-
-def MemoizeStateM.run'
-  {α: Type}
-  [DecidableEq α] [Hashable α]
-  {β: α -> Type}
-  {σ: Type}
-  (f: (a: α) -> StateM σ (β a))
-  [memf: MemoizeStateM f]
-  (a: α) (state: σ): {b: β a // ∀ state', b = (f a state').1} :=
-  (MemoizeStateM.call' f a state).1
-
-theorem MemoizeStateM.run'_is_correct {α: Type}
-  [DecidableEq α] [Hashable α]
-  {β: α -> Type}
-  {σ: Type}
-  (f: (a: α) -> StateM σ (β a))
-  [MemoizeStateM f]
-  (a: α) (state: σ):
-  (MemoizeStateM.run' f a state) = (f a state).1 := by
-  generalize ((run' f a state)) = x
-  obtain ⟨val, property⟩ := x
-  rw [<- property]
-
 
 -- Example
 
@@ -150,7 +103,7 @@ private def fibM' [Monad m] [MonadState (MemTable fib) m] [memfib: Memoize fib m
 private def fibM (n: Nat): Nat :=
   (StateM.run (s := MemTable.init fib) (fibM' n)).1
 
-private theorem fibM'_is_correct (table: MemTable fib) (n: Nat): fib n = (StateM.run (s := table) (fibM' n)).1 := by
+private theorem fibM'_is_correct (table: MemTable fib) (n: Nat): fib n = (StateM.run (fibM' n) table).1 := by
   generalize (StateM.run (fibM' n) table) = x
   obtain ⟨⟨b, hb⟩, table'⟩ := x
   simp only
