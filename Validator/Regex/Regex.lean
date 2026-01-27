@@ -382,3 +382,24 @@ theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] 
 -- https://leanprover.zulipchat.com/#narrow/channel/270676-lean4/topic/restricting.20axioms
 def decidableDenote (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ): DecidablePred (denote Φ r) :=
   fun xs => decidable_of_decidable_of_eq (validate_commutes Φ r xs)
+
+def filter (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
+  List.filter (validate Φ r) xss
+
+theorem mem_filter (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xss: List (List α)) :
+  ∀ xs, (xs ∈ filter (decideRel Φ) r xss) ↔ (Lang.MemFilter (denote Φ r) xss xs) := by
+  unfold filter
+  intro xs
+  rw [List.mem_filter]
+  unfold Lang.MemFilter
+  apply Iff.intro
+  case mp =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [<- validate_commutes]
+    assumption
+  case mpr =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [validate_commutes]
+    assumption

@@ -87,3 +87,24 @@ theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] 
   unfold validate
   rw [<- derives_commutes]
   rw [<- null_commutes]
+
+def filter (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
+  List.filter (Katydid.validate Φ r) xss
+
+theorem mem_filter (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xss: List (List α)) :
+  ∀ xs, (xs ∈ Katydid.filter (decideRel Φ) r xss) ↔ (Lang.MemFilter (denote Φ r) xss xs) := by
+  unfold filter
+  intro xs
+  rw [List.mem_filter]
+  unfold Lang.MemFilter
+  apply Iff.intro
+  case mp =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [<- validate_commutes]
+    assumption
+  case mpr =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [validate_commutes]
+    assumption
