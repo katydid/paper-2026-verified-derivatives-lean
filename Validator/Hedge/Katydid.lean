@@ -307,6 +307,27 @@ theorem validate_commutes (G: Grammar n φ) Φ [DecidableRel Φ] (nodes: Hedge �
 
 end Grammar.Katydid.Paper
 
+def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (xss: List (Hedge α)): List (Hedge α) :=
+  List.filter (Hedge.Grammar.Katydid.validate G Φ) xss
+
+theorem mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :
+  ∀ xs, (xs ∈ Hedge.Grammar.Katydid.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
+  unfold Hedge.Grammar.Katydid.filter
+  intro xs
+  rw [List.mem_filter]
+  unfold Lang.MemFilter
+  apply Iff.intro
+  case mp =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [<- Grammar.Katydid.validate_commutes]
+    assumption
+  case mpr =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [Grammar.Katydid.validate_commutes]
+    assumption
+
 -- Tests
 
 namespace Grammar.Katydid
