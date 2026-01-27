@@ -25,6 +25,7 @@ def Grammar.Katydid.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   Regex.Katydid.derive nodePred r
 
 namespace Grammar.Katydid
+
 def validate (G: Grammar n φ) (Φ: φ → α → Bool)
   (nodes: Hedge α): Bool :=
     Regex.null (List.foldl (derive G Φ) G.start nodes)

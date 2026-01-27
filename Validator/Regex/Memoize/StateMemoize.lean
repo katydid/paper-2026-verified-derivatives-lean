@@ -39,7 +39,7 @@ def StateMemoize.Regex.validate [DecidableEq σ] [Hashable σ]
 
 def StateMemoize.Regex.validate.run {σ: Type} [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
-  StateMemoize.run state (StateMemoize.Regex.validate Φ r xs)
+  StateMemoize.run state (Regex.Memoize.validate Φ r xs)
 
 #guard StateMemoize.Regex.validate.run memoizeState.init
   (· == ·) (Regex.or (Regex.symbol 'a') (Regex.symbol 'b')) ['a']
@@ -74,3 +74,23 @@ theorem Regex.StateMemoize.derive_commutes {σ: Type} {α: Type} [DecidableEq σ
   denote Φ (StateMemoize.Regex.derive.run state (flip (decideRel Φ) a) r) = Lang.derive (denote Φ r) a := by
   rw [StateMemoize.Regex.derive.run_is_sound]
   rw [<- Regex.Katydid.derive_commutes]
+
+lemma StateMemoize.Regex.validate.run_unfold [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → α → Bool) (r: Regex σ):
+  (StateMemoize.Regex.validate.run state Φ r xs) = StateMemoize.run state (Regex.Memoize.validate Φ r xs) :=
+  rfl
+
+theorem StateMemoize.validate.run_is_sound {σ: Type} {α: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
+  StateMemoize.Regex.validate.run state (decideRel Φ) r xs = Regex.Katydid.validate (decideRel Φ) r xs := by
+  rw [StateMemoize.Regex.validate.run_unfold]
+  generalize StateMemoize.run state (Regex.Memoize.validate (decideRel Φ) r xs) = x
+  obtain ⟨b, hd⟩ := x
+  simp only
+  assumption
+
+theorem Regex.StateMemoize.validate_commutes {σ: Type} {α: Type} [DecidableEq σ] [Hashable σ]
+  (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List α):
+  StateMemoize.Regex.validate.run state (decideRel Φ) r xs = denote Φ r xs := by
+  rw [StateMemoize.validate.run_is_sound]
+  rw [<- Regex.Katydid.validate_commutes]
