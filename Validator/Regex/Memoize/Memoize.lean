@@ -14,8 +14,9 @@ import Validator.Regex.Memoize.Leave
 namespace Regex.Memoize
 
 class MemoizeKatydid (m: Type -> Type u) σ [DecidableEq σ] [Hashable σ] where
-  enterM : (a: enterParam σ) -> m { b: enterResult a // b = enter a }
-  leaveM : (a: leaveParam σ) -> m { b: leaveResult a // b = leave a }
+  enterM : (r: Regex σ) -> m { res: Vector σ (symbols r) // res = enter r }
+  leaveM : (param: Σ (r: Regex σ), (Vector Bool (symbols r)))
+             -> m { res: Regex σ // res = Regex.leave param.1 param.2 }
 
 instance (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
   [Memoize (α := enterParam σ) (β := enterResult) enter m]
@@ -31,7 +32,6 @@ def derive [Monad m] [DecidableEq σ] [Hashable σ] [MemoizeKatydid m σ]
   let ⟨symbols, hsymbols⟩ <- MemoizeKatydid.enterM r
   let ⟨res, hres⟩ <- MemoizeKatydid.leaveM ⟨r, Vector.map Φ symbols⟩
   let h: res = Regex.Katydid.derive Φ r := by
-    unfold leave at hres
     simp only at hres
     rw [hsymbols] at hres
     assumption

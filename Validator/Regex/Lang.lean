@@ -2,8 +2,8 @@ import Validator.Std.List
 
 def Lang (α: Type): Type := List α → Prop
 
-def Lang.MemFilter {α: Type} (R: Lang α) (xss: List (List α)): Lang α :=
-  fun xs => xs ∈ xss /\ R xs
+def Lang.MemFilter {α: Type} (R: Lang α) (xs: List (List α)): Lang α :=
+  fun x => x ∈ xs /\ R x
 
 def Lang.emptyset: Lang α := fun _ => False
 def Lang.emptystr: Lang α := fun xs => xs = []

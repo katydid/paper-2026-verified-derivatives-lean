@@ -8,6 +8,8 @@ import Validator.Regex.Lang
 import Validator.Regex.Katydid
 import Validator.Regex.Enter
 import Validator.Regex.Memoize.Memoize
+import Validator.Regex.Num
+
 import Validator.Hedge.Denote
 import Validator.Hedge.Grammar
 import Validator.Hedge.Katydid
@@ -81,16 +83,45 @@ lemma StateMemoize.Grammar.filter.run_unfold {φ: Type} {α: Type} [DecidableEq 
   (StateMemoize.Grammar.filter.run state G Φ xss) = StateMemoize.run state (Grammar.Memoize.filter G Φ xss) :=
   rfl
 
-theorem Grammar.StateMemoize.mem_filter {φ: Type} {α: Type} [DecidableEq φ] [Hashable φ]
-  (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (xss: List (Hedge α)):
-  ∀ xs, (xs ∈ StateMemoize.Grammar.filter.run state G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
-  intro xs
+theorem Grammar.StateMemoize.mem_filter [DecidableEq φ] [Hashable φ]
+  (state: memoizeState (φ × Ref n)) (G: Grammar n φ) Φ [DecidableRel Φ] (xs: List (Hedge α)):
+  ∀ x, (x ∈ StateMemoize.Grammar.filter.run state G (decideRel Φ) xs) ↔ (Lang.MemFilter (Grammar.denote G Φ) xs x) := by
+  intro x
   rw [StateMemoize.Grammar.filter.run_unfold]
-  generalize StateMemoize.run state (Grammar.Memoize.filter G (decideRel Φ) xss) = x
-  obtain ⟨res, hres⟩ := x
+  generalize StateMemoize.run state (Grammar.Memoize.filter G (decideRel Φ) xs) = h
+  obtain ⟨res, hres⟩ := h
   simp only
   rw [hres]
   unfold Katydid.filter
   rw [List.mem_filter]
   unfold Lang.MemFilter
   rw [Katydid.validate_commutes]
+
+namespace Paper
+
+abbrev symbols (r: Regex σ) := Regex.symbols r
+abbrev enter (r: Regex σ) := Regex.enter r
+abbrev leave (r: Regex σ) (param2: (Vector Bool (symbols r))) := Regex.leave r param2
+
+lemma StateM.StateT.run11 :
+  StateM.run' (StateT.run' f s1) s2 = (StateM.run (StateT.run f s1) s2).1.1 := by
+  rfl
+
+-- (enterState: Std.ExtDHashMap (Regex (φ × Ref n)) (fun r => {res: Vector (φ × Ref n) (symbols r) // res = enter r }))
+-- (leaveState: Std.ExtDHashMap (Σ (r: Regex (φ × Ref n)), (Vector Bool (symbols r))) (fun param => {r: Regex (φ × Ref n) // r = leave param.1 param.2 }))
+
+theorem memoize_mem_filter [DecidableEq φ] [Hashable φ] (state: memoizeState (φ × Ref n))
+  (G: Grammar n φ) Φ [DecidableRel Φ] (xs: List (Hedge α)):
+  ∀ x, (x ∈ (flip StateM.run' state.leave (flip StateT.run' state.enter
+       (Grammar.Memoize.filter G (decideRel Φ) xs))).1)
+    ↔ (x ∈ xs /\ Grammar.denote G Φ x) := by
+  intro x
+  simp only [flip]
+  rw [StateM.StateT.run11]
+  generalize (StateM.run (StateT.run (Grammar.Memoize.filter G (decideRel Φ) xs) state.enter) state.leave).1.1 = h
+  obtain ⟨res, hres⟩ := h
+  simp only
+  rw [hres]
+  unfold Grammar.Katydid.filter
+  rw [List.mem_filter]
+  rw [Grammar.Katydid.validate_commutes]

@@ -17,6 +17,8 @@ namespace Regex.Memoize
 abbrev StateMemoize σ [DecidableEq σ] [Hashable σ] := StateT (enterMemTable σ) (StateM (leaveMemTable σ))
 abbrev memoizeState σ [DecidableEq σ] [Hashable σ] := (enterMemTable σ × leaveMemTable σ)
 def memoizeState.init {σ: Type} [DecidableEq σ] [Hashable σ]: memoizeState σ := ((MemTable.init enter), (MemTable.init leave))
+def memoizeState.enter {σ: Type} [DecidableEq σ] [Hashable σ] (m: memoizeState σ): enterMemTable σ := m.1
+def memoizeState.leave {σ: Type} [DecidableEq σ] [Hashable σ] (m: memoizeState σ): leaveMemTable σ := m.2
 
 def StateMemoize.run {σ: Type} {β: Type} [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (f: StateMemoize σ β): β :=
@@ -101,12 +103,12 @@ lemma StateMemoize.Regex.filter.run_unfold [DecidableEq σ] [Hashable σ]
   rfl
 
 theorem Regex.StateMemoize.mem_filter {σ: Type} {α: Type} [DecidableEq σ] [Hashable σ]
-  (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ]  (r: Regex σ) (xss: List (List α)) :
-  ∀ xs, (xs ∈ StateMemoize.Regex.filter.run state (decideRel Φ) r xss) ↔ (Lang.MemFilter (denote Φ r) xss xs) := by
-  intro xs
+  (state: memoizeState σ) (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xs: List (List α)) :
+  ∀ x, (x ∈ StateMemoize.Regex.filter.run state (decideRel Φ) r xs) ↔ (Lang.MemFilter (denote Φ r) xs x) := by
+  intro x
   rw [StateMemoize.Regex.filter.run_unfold]
-  generalize StateMemoize.run state (Regex.Memoize.filter (decideRel Φ) r xss) = x
-  obtain ⟨res, hres⟩ := x
+  generalize StateMemoize.run state (Regex.Memoize.filter (decideRel Φ) r xs) = h
+  obtain ⟨res, hres⟩ := h
   simp only
   rw [hres]
   unfold Lang.MemFilter

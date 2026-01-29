@@ -9,7 +9,7 @@ namespace Regex.Memoize
 abbrev leaveParam (σ: Type) := Σ (r: Regex σ), (Vector Bool (symbols r))
 abbrev leaveResult {σ: Type} (_: leaveParam σ) := Regex σ
 
-def leave {σ: Type}: (a: leaveParam σ) → leaveResult a
+abbrev leave {σ: Type}: (a: leaveParam σ) → leaveResult a
   | ⟨r, bools⟩ => Regex.leave r bools
 
 abbrev leaveMemTable (σ: Type) [DecidableEq σ] [Hashable σ] := MemTable leave (α := leaveParam σ)

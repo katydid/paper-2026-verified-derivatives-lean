@@ -26,7 +26,6 @@ def Regex.Memoize.deriveM [DecidableEq σ] [Hashable σ] [Monad m] [MemoizeKatyd
   let bools <- Vector.mapMemoize Φ' Φ symbols
   let ⟨res, hres⟩ <- MemoizeKatydid.leaveM ⟨r, bools⟩
   let h: res = Regex.Katydid.derive Φ' r := by
-    unfold leave at hres
     simp only at hres
     subst_eqs
     rename_i hleave

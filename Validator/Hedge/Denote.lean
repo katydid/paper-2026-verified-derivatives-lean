@@ -176,8 +176,7 @@ theorem decreasing_compliment {α: Type} {σ: Type} [SizeOf σ] (r1: Regex σ) (
 -- Lang.or, Lang.concat and Lang.star are unfolded to help with the termination proof.
 -- Φ needs to be the last parameter, so that simp only works on this function when the parameter r is provided.
 def Rule.denote (G: Grammar n φ) (Φ: φ → α → Prop)
-  (r: Regex (φ × Ref n)) (nodes: Hedge α): Prop :=
-  match r with
+  (r: Regex (φ × Ref n)) (nodes: Hedge α): Prop := match r with
   | Regex.emptyset => False
   | Regex.emptystr => nodes = []
   | Regex.symbol (pred, ref) => match nodes with
