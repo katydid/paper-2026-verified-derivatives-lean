@@ -287,8 +287,8 @@ theorem list_elemof_drop_is_elem {xs: List α} (y: List.ElemOf (List.drop n xs))
 def interleaves (xs: List α) (acc: List (List α × List α) := [([], [])])
   : List (List α × List α) := match xs with
   | [] => acc
-  | (x::xs) => let acc' := interleaves xs acc
-    map (fun a => (x::a.1, a.2)) acc' ++ map (fun a => (a.1, x::a.2)) acc'
+  | (x::xs) => map (fun res => (x::res.1, res.2)) (interleaves xs acc)
+            ++ map (fun res => (res.1, x::res.2)) (interleaves xs acc)
 
 #guard (interleaves [1,2,3,4]).contains ([1,3],[2,4])
 #guard (interleaves [1,2,3,4]).contains ([3],[1,2,4])
