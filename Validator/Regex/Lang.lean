@@ -33,111 +33,6 @@ def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
     P (List.get (List.interleaves xs) i).1
     /\ Q (List.get (List.interleaves xs) i).2
 
-def Lang.interleave_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
-  ∃ interleave ∈ List.interleaves xs, P interleave.1 ∧ Q interleave.2
-
-def Lang.interleave_derive (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
-  match xs with
-  | [] => P [] /\ Q []
-  | (x::xs') =>
-      (interleave_derive (P.derive x) Q xs')
-    \/ (interleave_derive (Q.derive x) P xs')
-
-theorem Lang.interleave_iff_interleave_mem (P Q : Lang α) (xs : List α) :
-  Lang.interleave P Q xs ↔ Lang.interleave_mem P Q xs := by
-  constructor
-  · intro h
-    rcases h with ⟨i, hp, hq⟩
-    exists (List.get (List.interleaves xs) i)
-    and_intros
-    · exact List.get_mem xs.interleaves i
-    · exact hp
-    · exact hq
-  · intro h
-    rcases h with ⟨p, hp, hpq⟩
-    obtain ⟨i, hi⟩ := List.mem_iff_get.1 hp
-    rcases hpq with ⟨hpqP, hpqQ⟩
-    exists i
-    rw [hi]
-    and_intros
-    · exact hpqP
-    · exact hpqQ
-
-theorem Lang.interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α) :
-  Lang.interleave_derive P Q xs ↔ Lang.interleave_mem P Q xs := by
-  induction xs generalizing P Q with
-  | nil =>
-    constructor
-    all_goals
-      intro h
-      simp [Lang.interleave_derive, Lang.interleave_mem, List.interleaves, List.interleaves] at *
-      exact h
-  | cons x xs ih =>
-    constructor
-    · intro h
-      rcases h with h | h
-      · obtain ⟨p, hp, hpq⟩ := (ih (P.derive x) Q).1 h
-        rcases hpq with ⟨hpqP, hpqQ⟩
-        exists (x :: p.fst, p.snd)
-        and_intros
-        · simp [List.interleaves, List.interleaves]
-          left
-          exact hp
-        · exact hpqP
-        · exact hpqQ
-      · obtain ⟨p, hp, hpq⟩ := (ih (Q.derive x) P).1 h
-        have hp' := List.interleaves_mem_swap xs hp
-        rcases hpq with ⟨hpqP, hpqQ⟩
-        exists (p.snd, x :: p.fst)
-        and_intros
-        · simp [List.interleaves, List.interleaves]
-          right
-          exact hp'
-        · exact hpqQ
-        · exact hpqP
-    · intro h
-      unfold Lang.interleave_derive at h
-      rcases h with ⟨p, h, hp, hq⟩
-      simp [List.interleaves, List.interleaves, List.mem_append] at h
-      rcases h with h | h
-      · rcases h with ⟨fst, snd, hmem, heq⟩
-        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive P x p.1 ∧ Q p.2 := by
-          exists (fst, snd)
-          and_intros
-          · exact hmem
-          · rw [←heq] at hp
-            rw [←heq] at hq
-            simp [Lang.derive]
-            exact hp
-          · rw [←heq] at hq
-            exact hq
-        left
-        exact (ih (Lang.derive P x) Q).2 hmem'
-      · rcases h with ⟨fst, snd, hmem, heq⟩
-        have hmem_swap := List.interleaves_mem_swap xs hmem
-        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive Q x p.1 ∧ P p.2 := by
-          exists (snd, fst)
-          and_intros
-          · exact hmem_swap
-          · rw [←heq] at hp
-            rw [←heq] at hq
-            simp [Lang.derive]
-            exact hq
-          · rw [←heq] at hp
-            exact hp
-        right
-        exact (ih (Lang.derive Q x) P).2 hmem'
-
-theorem Lang.interleave_derive_iff_interleave (P Q : Lang α) (xs : List α) :
-  Lang.interleave_derive P Q xs ↔ Lang.interleave P Q xs := by
-  rw [Lang.interleave_derive_iff_interleave_mem]
-  exact Iff.symm (Lang.interleave_iff_interleave_mem P Q xs)
-
-theorem Lang.interleave_derive_is_interleave (P Q : Lang α) :
-  Lang.interleave_derive P Q = Lang.interleave P Q := by
-  funext xs
-  exact propext (Lang.interleave_derive_iff_interleave P Q xs)
-
 namespace Lang
 
 open List (
@@ -287,6 +182,111 @@ theorem null_iff_concat {α: Type} {P Q: Lang α}:
 theorem null_concat {α: Type} {P Q: Lang α}:
   null (concat P Q) = ((null P) /\ (null Q)) := by
   rw [null_iff_concat]
+
+def interleave_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+  ∃ interleave ∈ List.interleaves xs, P interleave.1 ∧ Q interleave.2
+
+def interleave_derive (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
+  match xs with
+  | [] => P [] /\ Q []
+  | (x::xs') =>
+      (interleave_derive (P.derive x) Q xs')
+    \/ (interleave_derive (Q.derive x) P xs')
+
+theorem interleave_iff_interleave_mem (P Q : Lang α) (xs : List α) :
+  interleave P Q xs ↔ interleave_mem P Q xs := by
+  constructor
+  · intro h
+    rcases h with ⟨i, hp, hq⟩
+    exists (List.get (List.interleaves xs) i)
+    and_intros
+    · exact List.get_mem xs.interleaves i
+    · exact hp
+    · exact hq
+  · intro h
+    rcases h with ⟨p, hp, hpq⟩
+    obtain ⟨i, hi⟩ := List.mem_iff_get.1 hp
+    rcases hpq with ⟨hpqP, hpqQ⟩
+    exists i
+    rw [hi]
+    and_intros
+    · exact hpqP
+    · exact hpqQ
+
+theorem interleave_derive_iff_interleave_mem (P Q : Lang α) (xs : List α) :
+  interleave_derive P Q xs ↔ interleave_mem P Q xs := by
+  induction xs generalizing P Q with
+  | nil =>
+    constructor
+    all_goals
+      intro h
+      simp [Lang.interleave_derive, Lang.interleave_mem, List.interleaves, List.interleaves] at *
+      exact h
+  | cons x xs ih =>
+    constructor
+    · intro h
+      rcases h with h | h
+      · obtain ⟨p, hp, hpq⟩ := (ih (P.derive x) Q).1 h
+        rcases hpq with ⟨hpqP, hpqQ⟩
+        exists (x :: p.fst, p.snd)
+        and_intros
+        · simp [List.interleaves, List.interleaves]
+          left
+          exact hp
+        · exact hpqP
+        · exact hpqQ
+      · obtain ⟨p, hp, hpq⟩ := (ih (Q.derive x) P).1 h
+        have hp' := List.interleaves_mem_swap xs hp
+        rcases hpq with ⟨hpqP, hpqQ⟩
+        exists (p.snd, x :: p.fst)
+        and_intros
+        · simp [List.interleaves, List.interleaves]
+          right
+          exact hp'
+        · exact hpqQ
+        · exact hpqP
+    · intro h
+      unfold Lang.interleave_derive at h
+      rcases h with ⟨p, h, hp, hq⟩
+      simp [List.interleaves, List.interleaves, List.mem_append] at h
+      rcases h with h | h
+      · rcases h with ⟨fst, snd, hmem, heq⟩
+        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive P x p.1 ∧ Q p.2 := by
+          exists (fst, snd)
+          and_intros
+          · exact hmem
+          · rw [←heq] at hp
+            rw [←heq] at hq
+            simp [Lang.derive]
+            exact hp
+          · rw [←heq] at hq
+            exact hq
+        left
+        exact (ih (Lang.derive P x) Q).2 hmem'
+      · rcases h with ⟨fst, snd, hmem, heq⟩
+        have hmem_swap := List.interleaves_mem_swap xs hmem
+        have hmem' : ∃ p ∈ List.interleaves xs, Lang.derive Q x p.1 ∧ P p.2 := by
+          exists (snd, fst)
+          and_intros
+          · exact hmem_swap
+          · rw [←heq] at hp
+            rw [←heq] at hq
+            simp [Lang.derive]
+            exact hq
+          · rw [←heq] at hp
+            exact hp
+        right
+        exact (ih (Lang.derive Q x) P).2 hmem'
+
+theorem interleave_derive_iff_interleave (P Q : Lang α) (xs : List α) :
+  interleave_derive P Q xs ↔ interleave P Q xs := by
+  rw [interleave_derive_iff_interleave_mem]
+  exact Iff.symm (interleave_iff_interleave_mem P Q xs)
+
+theorem interleave_derive_is_interleave (P Q : Lang α) :
+  interleave_derive P Q = interleave P Q := by
+  funext xs
+  exact propext (interleave_derive_iff_interleave P Q xs)
 
 theorem null_iff_interleave_idx {α: Type} {P Q: Lang α}:
   null (interleave P Q) <-> ((null P) /\ (null Q)) := by
@@ -646,3 +646,197 @@ theorem simp_onlyif_and {α: Type} (cond1 cond2 : Prop) (P : Lang α):
     simp_all only [and_self]
   · intro a
     simp_all only [and_self]
+
+-- Alternative definitions
+
+def concat_append {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
+  fun (xs : List α) =>
+    ∃ (xs1 : List α) (xs2 : List α), P xs1 /\ Q xs2 /\ xs = (xs1 ++ xs2)
+
+theorem concat_iff_concat_append:
+  concat P Q xs <-> concat_append P Q xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    cases h with
+    | intro n h =>
+    cases h with
+    | intro hx hy =>
+    exists (List.take n xs)
+    exists (List.drop n xs)
+    apply And.intro hx
+    apply And.intro hy
+    simp only [List.take_append_drop]
+  case mpr =>
+    intro h
+    cases h with
+    | intro xs h =>
+    cases h with
+    | intro ys h =>
+    cases h with
+    | intro hx h =>
+    cases h with
+    | intro hy hxsys =>
+    rw [hxsys]
+    unfold concat
+    exists (Fin.mk (List.length xs) (by
+      simp only [List.length_append]
+      omega
+    ))
+    simp only [List.take_left', List.drop_left']
+    apply And.intro hx hy
+
+theorem concat_is_concat_append:
+  concat P Q = concat_append P Q := by
+  funext xs
+  rw [concat_iff_concat_append]
+
+inductive star_append {α: Type} (R: Lang α): Lang α where
+  | zero: star_append R []
+  | more: ∀ (x: α) (xs1 xs2 xs: List α),
+    xs = (x::xs1) ++ xs2
+    -> R (x::xs1)
+    -> star_append R xs2
+    -> star_append R xs
+
+theorem star_append_is_star:
+  star P xs <-> star_append P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    unfold star at h
+    cases xs with
+    | nil =>
+      apply star_append.zero
+    | cons x xs =>
+      simp at h
+      obtain ⟨⟨n, hn⟩, ⟨hp, hq⟩⟩ := h
+      simp at hp hq
+      apply star_append.more x (List.take n xs) (List.drop n xs)
+      · rw [cons_append]
+        simp
+      · assumption
+      · apply star_append_is_star.mp hq
+  case mpr =>
+    intro h
+    cases xs with
+    | nil =>
+      unfold star
+      simp
+    | cons x xs =>
+      unfold star
+      cases h with
+      | more x xs1 xs2 _ hxs hp hq =>
+        simp at hxs
+        obtain ⟨hx, hxs⟩ := hxs
+        subst_vars
+        exists (Fin.mk xs1.length (by
+          simp
+          omega
+        ))
+        simp
+        apply And.intro hp
+        apply star_append_is_star.mpr hq
+  termination_by xs.length
+
+inductive All {α: Type} (P : α -> Prop) : (List α -> Prop) where
+  | nil : All P []
+  | cons : ∀ {x xs} (_px : P x) (_pxs : All P xs), All P (x :: xs)
+
+def star_flatten {α: Type} (P : Lang α) : Lang α :=
+  fun (w : List α) =>
+    ∃ (ws : List (List α)), (All P ws) /\ w = (List.flatten ws)
+
+inductive star_append_empty {α: Type} (R: Lang α): Lang α where
+  | zero: star_append_empty R []
+  | more: ∀ (xs1 xs2 xs: List α),
+    xs = xs1 ++ xs2
+    -> R xs1
+    -> star_append_empty R xs2
+    -> star_append_empty R xs
+
+theorem star_append_empty_is_star_append {xs: List α}:
+  star_append_empty P xs <-> star_append P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    induction h with
+    | zero =>
+      apply star_append.zero
+    | more xs1 xs2 xs3 hxs3 hxs hone ih =>
+      rw [hxs3]
+      cases xs1 with
+      | nil =>
+        simp
+        exact ih
+      | cons x1 xs1' =>
+        apply star_append.more x1 xs1' xs2
+        · rfl
+        · exact hxs
+        · exact ih
+  case mpr =>
+    intro h
+    induction h with
+    | zero =>
+      apply star_append_empty.zero
+    | more xs1 xs2 xs xs' hxs hone hmore ih =>
+      apply star_append_empty.more (xs1::xs2) xs
+      · exact hxs
+      · exact hone
+      · exact ih
+
+theorem star_append_empty_is_star_flatten {xs: List α}:
+  star_append_empty P xs <-> star_flatten P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    have h' := star_append_empty_is_star_append.mp h
+    clear h
+    induction h' with
+    | zero =>
+      unfold star_flatten
+      exists []
+      apply And.intro
+      · apply All.nil
+      · simp only [List.flatten_nil]
+    | more x xs1 xs2 xs3 hxs hone hmore ih =>
+      unfold star_flatten
+      unfold star_flatten at ih
+      obtain ⟨ws, ih1, ih2⟩ := ih
+      subst hxs
+      subst ih2
+      exists [x :: xs1] ++ ws
+      apply And.intro
+      · apply All.cons hone
+        simp
+        exact ih1
+      · simp
+  case mpr =>
+    intro h
+    unfold star_flatten at h
+    obtain ⟨ws, h1, h2⟩ := h
+    induction ws generalizing xs with
+    | nil =>
+      simp at h2
+      rw [h2]
+      apply star_append_empty.zero
+    | cons w ws ih =>
+      cases h1 with
+      | cons h1 h1s =>
+      have ih' := @ih ws.flatten h1s rfl
+      simp at h2
+      apply star_append_empty.more w ws.flatten
+      · exact h2
+      · exact h1
+      · exact ih'
+
+
+theorem star_append_is_star_flatten {xs: List α}:
+  star_append P xs <-> star_flatten P xs := by
+  rw [<- star_append_empty_is_star_append]
+  exact star_append_empty_is_star_flatten
+
+theorem star_is_star_flatten {xs: List α}:
+  star P xs <-> star_flatten P xs := by
+  rw [<- star_append_is_star_flatten]
+  exact star_append_is_star

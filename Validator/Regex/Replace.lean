@@ -15,7 +15,7 @@ def replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
   | and r1 r2 => and (replaceLE r1 xs h) (replaceLE r2 xs h)
   | compliment r1 => compliment (replaceLE r1 xs h)
 
-def replace (r: RegexID n) (xs: Vector σ n): Regex σ :=
+def replace (r: Regex (Fin n)) (xs: Vector σ n): Regex σ :=
   replaceLE r xs (Nat.le_refl n)
 
 #guard replace (or (symbol 0) (star (symbol 1))) #v['a', 'b']

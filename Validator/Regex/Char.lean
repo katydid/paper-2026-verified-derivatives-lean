@@ -14,7 +14,7 @@ def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char := match r with
   | and r1 r2 => and (derive r1 a) (derive r2 a)
   | compliment r1 => compliment (derive r1 a)
 
-theorem Regex.Char.derive_is_derive_symbol:
+theorem gen_derive:
   Regex.Char.derive r a = Regex.derive (fun s a => s == a) r a := by
   induction r with
   | emptyset => rfl

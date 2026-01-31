@@ -33,7 +33,7 @@ def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vect
     (and (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
   | compliment r1 => let (rid1, acc1) := extractAcc r1 acc; (compliment rid1, acc1)
 
-def extract (r: Regex σ): RegexID (symbols r) × Vector σ (symbols r) :=
+def extract (r: Regex σ): Regex (Fin (symbols r)) × Vector σ (symbols r) :=
   let (rid, xs) := extractAcc r #v[]
   (RegexID.cast rid (by omega), Vector.cast (by omega) xs)
 

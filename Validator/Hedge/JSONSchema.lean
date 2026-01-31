@@ -411,8 +411,7 @@ private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
 -- modified example from Taxonomy of XML Section 6.5
 
 private def example_grammar_doc: Hedge.Grammar 3 String :=
-  Hedge.Grammar.mk
-    (start := Regex.symbol ("doc", 0))
+  Hedge.Grammar.mk (start := Regex.symbol ("doc", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol ("para", 1)),
       Regex.symbol ("pcdata", 2),
