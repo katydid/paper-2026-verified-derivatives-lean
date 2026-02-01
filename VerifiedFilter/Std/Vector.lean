@@ -20,8 +20,8 @@ theorem eq (xs ys: Vector α n) (h: Vector.toList xs = Vector.toList ys): xs = y
   simp_all only [toList_mk]
 
 theorem toList_snoc {xs : Vector α n} :
-  (Vector.push xs x).toList = List.snoc xs.toList x := by
-  simp only [push, toList_mk, Array.toList_push, List.snoc, List.append_cancel_right_eq]
+  (Vector.push xs x).toList = xs.toList ++ [x] := by
+  simp only [push, toList_mk, Array.toList_push, List.append_cancel_right_eq]
   rfl
 
 theorem append_nil (xs: Vector α n):
@@ -127,11 +127,10 @@ theorem append_cons (xs: Vector α n1) (ys: Vector α n2):
 theorem cons_push:
   (Vector.push (cons x xs) y) = cons x (Vector.push xs y) := by
   apply eq
-  rw [toList_snoc]
-  rw [toList_cons]
   rw [toList_cons]
   rw [toList_snoc]
-  simp only [List.snoc]
+  rw [toList_cons]
+  rw [toList_snoc]
   ac_rfl
 
 -- take theorems
@@ -196,7 +195,6 @@ theorem push_map_list (xs: Vector α l) (f: α → β):
   rw [toList_snoc]
   rw [toList_snoc]
   rw [toList_map]
-  simp only [List.snoc]
   simp only [List.map_append, List.map_cons, List.map_nil]
 
 theorem push_map (xs: Vector α l) (f: α → β):

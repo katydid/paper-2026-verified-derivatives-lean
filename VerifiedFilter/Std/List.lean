@@ -3,9 +3,6 @@ import Mathlib.Tactic.RewriteSearch
 
 namespace List
 
-def snoc (xs: List α) (x: α) :=
-  xs ++ [x]
-
 theorem list_elem_lt [SizeOf α] {xs: List α} (h: x ∈ xs): sizeOf x ≤ sizeOf xs := by
   rw [show (x ∈ xs) = List.Mem x xs from rfl] at h
   induction h with
