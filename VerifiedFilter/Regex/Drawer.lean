@@ -50,7 +50,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
   | symbol s =>
     intro n acc hr
     simp only [replaceLE, extractAcc]
-    rw [Vector.snoc_get]
+    rw [Vector.push_get]
   | or r1 r2 ih1 ih2 =>
     intro n acc hr
     simp only [extractAcc]
@@ -214,8 +214,8 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
   | symbol s =>
     intro n acc hr
     simp only [replaceLE, extractAcc, Regex.map]
-    simp only [Vector.snoc_map]
-    rw [Vector.snoc_get]
+    simp only [Vector.push_map]
+    rw [Vector.push_get]
   | or r1 r2 ih1 ih2 =>
     intro n acc hr
     simp only [extractAcc]

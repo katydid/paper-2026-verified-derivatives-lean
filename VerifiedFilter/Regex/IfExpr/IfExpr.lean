@@ -78,7 +78,7 @@ theorem mkAcc_eval_cons_list (xs: Vector σ k) (b: Bool) (acc: Vector Bool l):
           have hhead : (Vector.mk { toList := x :: xs } hxs).head = x := rfl
           have hpush : ∀ x, (Vector.cons b acc).push x = Vector.cons b (acc.push x) := by
             intro x
-            exact Vector.cons_snoc (x := b) (xs := acc) (y := x)
+            exact Vector.cons_push (x := b) (xs := acc) (y := x)
           cases hx : Φ x with
           | true =>
               simp only [IfExpr.mkAcc, IfExpr.eval, hhead, hx, IfExpr.lift_cast_eval, hpush]

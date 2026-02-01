@@ -13,7 +13,7 @@ def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vect
   match r with
   | emptyset => (emptyset, acc)
   | emptystr => (emptystr, acc)
-  | symbol s => (symbol (Fin.mk acc.size lt_add_symbol), Vector.snoc acc s)
+  | symbol s => (symbol (Fin.mk acc.size lt_add_symbol), Vector.push acc s)
   | or r1 r2 =>
     let (rid1, acc1) := extractAcc r1 acc
     let (rid2, acc2) := extractAcc r2 acc1
@@ -49,10 +49,8 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     simp only [symbols, Nat.add_zero, extractAcc, Vector.append_nil, Vector.cast_toList]
   | symbol s =>
     simp only [extractAcc]
-    rw [Vector.snoc_append]
-    -- aesop?
-    simp_all only [symbols, Nat.reduceAdd]
-    rfl
+    simp only [symbols, Nat.reduceAdd, Vector.push_mk, List.push_toArray, List.nil_append,
+      Vector.append_singleton]
   | or r1 r2 ih1 ih2 =>
     simp only [extractAcc]
     rw [Vector.cast_assoc]
