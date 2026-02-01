@@ -1,5 +1,4 @@
 import VerifiedFilter.Std.Decidable
-import VerifiedFilter.Std.Except
 import VerifiedFilter.Std.List
 import VerifiedFilter.Std.Hedge
 
