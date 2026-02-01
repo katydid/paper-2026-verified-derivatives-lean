@@ -1,5 +1,5 @@
 import VerifiedFilter.Std.Decidable
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Lang
 

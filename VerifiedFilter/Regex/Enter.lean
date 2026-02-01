@@ -1,4 +1,4 @@
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Extract
 import VerifiedFilter.Regex.Num

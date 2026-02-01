@@ -3,7 +3,7 @@ import Std
 import Mathlib.Tactic.Linarith
 
 import VerifiedFilter.Std.State
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 
 abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: (a: α) → β a) :=
   Std.ExtDHashMap

@@ -3,7 +3,7 @@ import Std
 import Mathlib.Tactic.Linarith
 
 import VerifiedFilter.Std.State
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.Memoize
 
 private def MemTable.StateM.run

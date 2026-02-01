@@ -6,5 +6,5 @@ import VerifiedFilter.Std.Memoize
 import VerifiedFilter.Std.Nat
 import VerifiedFilter.Std.Lex
 import VerifiedFilter.Std.List
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.State

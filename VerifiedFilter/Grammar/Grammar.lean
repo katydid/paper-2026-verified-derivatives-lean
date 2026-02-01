@@ -1,6 +1,6 @@
 import VerifiedFilter.Std.Hedge
 import VerifiedFilter.Std.List
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Pred.AnyEq
 import VerifiedFilter.Regex.Regex

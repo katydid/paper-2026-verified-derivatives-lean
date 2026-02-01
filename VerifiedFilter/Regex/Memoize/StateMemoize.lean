@@ -1,4 +1,4 @@
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.StateMemoize
 
 import VerifiedFilter.Regex.Drawer

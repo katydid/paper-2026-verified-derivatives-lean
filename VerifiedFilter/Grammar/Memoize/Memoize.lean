@@ -2,7 +2,7 @@ import Mathlib.Tactic.SimpRw
 
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Hedge
-import VerifiedFilter.Std.Vec
+import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Lang
 import VerifiedFilter.Regex.Katydid
