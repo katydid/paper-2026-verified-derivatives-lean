@@ -3,7 +3,7 @@ import Mathlib.Tactic.RewriteSearch
 
 namespace List
 
-theorem list_elem_lt [SizeOf α] {xs: List α} (h: x ∈ xs): sizeOf x ≤ sizeOf xs := by
+theorem elem_lt [SizeOf α] {xs: List α} (h: x ∈ xs): sizeOf x ≤ sizeOf xs := by
   rw [show (x ∈ xs) = List.Mem x xs from rfl] at h
   induction h with
   | head xs' =>
@@ -12,7 +12,7 @@ theorem list_elem_lt [SizeOf α] {xs: List α} (h: x ∈ xs): sizeOf x ≤ sizeO
     apply Nat.le_trans ih
     simp +arith
 
-theorem list_sizeOf_cons [SizeOf α] (xs ys: List α):
+theorem sizeOf_cons [SizeOf α] (xs ys: List α):
   sizeOf xs < sizeOf (y::ys ++ xs) := by
   induction ys with
   | nil =>
@@ -23,28 +23,28 @@ theorem list_sizeOf_cons [SizeOf α] (xs ys: List α):
     simp only [List.cons.sizeOf_spec] at *
     omega
 
-theorem list_sizeOf_cons_lt_cons [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
+theorem sizeOf_cons_lt_cons [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
   sizeOf (x :: ys) < sizeOf (x :: xs) := by
   simp only [cons.sizeOf_spec, Nat.add_lt_add_iff_left]
   exact h_lt
 
-theorem list_sizeOf_lt_cons_eq [SizeOf α] (x: α) {ys xs: List α} (h_eq: ys = xs):
+theorem sizeOf_lt_cons_eq [SizeOf α] (x: α) {ys xs: List α} (h_eq: ys = xs):
   sizeOf ys < sizeOf (x :: xs) := by
   rw [h_eq]
   simp [cons.sizeOf_spec]
   exact Nat.pos_of_neZero (1 + sizeOf x)
 
-theorem list_sizeOf_lt_cons_lt [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
+theorem sizeOf_lt_cons_lt [SizeOf α] (x: α) {ys xs: List α} (h_lt: sizeOf ys < sizeOf xs):
   sizeOf ys < sizeOf (x :: xs) := by
   simp [cons.sizeOf_spec]
   exact Nat.lt_add_left (1 + sizeOf x) h_lt
 
-theorem list_length_drop_lt_cons {n: Nat} {xs: List α}:
+theorem length_drop_lt_cons {n: Nat} {xs: List α}:
   (List.drop n xs).length < (x :: xs).length := by
   simp only [length_drop, length_cons]
   omega
 
-theorem list_drop_exists (n: Nat) (xs: List α): ∃ ys, xs = ys ++ (List.drop n xs) := by
+theorem drop_exists (n: Nat) (xs: List α): ∃ ys, xs = ys ++ (List.drop n xs) := by
   cases n with
   | zero =>
     rw [drop_zero]
@@ -196,15 +196,15 @@ theorem interleaves_sizeOf1 (xs: List α) [SizeOf α]:
         exact congrArg (List.cons x) h_eq
       · right
         rw [←hp_eq]
-        exact list_sizeOf_cons_lt_cons x h_lt
+        exact sizeOf_cons_lt_cons x h_lt
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
       · right
         rw [←hp_eq]
-        exact list_sizeOf_lt_cons_eq x h_eq
+        exact sizeOf_lt_cons_eq x h_eq
       · right
         rw [←hp_eq]
-        exact list_sizeOf_lt_cons_lt x h_lt
+        exact sizeOf_lt_cons_lt x h_lt
 
 theorem interleaves_sizeOf1_idx (xs: List α) [SizeOf α] (i: Fin (List.interleaves xs).length):
   ((List.interleaves xs).get i).1 = xs \/ sizeOf ((List.interleaves xs).get i).1 < sizeOf xs := by
@@ -226,10 +226,10 @@ theorem interleaves_sizeOf2 [SizeOf α] (xs: List α):
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
       · right
         rw [←hp_eq]
-        exact list_sizeOf_lt_cons_eq x h_eq
+        exact sizeOf_lt_cons_eq x h_eq
       · right
         rw [←hp_eq]
-        exact list_sizeOf_lt_cons_lt x h_lt
+        exact sizeOf_lt_cons_lt x h_lt
     · rcases hp with ⟨fst, snd, hp_mem, hp_eq⟩
       obtain h_eq | h_lt := ih (fst, snd) hp_mem
       · left
@@ -237,7 +237,7 @@ theorem interleaves_sizeOf2 [SizeOf α] (xs: List α):
         exact congrArg (List.cons x) h_eq
       · right
         rw [←hp_eq]
-        exact list_sizeOf_cons_lt_cons x h_lt
+        exact sizeOf_cons_lt_cons x h_lt
 
 theorem interleaves_sizeOf2_idx [SizeOf α] (xs: List α) (i: Fin (List.interleaves xs).length):
   ((List.interleaves xs).get i).2 = xs \/ sizeOf ((List.interleaves xs).get i).2 < sizeOf xs := by

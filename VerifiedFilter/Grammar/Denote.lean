@@ -329,7 +329,7 @@ theorem denote_star_iff' {α: Type} {φ: Type} (G: Grammar n φ) (Φ: φ → α 
   termination_by xs.length
   decreasing_by
     obtain ⟨n, hn⟩ := n
-    apply List.list_length_drop_lt_cons
+    apply List.length_drop_lt_cons
 
 theorem denote_star_iff {α: Type} {φ: Type} (G: Grammar n φ) (Φ: φ → α → Prop) (r: Regex (φ × Ref n)) (xs: Hedge α):
   Rule.denote G Φ (Regex.star r) xs <-> Lang.star (Rule.denote G Φ r) xs := by

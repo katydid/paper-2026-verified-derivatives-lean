@@ -167,7 +167,7 @@ theorem sizeOf_take (n: Nat) (xs: Hedge α):
 
 theorem sizeOf_drop (n: Nat) (xs: Hedge α):
   List.drop n xs = xs \/ sizeOf (List.drop n xs) < sizeOf xs := by
-  have h := List.list_drop_exists (xs := xs) (n := n)
+  have h := List.drop_exists (xs := xs) (n := n)
   cases h with
   | intro ys h =>
   nth_rewrite 2 [h]
@@ -177,7 +177,7 @@ theorem sizeOf_drop (n: Nat) (xs: Hedge α):
     simp only [List.nil_append, Nat.lt_irrefl, or_false]
   | cons y ys =>
     apply Or.inr
-    apply List.list_sizeOf_cons
+    apply List.sizeOf_cons
 
 private theorem Node.sizeOf_lt_cons_child {α: Type} (label: α) (x1: Hedge.Node α) (x2: Hedge.Node α) (xs: Hedge α):
   sizeOf x1 < sizeOf (Hedge.Node.mk label xs)

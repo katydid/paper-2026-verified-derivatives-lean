@@ -65,7 +65,7 @@ theorem Grammar.JSONSchema.decreasing_symbol {α: Type} {σ: Type} [SizeOf σ] (
     (Hedge.Node.mk label children, r2) := by
   apply Prod.Lex.left
   simp +arith only [Hedge.Node.mk.sizeOf_spec]
-  have h' := List.list_elem_lt h
+  have h' := List.elem_lt h
   omega
 
 theorem Grammar.JSONSchema.decreasing_interleave_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
