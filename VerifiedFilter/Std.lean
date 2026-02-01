@@ -3,7 +3,6 @@ import VerifiedFilter.Std.Except
 import VerifiedFilter.Std.Hashable
 import VerifiedFilter.Std.Hedge
 import VerifiedFilter.Std.Memoize
-import VerifiedFilter.Std.Lex
 import VerifiedFilter.Std.List
 import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.State
