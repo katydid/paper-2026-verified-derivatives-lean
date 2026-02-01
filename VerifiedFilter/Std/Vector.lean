@@ -1,4 +1,4 @@
--- A Vector library that suppliments Lean's standard Vector type with extra proofs.
+-- A Vector library that suppliments Lean's standard Vector type with extra definitions and proofs.
 
 import VerifiedFilter.Std.List
 
