@@ -1,3 +1,6 @@
+-- A minimum Hedge library that could be added to a standard library,
+-- A hedge looks similar Haskell's rose tree, but has no laziness and is finite in size.
+
 import Lean.Elab.Tactic
 
 import Mathlib.Tactic.NthRewrite
@@ -13,122 +16,16 @@ abbrev Hedge α := List (Hedge.Node α)
 
 namespace Hedge
 
--- Node is a Labelled Tree.
-
-instance [Ord α]: LE (Node α) where
-  le x y := (Ord.compare x y).isLE
-
-instance [Ord α]: LT (Node α) where
-  lt x y := (Ord.compare x y).isLT
-
 def Node.getLabel (t: Node α): α :=
   match t with
   | Node.mk l _ => l
-
-def Node.getLabels (t: Node α): List α :=
-  match t with
-  | Node.mk l children => l :: List.flatMap Node.getLabels children
 
 def Node.getChildren (t: Node α): Hedge α :=
   match t with
   | Node.mk _ c => c
 
-def getAttachedChildren (t: Hedge.Node α): List {x // x ∈ t.getChildren} :=
-  match t with
-  | Node.mk _ c => c.attach
-
 def node {α: Type} (label: α) (children: Hedge α): Hedge.Node α :=
   Hedge.Node.mk label children
-
-def Node.getDescendants (t: Hedge.Node α): Hedge α :=
-  match t with
-  | Node.mk _ children => children ++ List.flatMap Node.getDescendants children
-
-abbrev Node.Descendant (child: Hedge.Node α) (ancestor: Hedge.Node α) := child ∈ ancestor.getDescendants
-
-abbrev Node.DescendantOf {α: Type} (ancestor: Hedge.Node α) := {
-    child: Hedge.Node α
-    // Descendant child ancestor
-  }
-
-def Node.DescendantOf.mk (d: Descendant child ancestor): DescendantOf ancestor :=
-  Subtype.mk child d
-
-def Node.Descendant.mkFirstChild
-  (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α): Descendant x (Node.mk parentLabel (x :: siblings)) := by
-  unfold Node.Descendant
-  unfold Node.getDescendants
-  simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
-    true_or]
-
-def Node.Descendant.consFirstChild
-  (firstchild: Hedge.Node α):
-  Descendant firstchild (Node.mk label (firstchild :: xs)) := by
-  unfold Node.Descendant
-  unfold Node.getDescendants
-  simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
-    true_or]
-
-def Node.DescendantOf.mkFirstChild
-  (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α): (Node.mk parentLabel (x :: siblings)).DescendantOf := by
-  refine (Subtype.mk x ?_)
-  unfold Node.Descendant
-  unfold Node.getDescendants
-  simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
-    true_or]
-
-def Node.DescendantOf.mkFirstChild_eq (parentLabel: α) (x: Hedge.Node α) (siblings: Hedge α):
-  {
-    descendant: (Node.mk parentLabel (x :: siblings)).DescendantOf
-    // descendant.val = x
-  } := by
-  refine (Subtype.mk (Subtype.mk x ?_) ?_)
-  · unfold Node.Descendant
-    unfold Node.getDescendants
-    simp only [List.flatMap_cons, List.cons_append, List.mem_cons, List.mem_append, List.mem_flatMap,
-      true_or]
-  · simp only
-
-def Node.DescendantOf.consFirstChild
-  (firstchild: Hedge.Node α) (h: (Node.mk label xs).DescendantOf):
-  (Node.mk label (firstchild :: xs)).DescendantOf := by
-  unfold Node.DescendantOf at *
-  unfold Node.Descendant at *
-  unfold Node.getDescendants at *
-  obtain ⟨child, h⟩ := h
-  refine (Subtype.mk child ?_)
-  simp
-  simp at h
-  apply Or.inr
-  cases h
-  · apply Or.inl
-    assumption
-  · apply Or.inr
-    apply Or.inr
-    assumption
-
-def Node.DescendantOf.consFirstChild_eq
-  (firstchild: Hedge.Node α) (h: (Node.mk label xs).DescendantOf):
-  {
-    descendant: (Node.mk label (firstchild :: xs)).DescendantOf
-    // descendant.val = h.val
-  } := by
-  obtain ⟨child, h⟩ := h
-  unfold Node.Descendant at *
-  simp only
-  refine (Subtype.mk (Subtype.mk child ?_) ?_)
-  · unfold Node.Descendant
-    unfold Node.getDescendants at *
-    simp
-    simp at h
-    apply Or.inr
-    cases h
-    · apply Or.inl
-      assumption
-    · apply Or.inr
-      apply Or.inr
-      assumption
-  · simp
 
 example: Hedge String := [
   node "html" [
@@ -149,11 +46,11 @@ example: Hedge String := [
   ]
 ]
 
-def Node.text (s: String) (children: Hedge (Option String)):
+private def Node.text (s: String) (children: Hedge (Option String)):
   Hedge.Node (Option String) :=
   node (Option.some s) children
 
-def Node.elem (children: Hedge (Option String)):
+private def Node.elem (children: Hedge (Option String)):
   Hedge.Node (Option String) :=
   node Option.none children
 
@@ -231,7 +128,7 @@ private theorem lt_plus (x y z: Nat):
   y < z → x + y < x + z := by
   simp
 
-theorem take_eq_self_iff (xs : List α) {n : Nat} : xs.take n = xs ↔ xs.length ≤ n :=
+private theorem take_eq_self_iff (xs : List α) {n : Nat} : xs.take n = xs ↔ xs.length ≤ n :=
   ⟨fun h ↦ by rw [← h]; simp; omega, List.take_of_length_le⟩
 
 theorem sizeOf_take (n: Nat) (xs: Hedge α):
@@ -268,17 +165,6 @@ theorem sizeOf_take (n: Nat) (xs: Hedge α):
     apply Or.inl
     assumption
 
-theorem sizeOf_take_lt_n {xs: Hedge α}
-  (hlen: n < List.length xs):
-  sizeOf (List.take n xs) < sizeOf xs := by
-  have h := sizeOf_take n xs
-  cases h with
-  | inl hh =>
-    rw [List.list_take_eq_self_iff] at hh
-    omega
-  | inr hh =>
-    exact hh
-
 theorem sizeOf_drop (n: Nat) (xs: Hedge α):
   List.drop n xs = xs \/ sizeOf (List.drop n xs) < sizeOf xs := by
   have h := List.list_drop_exists (xs := xs) (n := n)
@@ -293,34 +179,7 @@ theorem sizeOf_drop (n: Nat) (xs: Hedge α):
     apply Or.inr
     apply List.list_sizeOf_cons
 
-theorem le (a b: Nat):
-  a <= b <-> a = b \/ a < b := by
-  apply Iff.intro
-  case mp =>
-    intro h
-    omega
-  case mpr =>
-    intro h
-    cases h with
-    | inl h =>
-      rw [h]
-      omega
-    | inr h =>
-      omega
-
-theorem elem_is_leq_sizeOf {α: Type} [SizeOf α] {x: Hedge.Node α} {ys: Hedge α}:
-  x ∈ ys →
-  sizeOf x <= sizeOf ys := by
-  intro h
-  induction h with
-  | head =>
-    simp only [List.cons.sizeOf_spec]
-    omega
-  | tail =>
-    simp only [List.cons.sizeOf_spec]
-    omega
-
-theorem Node.sizeOf_lt_cons_child {α: Type} (label: α) (x1: Hedge.Node α) (x2: Hedge.Node α) (xs: Hedge α):
+private theorem Node.sizeOf_lt_cons_child {α: Type} (label: α) (x1: Hedge.Node α) (x2: Hedge.Node α) (xs: Hedge α):
   sizeOf x1 < sizeOf (Hedge.Node.mk label xs)
   → sizeOf x1 < sizeOf (Hedge.Node.mk label (x2 :: xs)) := by
   simp
