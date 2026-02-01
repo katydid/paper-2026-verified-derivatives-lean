@@ -5,8 +5,8 @@ import Validator.Std.Hedge
 
 import Validator.Regex.Regex
 
-import Validator.Hedge.Denote
-import Validator.Hedge.Grammar
+import Validator.Grammar.Denote
+import Validator.Grammar.Grammar
 
 import Validator.Pred.AnyEq
 import Validator.Pred.Compare

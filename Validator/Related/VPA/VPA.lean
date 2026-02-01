@@ -1,5 +1,5 @@
 import Validator.Regex.Regex
-import Validator.Hedge.Grammar
+import Validator.Grammar.Grammar
 
 namespace Vpa
 

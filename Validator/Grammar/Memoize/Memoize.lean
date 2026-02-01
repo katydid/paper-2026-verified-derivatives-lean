@@ -8,11 +8,11 @@ import Validator.Regex.Lang
 import Validator.Regex.Katydid
 import Validator.Regex.Enter
 import Validator.Regex.Memoize.Memoize
-import Validator.Hedge.Denote
-import Validator.Hedge.Grammar
-import Validator.Hedge.Katydid
-import Validator.Hedge.Lang
-import Validator.Hedge.Denote
+import Validator.Grammar.Denote
+import Validator.Grammar.Grammar
+import Validator.Grammar.Katydid
+import Validator.Grammar.Lang
+import Validator.Grammar.Denote
 
 import Validator.Regex.Memoize
 open Regex.Memoize

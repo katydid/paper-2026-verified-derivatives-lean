@@ -6,9 +6,9 @@ import Validator.Std.Hedge
 import Validator.Regex.Lang
 import Validator.Regex.Katydid
 
-import Validator.Hedge.Denote
-import Validator.Hedge.Grammar
-import Validator.Hedge.Lang
+import Validator.Grammar.Denote
+import Validator.Grammar.Grammar
+import Validator.Grammar.Lang
 
 import Validator.Pred.AnyEq
 import Validator.Pred.Compare

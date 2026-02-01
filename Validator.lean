@@ -1,6 +1,6 @@
 import Validator.Std
 
-import Validator.Hedge
+import Validator.Grammar
 import Validator.Pred
 import Validator.Regex
 import Validator.Related

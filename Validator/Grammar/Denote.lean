@@ -1,8 +1,8 @@
 import Validator.Std.List
 
 import Validator.Regex.Lang
-import Validator.Hedge.Grammar
-import Validator.Hedge.Lang
+import Validator.Grammar.Grammar
+import Validator.Grammar.Lang
 
 namespace Hedge.Grammar
 
