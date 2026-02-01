@@ -1,7 +1,7 @@
 import Lake
 open Lake DSL
 
-package validator
+package verifiedFilter
 
 abbrev packageLinters : Array LeanOption := #[]
 
@@ -9,7 +9,7 @@ abbrev packageLeanOptions :=
   packageLinters
 
 @[default_target]
-lean_lib Validator where
+lean_lib VerifiedFilter where
   leanOptions := packageLeanOptions
   moreServerOptions := packageLinters
 
