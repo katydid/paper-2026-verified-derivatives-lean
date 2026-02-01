@@ -11,7 +11,7 @@ import Validator.Grammar.Grammar
 import Validator.Pred.AnyEq
 import Validator.Pred.Compare
 
-namespace Hedge
+open Hedge
 
 theorem Grammar.JSONSchema.decreasing_or_l {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x: Hedge.Node α):
   Prod.Lex
@@ -184,21 +184,21 @@ theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ
   = Lang.derive (Rule.denote G Φ r) node := by
   fun_induction (Grammar.JSONSchema.derive G (fun p a => Φ p a)) r node with
   | case1 => -- emptyset
-    rw [Hedge.Grammar.denote_emptyset]
+    rw [Grammar.denote_emptyset]
     rw [Lang.derive_emptyset]
   | case2 => -- emptystr
-    rw [Hedge.Grammar.denote_emptyset]
-    rw [Hedge.Grammar.denote_emptystr]
+    rw [Grammar.denote_emptyset]
+    rw [Grammar.denote_emptystr]
     rw [Lang.derive_emptystr]
   | case3 p childRef label children ih =>
-    rw [Hedge.Grammar.denote_symbol]
+    rw [Grammar.denote_symbol]
     rw [Lang.derive_tree]
-    rw [Hedge.Grammar.denote_onlyif]
-    rw [Hedge.Grammar.denote_emptystr]
+    rw [Grammar.denote_onlyif]
+    rw [Grammar.denote_emptystr]
     apply (congrArg fun x => Lang.onlyif x Lang.emptystr)
     congr
     generalize (G.lookup childRef) = childExpr
-    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+    rw [Grammar.null_commutes (Φ := Φ)]
     unfold Lang.null
     induction children generalizing childExpr with
     | nil =>
@@ -218,54 +218,54 @@ theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ
         rw [List.mem_cons]
         apply Or.inr hchild
   | case4 x r1 r2 ih1 ih2 => -- or
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_or]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_or]
     unfold Lang.or
     rw [ih1]
     rw [ih2]
     rfl
   | case5 x r1 r2 ih1 ih2 => -- concat
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_onlyif]
+    rw [Grammar.denote_concat]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_concat]
+    rw [Grammar.denote_onlyif]
     rw [Lang.derive_concat]
     rw [<- ih1]
     rw [<- ih2]
     congr
-    rw [Hedge.Grammar.null_commutes (Φ := Φ)]
+    rw [Grammar.null_commutes (Φ := Φ)]
   | case6 x r1 ih1 => -- star
-    rw [Hedge.Grammar.denote_star]
-    rw [Hedge.Grammar.denote_concat]
-    rw [Hedge.Grammar.denote_star]
+    rw [Grammar.denote_star]
+    rw [Grammar.denote_concat]
+    rw [Grammar.denote_star]
     rw [Lang.derive_star]
     rw [ih1]
   | case7 x r1 r2 ih1 ih2 => -- interleave
-    rw [Hedge.Grammar.denote_interleave]
-    rw [Hedge.Grammar.denote_or]
-    rw [Hedge.Grammar.denote_interleave]
+    rw [Grammar.denote_interleave]
+    rw [Grammar.denote_or]
+    rw [Grammar.denote_interleave]
     rw [Lang.derive_interleave]
     rw [<- ih1]
     rw [<- ih2]
     congr
-    rw [Hedge.Grammar.denote_interleave]
+    rw [Grammar.denote_interleave]
   | case8 x r1 r2 ih1 ih2 => -- and
-    rw [Hedge.Grammar.denote_and]
-    rw [Hedge.Grammar.denote_and]
+    rw [Grammar.denote_and]
+    rw [Grammar.denote_and]
     unfold Lang.and
     rw [ih1]
     rw [ih2]
     rfl
   | case9 x r1 ih1 => -- compliment
-    rw [Hedge.Grammar.denote_compliment]
+    rw [Grammar.denote_compliment]
     rw [ih1]
-    rw [Hedge.Grammar.denote_compliment]
+    rw [Grammar.denote_compliment]
     rw [Lang.derive_compliment]
     unfold Lang.compliment
     rfl
 
-theorem Grammar.JSONSchema.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.JSONSchema.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+theorem Grammar.JSONSchema.derives_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Grammar.Rule.denote G Φ (List.foldl (Grammar.JSONSchema.derive G (decideRel Φ)) r nodes) = Lang.derives (Grammar.Rule.denote G Φ r) nodes := by
   rw [Lang.derives_foldl]
   induction nodes generalizing r with
   | nil =>
@@ -277,13 +277,13 @@ theorem Grammar.JSONSchema.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → 
     rw [h] at ih'
     exact ih'
 
-theorem Grammar.JSONSchema.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
-  (validate G (decideRel Φ) nodes = true) = (Hedge.Grammar.denote G Φ) nodes := by
-  unfold Hedge.Grammar.denote
-  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
+theorem Grammar.JSONSchema.validate_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (validate G (decideRel Φ) nodes = true) = (Grammar.denote G Φ) nodes := by
+  unfold Grammar.denote
+  rw [<- Lang.validate (Grammar.Rule.denote G Φ G.start) nodes]
   unfold validate
   rw [<- derives_commutes]
-  rw [<- Hedge.Grammar.null_commutes]
+  rw [<- Grammar.null_commutes]
 
 -- Tests
 
@@ -291,16 +291,16 @@ namespace Grammar.JSONSchema
 
 open Pred
 
-def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
+def run [DecidableEq α] (G: Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes
 
 #guard run
-  (Hedge.Grammar.singleton Regex.emptyset)
+  (Grammar.singleton Regex.emptyset)
   [node "a" [node "b" [], node "c" [node "d" []]]] =
   false
 
 #guard run
-  (Hedge.Grammar.mk (n := 1)
+  (Grammar.mk (n := 1)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
@@ -308,7 +308,7 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α):
   true
 
 #guard run
-  (Hedge.Grammar.mk (n := 1)
+  (Grammar.mk (n := 1)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
@@ -316,7 +316,7 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α):
   false
 
 #guard run
-  (Hedge.Grammar.mk (n := 2)
+  (Grammar.mk (n := 2)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.symbol (AnyEq.Pred.eq "b", 1))
@@ -327,7 +327,7 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α):
   = true
 
 #guard run
-  (Hedge.Grammar.mk (n := 2)
+  (Grammar.mk (n := 2)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
@@ -341,7 +341,7 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α):
   true
 
 #guard run
-  (Hedge.Grammar.mk (n := 3)
+  (Grammar.mk (n := 3)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
@@ -357,8 +357,8 @@ def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α):
 
 -- modified example from https://books.xmlschemata.org/relaxng/relax-CHP-5-SECT-4.html
 
-private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
-  Hedge.Grammar.mk
+private def example_grammar_library: Grammar 5 (Option String) :=
+  Grammar.mk
     (start := Regex.symbol (some "library", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol (some "book", 1)),
@@ -410,8 +410,8 @@ private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
 
 -- modified example from Taxonomy of XML Section 6.5
 
-private def example_grammar_doc: Hedge.Grammar 3 String :=
-  Hedge.Grammar.mk (start := Regex.symbol ("doc", 0))
+private def example_grammar_doc: Grammar 3 String :=
+  Grammar.mk (start := Regex.symbol ("doc", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol ("para", 1)),
       Regex.symbol ("pcdata", 2),
@@ -435,8 +435,8 @@ private def example_grammar_doc: Hedge.Grammar 3 String :=
   = true
 
 -- modified example from Taxonomy of XML Section 7.1
-private def example_grammar_sec: Hedge.Grammar 2 String :=
-  Hedge.Grammar.mk
+private def example_grammar_sec: Grammar 2 String :=
+  Grammar.mk
     (start := Regex.oneOrMore (Regex.symbol ("sec", 0)))
     (prods := #v[
       Regex.oneOrMore (Regex.or

@@ -10,7 +10,7 @@ abbrev Ref (n: Nat) := Fin n
 
 -- Ref is a non-terminal, where n represents the number of non-terminals
 
-structure Hedge.Grammar (n: Nat) (φ: Type) where
+structure Grammar (n: Nat) (φ: Type) where
   start: Regex (φ × Ref n)
   prods: Vector (Regex (φ × Ref n)) n
 

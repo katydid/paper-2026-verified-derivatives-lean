@@ -19,8 +19,7 @@ import Validator.Grammar.Denote
 import Validator.Grammar.Memoize.Memoize
 
 open Regex.Memoize
-
-namespace Hedge
+open Hedge
 
 def StateMemoize.Grammar.derive.run {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=

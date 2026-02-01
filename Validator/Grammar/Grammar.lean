@@ -7,7 +7,7 @@ import Validator.Regex.Regex
 import Validator.Regex.Lang
 import Validator.Grammar.Types
 
-namespace Hedge.Grammar
+namespace Grammar
 
 def lookup (G: Grammar n φ) (ref: Ref n): Regex (φ × Ref n) :=
   Vector.get G.prods ref

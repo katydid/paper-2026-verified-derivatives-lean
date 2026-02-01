@@ -16,8 +16,7 @@ import Validator.Grammar.Denote
 
 import Validator.Regex.Memoize
 open Regex.Memoize
-
-namespace Hedge
+open Hedge
 
 def Regex.Memoize.deriveM [DecidableEq σ] [Hashable σ] [Monad m] [MemoizeKatydid m σ]
   (Φ': σ -> Bool) (Φ: (s: σ) → m { b // b = Φ' s }) (r: Regex σ):

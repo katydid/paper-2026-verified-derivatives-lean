@@ -13,7 +13,7 @@ import Validator.Grammar.Lang
 import Validator.Pred.AnyEq
 import Validator.Pred.Compare
 
-namespace Hedge
+open Hedge
 
 def Grammar.Katydid.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
@@ -247,9 +247,9 @@ theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
     rw [ih2]
   | compliment r1 ih1 =>
     rw [Grammar.Katydid.derive_compliment]
-    rw [Hedge.Grammar.denote_compliment]
+    rw [Grammar.denote_compliment]
     rw [ih1]
-    rw [Hedge.Grammar.denote_compliment]
+    rw [Grammar.denote_compliment]
     rw [Lang.derive_compliment]
     unfold Lang.compliment
     rfl
@@ -269,8 +269,8 @@ theorem Grammar.Katydid.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bo
   rw [h1]
   rw [derive_commutes]
 
-theorem Grammar.Katydid.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  Hedge.Grammar.Rule.denote G Φ (List.foldl (Grammar.Katydid.derive G (decideRel Φ)) r nodes) = Lang.derives (Hedge.Grammar.Rule.denote G Φ r) nodes := by
+theorem Grammar.Katydid.derives_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Grammar.Rule.denote G Φ (List.foldl (Grammar.Katydid.derive G (decideRel Φ)) r nodes) = Lang.derives (Grammar.Rule.denote G Φ r) nodes := by
   rw [Lang.derives_foldl]
   induction nodes generalizing r with
   | nil =>
@@ -282,14 +282,14 @@ theorem Grammar.Katydid.derives_commutes (G: Hedge.Grammar n φ) (Φ: φ → α 
     rw [h] at ih'
     exact ih'
 
-theorem Grammar.Katydid.validate_commutes (G: Hedge.Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
-  (Hedge.Grammar.Katydid.validate G (decideRel Φ) nodes = true)
-  = Hedge.Grammar.denote G Φ nodes := by
-  unfold Hedge.Grammar.denote
-  rw [<- Lang.validate (Hedge.Grammar.Rule.denote G Φ G.start) nodes]
+theorem Grammar.Katydid.validate_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
+  (Grammar.Katydid.validate G (decideRel Φ) nodes = true)
+  = Grammar.denote G Φ nodes := by
+  unfold Grammar.denote
+  rw [<- Lang.validate (Grammar.Rule.denote G Φ G.start) nodes]
   unfold validate
   rw [<- derives_commutes]
-  rw [<- Hedge.Grammar.null_commutes]
+  rw [<- Grammar.null_commutes]
 
 namespace Grammar.Katydid.Paper
 
@@ -309,8 +309,8 @@ def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: List (Hedge α)):
 end Grammar.Katydid.Paper
 
 theorem mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :
-  ∀ xs, (xs ∈ Hedge.Grammar.Katydid.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
-  unfold Hedge.Grammar.Katydid.filter
+  ∀ xs, (xs ∈ Grammar.Katydid.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
+  unfold Grammar.Katydid.filter
   intro xs
   rw [List.mem_filter]
   unfold Lang.MemFilter
@@ -332,7 +332,7 @@ namespace Grammar.Katydid
 
 open Pred
 
-def run [DecidableEq α] (G: Hedge.Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
+def run [DecidableEq α] (G: Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes
 
 abbrev contains (r: Regex σ) := Regex.contains r
@@ -345,12 +345,12 @@ abbrev optional (r: Regex σ) := Regex.optional r
 abbrev starAny: Regex σ := Regex.starAny
 
 #guard run
-  (Hedge.Grammar.singleton Regex.emptyset)
+  (Grammar.singleton Regex.emptyset)
   [node "a" [node "b" [], node "c" [node "d" []]]] =
   false
 
 #guard run
-  (Hedge.Grammar.mk (n := 1)
+  (Grammar.mk (n := 1)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
@@ -358,7 +358,7 @@ abbrev starAny: Regex σ := Regex.starAny
   true
 
 #guard run
-  (Hedge.Grammar.mk (n := 1)
+  (Grammar.mk (n := 1)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[Regex.emptystr]
   )
@@ -366,7 +366,7 @@ abbrev starAny: Regex σ := Regex.starAny
   false
 
 #guard run
-  (Hedge.Grammar.mk (n := 2)
+  (Grammar.mk (n := 2)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.symbol (AnyEq.Pred.eq "b", 1))
@@ -377,7 +377,7 @@ abbrev starAny: Regex σ := Regex.starAny
   = true
 
 #guard run
-  (Hedge.Grammar.mk (n := 2)
+  (Grammar.mk (n := 2)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
@@ -391,7 +391,7 @@ abbrev starAny: Regex σ := Regex.starAny
   true
 
 #guard run
-  (Hedge.Grammar.mk (n := 3)
+  (Grammar.mk (n := 3)
     (Regex.symbol (AnyEq.Pred.eq "a", 0))
     #v[
       (Regex.concat
@@ -407,8 +407,8 @@ abbrev starAny: Regex σ := Regex.starAny
 
 -- modified example from https://books.xmlschemata.org/relaxng/relax-CHP-5-SECT-4.html
 
-private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
-  Hedge.Grammar.mk
+private def example_grammar_library: Grammar 5 (Option String) :=
+  Grammar.mk
     (start := Regex.symbol (some "library", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol (some "book", 1)),
@@ -460,8 +460,8 @@ private def example_grammar_library: Hedge.Grammar 5 (Option String) :=
 
 -- modified example from Taxonomy of XML Section 6.5
 
-private def example_grammar_doc: Hedge.Grammar 3 String :=
-  Hedge.Grammar.mk (start := Regex.symbol ("doc", 0))
+private def example_grammar_doc: Grammar 3 String :=
+  Grammar.mk (start := Regex.symbol ("doc", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol ("para", 1)),
       Regex.symbol ("pcdata", 2),
@@ -485,8 +485,8 @@ private def example_grammar_doc: Hedge.Grammar 3 String :=
   = true
 
 -- modified example from Taxonomy of XML Section 7.1
-private def example_grammar_sec: Hedge.Grammar 2 String :=
-  Hedge.Grammar.mk
+private def example_grammar_sec: Grammar 2 String :=
+  Grammar.mk
     (start := Regex.oneOrMore (Regex.symbol ("sec", 0)))
     (prods := #v[
       Regex.oneOrMore (Regex.or
@@ -512,7 +512,7 @@ private def example_grammar_sec: Hedge.Grammar 2 String :=
   [node "p" []]
   = false
 
-private def example_benchmark_nested_contains: Hedge.Grammar 3 String :=
+private def example_benchmark_nested_contains: Grammar 3 String :=
   mk (contains (symbol ("A",0))) #v[contains (symbol ("B",1)), symbol ("C",2), emptystr]
 
 #guard validate example_benchmark_nested_contains (· == ·)
@@ -525,7 +525,7 @@ private def example_benchmark_nested_contains: Hedge.Grammar 3 String :=
   [node "a" [node "B" [node "C" []]], node "A" [node "D" [node "C" []], node "B" [node "D" []], node "D" [node "D" []]], node "a" []]
   = false
 
-private def example_interleave: Hedge.Grammar 5 String :=
+private def example_interleave: Grammar 5 String :=
   mk (interleave (symbol ("A",0)) (interleave (symbol ("B",1)) (optional (symbol ("C",2))))) #v[
     interleave (symbol ("A1", 3)) (symbol ("A2",3)),
     interleave (symbol ("Bb", 3)) starAny,
