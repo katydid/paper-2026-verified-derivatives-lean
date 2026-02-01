@@ -3,10 +3,7 @@
 import VerifiedFilter.Std.List
 
 import Mathlib.Tactic.NthRewrite
-import Mathlib.Tactic.SplitIfs
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.RewriteSearch
-import Mathlib.Tactic.SimpRw
+import Batteries.Tactic.GeneralizeProofs
 
 namespace Vector
 
@@ -82,7 +79,7 @@ theorem get_cast (xs: Vector α n) (h: n = m):
 def cons (x: α) (xs: Vector α n): Vector α (n + 1) :=
   Vector.cast (by omega) (Vector.append #v[x] xs)
 
-theorem singleton_toList:
+theorem singleton_toList (x: α):
   [x] = #v[x].toList := by
   simp only [toList_mk]
 
@@ -168,7 +165,7 @@ theorem drop_zero (xs : Vector α n):
   Vector.drop xs 0 = xs := by
   simp only [Vector.drop]
   simp only [Nat.sub_zero, Array.drop_eq_extract, size_toArray, mk_eq, Array.extract_eq_self_iff,
-    le_refl, and_self, or_true]
+    Nat.le_refl, and_self, or_true]
 
 theorem drop_nil (i: Nat):
   Vector.drop #v[] i = Vector.cast (α := α) (by omega) #v[] := by
@@ -250,7 +247,7 @@ theorem take_append_drop_cast (i : Nat) (xs : Vector α l): Vector.cast (by omeg
 
 theorem get_is_getElem {n: Nat} {α: Type u} (xs: Vector α n) (hi: i < n):
   Vector.get xs (Fin.mk i hi) = xs[i] := by
-  aesop
+  rfl
 
 theorem append_getElem (xs: Vector α n) (ys: Vector α m) (h: i < n):
   (xs ++ ys)[i] = xs[i] := by
@@ -273,7 +270,7 @@ theorem take_get (xs: Vector α (n + m)) (h1: i < n):
 theorem push_getElem {n: Nat} {α: Type u} (xs: Vector α n) (y: α):
   (Vector.push xs y)[n] = y := by
   simp only [push, Array.push, List.concat_eq_append, getElem_mk, List.getElem_toArray,
-    Array.length_toList, size_toArray, le_refl, List.getElem_append_right, tsub_self,
+    Array.length_toList, size_toArray, Nat.le_refl, List.getElem_append_right, Nat.sub_self,
     List.getElem_cons_zero]
 
 theorem push_get {n: Nat} {α: Type u} (xs: Vector α n) (y: α):
