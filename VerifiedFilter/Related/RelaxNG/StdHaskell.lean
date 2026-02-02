@@ -1,3 +1,6 @@
+-- StdHaskell is a substandard implementaton of the Haskell standard library functions used by RelaxNG.
+-- It serves its purpose, as it allows us to play around with RelaxNG,
+-- outside of some whitespace edge cases that this library needs to be improved for to properly cover.
 
 -- TODO: write a better isSpace
 def isSpace: Char -> Bool
