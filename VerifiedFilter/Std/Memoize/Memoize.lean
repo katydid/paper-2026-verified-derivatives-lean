@@ -1,8 +1,11 @@
-import Std
+-- Memoize is a standard package for generic memoization.
+import Std.Data.ExtDHashMap
 
 import VerifiedFilter.Std.State
 import VerifiedFilter.Std.Vector
 
+-- MemTable is a hashtable containing function input parameter and result as the key and value respectively.
+-- The value of the key-value pair also includes a proof that value was obtained by called the function f with the corresponding key.
 abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: (a: α) → β a) :=
   Std.ExtDHashMap
     α
@@ -10,9 +13,11 @@ abbrev MemTable {α: Type} {β: α → Type} [DecidableEq α] [Hashable α] (f: 
       { b: β a // b = f a }
     )
 
+-- MemTable.init creates an empty MemTable.
 def MemTable.init {α: Type} {β: α -> Type} [DecidableEq α] [Hashable α]
   (f: (a: α) → β a): MemTable f := Std.ExtDHashMap.emptyWithCapacity
 
+-- MemTable.modifyGet is an example of how to implement modifyGet for a State monad with MemTable as the state.
 def MemTable.modifyGet
   {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type}
   (f: (a: α) -> β a)
@@ -25,6 +30,9 @@ def MemTable.modifyGet
     | Option.some b =>
       (b, table)
 
+-- MemTable.call calls the function f with MemTable as the state of the MonadState class.
+-- This will first try to lookup if the MemTable already contains any results, so that we can avoid calling f.
+-- If this fails, f will be called and the result will be stored in MemTable for next time.
 def MemTable.call
   {α: Type} [DecidableEq α] [Hashable α] {β: α -> Type}
   (f: (a: α) -> β a)
@@ -38,22 +46,16 @@ def MemTable.call
     return b
   | Option.some b => return b
 
--- consider {β: α -> outParam Type}
+-- Memoize is a class that allows a function to be called inside a monad, but still produce the same result inside the monad.
+-- A typical use case would be a state monad that memoizes the results of calling f for optimization purposes.
+-- We can consider {β: α -> outParam Type} instead of {β: α -> Type} in future.
 class Memoize [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a)
   (m: Type -> Type u) where call: (a: α) -> m { b: β a // b = f a }
-  -- An alternative would be to create a separate property from the call function, which would then be call : (a: α) -> m (β a)
-  -- prop : (a: α) -> m Prop := fun a => (fun b => b = f a) <$> (call a)
 
-def Memoize.call'
-  {α: Type}
-  [DecidableEq α] [Hashable α]
-  {β: α -> Type}
-  (f: (a: α) -> β a)
-  {m: Type -> Type u}
-  [memf: Memoize f m]
-  (a: α): m {b: β a // b = f a} :=
-  memf.call a
-
+-- Vector.mapMemoize is Vector.mapM, but also includes a subtype for memoization purposes.
+-- The `memf` is the only function called and is a memoized version of `puref`.
+-- Although a pure function `puref` is passed, it is never called in the implementation, only in the proofs for the subtype.
+-- The proofs in the subtype, show that this `map` function is the same as calling `Vector.map`, except that results might be memoized for optimization purposes.
 def Vector.mapMemoize [Monad m]
   (puref: α -> β) (memf: (a: α) -> m {res // res = puref a}) (xs : Vector α n)
   : m {ys: (Vector β n) // ys = Vector.map puref xs } := do
@@ -102,6 +104,11 @@ where
           simp_all only [extract_size, Nat.sub_zero, cast_cast, cast_rfl]
         ⟩
 
+-- List.foldlMemoizeWithMembership is List.foldlM, but also includes a subtype for memoization purposes and also another subtype on the input parameter of `memf`.
+-- The `memf` is the only function called and is a memoized version of `puref`.
+-- The subtype on the input parameter of `memf` is their to show that the it will always receive a member of the input list, which is used for termination proof pursoses.
+-- Although a pure function `puref` is passed, it is never called in the implementation, only in the proofs for the subtype.
+-- The proofs in the subtype, show that this `foldl` function is the same as calling `List.foldl`, except that results might be memoized for optimization purposes.
 def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List α)
   (memf: (acc: β) -> (a: {a': α // a' ∈ xs}) -> m {res: β // res = puref acc a } )
   (init: β)
@@ -134,6 +141,10 @@ def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List 
       simp only [List.foldl]
     ))
 
+-- List.foldlMemoize is List.foldlM, but also includes a subtype for memoization purposes.
+-- The `memf` is the only function called and is a memoized version of `puref`.
+-- Although a pure function `puref` is passed, it is never called in the implementation, only in the proofs for the subtype.
+-- The proofs in the subtype, show that this `foldl` function is the same as calling `List.foldl`, except that results might be memoized for optimization purposes.
 def List.foldlMemoize [Monad m] (puref: β -> α -> β)
   (memf: (acc: β) -> (a: α) -> m {res: β // res = puref acc a } ) (init: β) (xs: List α)
   : m {res': β // res' = List.foldl puref init xs } :=
@@ -164,6 +175,10 @@ def List.foldlMemoize [Monad m] (puref: β -> α -> β)
       simp only [List.foldl]
     ))
 
+-- List.filterMemoize is List.filterM, but also includes a subtype for memoization purposes.
+-- The `memf` is the only function called and is a memoized version of `puref`.
+-- Although a pure function `puref` is passed, it is never called in the implementation, only in the proofs for the subtype.
+-- The proofs in the subtype, show that this `filter` function is the same as calling `List.filter`, except that results might be memoized for optimization purposes.
 def List.filterMemoize [Monad m] (puref: α -> Bool)
   (memf: (a: α) -> m {res: Bool // res = puref a } ) (xs: List α)
   : m {res': List α // res' = List.filter puref xs } :=
