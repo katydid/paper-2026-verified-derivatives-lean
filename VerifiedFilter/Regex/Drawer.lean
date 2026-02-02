@@ -68,8 +68,10 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
       rw [extractAcc_take]
-      nth_rewrite 1 [ih1 acc]
-      rw [replaceLE_cast_symbols]
+      have ih1' := ih1 acc
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -96,8 +98,10 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
       rw [extractAcc_take]
-      nth_rewrite 1 [ih1 acc]
-      rw [replaceLE_cast_symbols]
+      have ih1' := ih1 acc
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -129,8 +133,10 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
       rw [extractAcc_take]
-      nth_rewrite 1 [ih1 acc]
-      rw [replaceLE_cast_symbols]
+      have ih1' := ih1 acc
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -157,8 +163,10 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
       rw [extractAcc_take]
-      nth_rewrite 1 [ih1 acc]
-      rw [replaceLE_cast_symbols]
+      have ih1' := ih1 acc
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -223,8 +231,9 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_take]
       rw [extractAcc_take_fmap]
       have ih1' := ih1 acc
-      nth_rewrite 1 [ih1']
-      rw [replaceLE_cast_symbols]
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -255,8 +264,9 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_take]
       rw [extractAcc_take_fmap]
       have ih1' := ih1 acc
-      nth_rewrite 1 [ih1']
-      rw [replaceLE_cast_symbols]
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -293,8 +303,9 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_take]
       rw [extractAcc_take_fmap]
       have ih1' := ih1 acc
-      nth_rewrite 1 [ih1']
-      rw [replaceLE_cast_symbols]
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -325,8 +336,9 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_take]
       rw [extractAcc_take_fmap]
       have ih1' := ih1 acc
-      nth_rewrite 1 [ih1']
-      rw [replaceLE_cast_symbols]
+      rw [replaceLE_cast_symbols] at ih1'
+      rw [<- ih1']
+      omega
     rw [<- hh1]
     clear hh1
     clear ih1

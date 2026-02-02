@@ -2,8 +2,6 @@
 
 import VerifiedFilter.Std.List
 
-import Mathlib.Tactic.NthRewrite
-
 namespace Vector
 
 abbrev nil (α: Type): Vector α 0 := #v[]
@@ -91,10 +89,10 @@ theorem toList_cons {xs : Vector α n} :
   (Vector.cons x xs).toList = List.cons x xs.toList := by
   rw [← List.singleton_append]
   simp only [Vector.cons]
-  nth_rw 2 [singleton_toList]
-  rw [← Vector.toList_append]
   rw [<- show #v[x] ++ xs = #v[x].append xs from rfl]
   rw [cast_toList]
+  rw [Vector.toList_append]
+  rw [<- singleton_toList]
 
 theorem cons_append_list (xs: Vector α n1) (ys: Vector α n2):
   (Vector.cons x (xs ++ ys)).toList = ((Vector.cons x xs) ++ ys).toList := by
@@ -260,10 +258,11 @@ theorem append_get (xs: Vector α n) (ys: Vector α m) (h: i < n):
 theorem take_get (xs: Vector α (n + m)) (h1: i < n):
   Vector.get (Vector.take xs n) ⟨i, (by omega)⟩ = Vector.get xs ⟨i, h⟩ := by
   have h := take_append_drop_cast (xs := xs) (i := n)
-  nth_rewrite 2 [<- h]
+  rw [<- h]
   rw [Vector.get_cast]
   simp only
   rw [append_get]
+  rw [h]
 
 theorem push_getElem {n: Nat} {α: Type u} (xs: Vector α n) (y: α):
   (Vector.push xs y)[n] = y := by

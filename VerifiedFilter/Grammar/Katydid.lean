@@ -264,7 +264,9 @@ theorem Grammar.Katydid.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bo
     simp_all only [Bool.decide_eq_true]
   have h2: (fun s a => Φ s a) = Φ := by
     rfl
-  nth_rewrite 2 [<- h2]
+  have h3: (derive G Φ r x) = (derive G (fun s a => Φ s a) r x) := by
+    rw [h2]
+  rw [h3]
   rw [h1]
   rw [derive_commutes]
 
