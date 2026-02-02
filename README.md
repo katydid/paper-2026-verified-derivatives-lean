@@ -21,4 +21,3 @@ This algorithm allows us to filtering through millions of serialized data struct
 
   - [Install Lean4](https://lean-lang.org/install/).
   - Remember to also add `lake` (the build system for lean) to your `PATH`.  You can do this on mac by adding `export PATH=~/.elan/bin/:${PATH}` to your  `~/.zshrc` file
-  - Use mathlib's cache to speed up building time by running: `$ lake exe cache get`
