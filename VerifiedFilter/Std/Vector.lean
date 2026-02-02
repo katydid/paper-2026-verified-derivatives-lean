@@ -3,7 +3,6 @@
 import VerifiedFilter.Std.List
 
 import Mathlib.Tactic.NthRewrite
-import Batteries.Tactic.GeneralizeProofs
 
 namespace Vector
 
@@ -150,11 +149,10 @@ theorem take_succ_toList (xs: Vector α (n + 1)) (h: k <= n):
   (List.take (k + 1) xs.toList) = (List.take k (xs.toList)) ++ [xs.get ⟨k, by omega⟩] := by
   obtain ⟨⟨xs⟩, hxs⟩ := xs
   simp only [toList_mk]
-  generalize_proofs hget
   have hk : k < xs.length := by
     simp only [List.size_toArray] at hxs
     omega
-  have h: (Vector.mk (Array.mk xs) hxs).get ⟨k, hget⟩ = List.get xs ⟨k, hk⟩ := rfl
+  have h: (Vector.mk (Array.mk xs) hxs).get ⟨k, (by omega)⟩ = List.get xs ⟨k, hk⟩ := rfl
   rw [h]
   -- aesop?
   simp_all only [List.get_eq_getElem, List.take_append_getElem]

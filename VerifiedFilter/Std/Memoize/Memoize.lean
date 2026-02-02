@@ -90,15 +90,16 @@ where
             ))
       else
         return ⟨Vector.cast (by omega) acc.val, by
-          generalize_proofs h1 h2
           obtain ⟨acc, hacc⟩ := acc
           simp only
           rw [hacc]
           -- aesop?
-          subst h1 hacc
-          simp_all only [Nat.lt_irrefl, not_false_eq_true, Nat.min_eq_left, take_eq_extract, extract_size,
-            Nat.sub_zero, cast_rfl]
-          rfl
+          subst hacc
+          simp only [take_eq_extract, map_extract, cast_cast]
+          have h'' : k = n := by
+            omega
+          subst h''
+          simp_all only [extract_size, Nat.sub_zero, cast_cast, cast_rfl]
         ⟩
 
 def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List α)

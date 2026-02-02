@@ -38,21 +38,20 @@ namespace Regex
 theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
   r = replace (extractAcc r acc).1 (extractAcc r acc).2 := by
   simp only [replace]
-  generalize_proofs hr
   revert acc l
   induction r with
   | emptyset =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc]
   | emptystr =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc]
   | symbol s =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc]
     rw [Vector.push_get]
   | or r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     have hh1 :
@@ -60,7 +59,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -68,12 +67,9 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take]
-      generalize_proofs h1 h2
       nth_rewrite 1 [ih1 acc]
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -83,7 +79,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
     rw [<- replaceLE_cast_both]
     rw [<- ih2 ((extractAcc r1 acc).2)]
   | concat r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     have hh1 :
@@ -91,7 +87,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -99,12 +95,9 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take]
-      generalize_proofs h1 h2
       nth_rewrite 1 [ih1 acc]
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -116,10 +109,10 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
   | star r1 ih1 =>
     simp only [extractAcc]
     simp only [replaceLE]
-    intro n acc hr
+    intro n acc
     rw [<- ih1 acc]
   | interleave r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     have hh1 :
@@ -127,7 +120,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -135,12 +128,9 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take]
-      generalize_proofs h1 h2
       nth_rewrite 1 [ih1 acc]
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -150,7 +140,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
     rw [<- replaceLE_cast_both]
     rw [<- ih2 ((extractAcc r1 acc).2)]
   | and r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     have hh1 :
@@ -158,7 +148,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2)
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -166,12 +156,9 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take]
-      generalize_proofs h1 h2
       nth_rewrite 1 [ih1 acc]
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -183,7 +170,7 @@ theorem extractAcc_replace_is_id (r: Regex σ) (acc: Vector σ l):
   | compliment r1 ih1 =>
     simp only [extractAcc]
     simp only [replaceLE]
-    intro n acc hr
+    intro n acc
     rw [<- ih1 acc]
 
 theorem extractAcc_replaceLE_is_id (r: Regex σ) (acc: Vector σ l):
@@ -202,22 +189,21 @@ theorem extract_replace_is_id : ∀ (r: Regex σ),
 theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → β):
   Regex.map r f = replace (extractAcc r acc).1 (Vector.map f (extractAcc r acc).2) := by
   simp only [replace]
-  generalize_proofs hr
   revert acc l
   induction r with
   | emptyset =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc, Regex.map]
   | emptystr =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc, Regex.map]
   | symbol s =>
-    intro n acc hr
+    intro n acc
     simp only [replaceLE, extractAcc, Regex.map]
     simp only [Vector.push_map]
     rw [Vector.push_get]
   | or r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     simp only [Regex.map]
@@ -226,7 +212,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -235,13 +221,10 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take_fmap]
-      generalize_proofs h1 h2
       have ih1' := ih1 acc
       nth_rewrite 1 [ih1']
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -252,7 +235,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
     rw [<- replaceLE_cast_both]
     rw [<- ih2 ((extractAcc r1 acc).2)]
   | concat r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     simp only [Regex.map]
@@ -261,7 +244,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -270,13 +253,10 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take_fmap]
-      generalize_proofs h1 h2
       have ih1' := ih1 acc
       nth_rewrite 1 [ih1']
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -289,11 +269,11 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
   | star r1 ih1 =>
     simp only [extractAcc]
     simp only [replaceLE]
-    intro n acc hr
+    intro n acc
     rw [<- ih1 acc]
     simp only [Regex.map]
   | interleave r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     simp only [Regex.map]
@@ -302,7 +282,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -311,13 +291,10 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take_fmap]
-      generalize_proofs h1 h2
       have ih1' := ih1 acc
       nth_rewrite 1 [ih1']
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -328,7 +305,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
     rw [<- replaceLE_cast_both]
     rw [<- ih2 ((extractAcc r1 acc).2)]
   | and r1 r2 ih1 ih2 =>
-    intro n acc hr
+    intro n acc
     simp only [extractAcc]
     simp only [replaceLE]
     simp only [Regex.map]
@@ -337,7 +314,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
         (replaceLE
           (RegexID.cast_assoc (RegexID.cast_add (symbols r2) (extractAcc r1 acc).1))
           (Vector.map f (Vector.cast_assoc (extractAcc r2 (extractAcc r1 acc).2).2))
-          hr
+          (by omega)
         ) := by
       clear ih2
       rw [RegexID.cast_assoc]
@@ -346,13 +323,10 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
       rw [<- replaceLE_cast_both]
       rw [<- replaceLE_regexid_add]
       rw [<- replaceLE_take]
-      generalize_proofs h1
       rw [extractAcc_take_fmap]
-      generalize_proofs h1 h2
       have ih1' := ih1 acc
       nth_rewrite 1 [ih1']
       rw [replaceLE_cast_symbols]
-      omega
     rw [<- hh1]
     clear hh1
     clear ih1
@@ -365,7 +339,7 @@ theorem extractAcc_replace_is_fmap (r: Regex α) (acc: Vector α l) (f: α → �
   | compliment r1 ih1 =>
     simp only [extractAcc]
     simp only [replaceLE]
-    intro n acc hr
+    intro n acc
     rw [<- ih1 acc]
     simp only [Regex.map]
 

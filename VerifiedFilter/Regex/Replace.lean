@@ -40,88 +40,72 @@ theorem replaceLE_take (r: RegexID n) (xs: Vector σ (n + l)):
   | emptystr =>
     simp only [replaceLE]
   | symbol s =>
-    generalize_proofs h1 h2 at *
     simp only [replaceLE]
     obtain ⟨s, hs⟩ := s
     simp only [Regex.symbol.injEq]
-    generalize_proofs h3 h4
     rw [Vector.take_get]
     omega
   | or r1 r2 ih1 ih2 =>
     simp only [replaceLE, Regex.or.injEq]
-    generalize_proofs h1 h2 at *
     rw [<- ih1]
     rw [<- ih2]
     apply And.intro rfl rfl
   | concat r1 r2 ih1 ih2 =>
     simp only [replaceLE, Regex.concat.injEq]
-    generalize_proofs h1 h2 at *
     rw [<- ih1]
     rw [<- ih2]
     apply And.intro rfl rfl
   | star r1 ih1 =>
     simp only [replaceLE]
-    generalize_proofs h1 at *
     rw [<- ih1]
   | interleave r1 r2 ih1 ih2 =>
     simp only [replaceLE, Regex.interleave.injEq]
-    generalize_proofs h1 h2 at *
     rw [<- ih1]
     rw [<- ih2]
     apply And.intro rfl rfl
   | and r1 r2 ih1 ih2 =>
     simp only [replaceLE, Regex.and.injEq]
-    generalize_proofs h1 h2 at *
     rw [<- ih1]
     rw [<- ih2]
     apply And.intro rfl rfl
   | compliment r1 ih1 =>
     simp only [replaceLE]
-    generalize_proofs h1 at *
     rw [<- ih1]
 
 theorem replaceLE_regexid_add (r: RegexID n) (xs: Vector σ (n + l)):
   replaceLE r xs (by omega) = replaceLE (RegexID.cast_add l r) xs (by omega):= by
-  generalize_proofs h1 h2
   induction r with
   | emptyset =>
     simp only [replaceLE, RegexID.cast_add, Regex.map]
   | emptystr =>
     simp only [replaceLE, RegexID.cast_add, Regex.map]
   | symbol s =>
-    generalize_proofs h1 h2 at *
     simp only [replaceLE, RegexID.cast_add, Regex.map, Fin.val_castLE]
   | or r1 r2 ih1 ih2 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.or.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rw [ih2]
     apply And.intro rfl rfl
   | concat r1 r2 ih1 ih2 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.concat.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rw [ih2]
     apply And.intro rfl rfl
   | star r1 ih1 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.star.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rfl
   | interleave r1 r2 ih1 ih2 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.interleave.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rw [ih2]
     apply And.intro rfl rfl
   | and r1 r2 ih1 ih2 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.and.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rw [ih2]
     apply And.intro rfl rfl
   | compliment r1 ih1 =>
     simp only [replaceLE, RegexID.cast_add, Regex.map, Regex.compliment.injEq]
-    generalize_proofs h1 h2 at *
     rw [ih1]
     rfl
