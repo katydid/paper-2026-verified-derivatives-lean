@@ -3,8 +3,6 @@
 
 import Lean.Elab.Tactic
 
-import Mathlib.Tactic.NthRewrite
-
 import VerifiedFilter.Std.List
 
 inductive Hedge.Node (α: Type) where
@@ -169,8 +167,13 @@ theorem sizeOf_drop (n: Nat) (xs: Hedge α):
   have h := List.drop_exists (xs := xs) (n := n)
   cases h with
   | intro ys h =>
-  nth_rewrite 2 [h]
-  nth_rewrite 4 [h]
+  have h' : List.drop n xs = xs <-> List.drop n xs = ys ++ List.drop n xs := by
+    rw [<- h]
+  rw [h']
+  clear h'
+  have h' : sizeOf xs = sizeOf (ys ++ List.drop n xs) := by
+    rw [<- h]
+  rw [h']
   cases ys with
   | nil =>
     simp only [List.nil_append, Nat.lt_irrefl, or_false]
