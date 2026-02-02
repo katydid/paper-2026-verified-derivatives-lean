@@ -4,7 +4,6 @@
 import Lean.Elab.Tactic
 
 import Mathlib.Tactic.NthRewrite
-import Mathlib.Tactic.RewriteSearch
 
 import VerifiedFilter.Std.List
 

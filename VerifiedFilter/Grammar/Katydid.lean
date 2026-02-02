@@ -30,7 +30,7 @@ def filter (G: Grammar n φ) (Φ: φ → α → Bool)
   (hedges: List (Hedge α)): List (Hedge α) := List.filter (validate G Φ) hedges
 end Grammar.Katydid
 
-lemma Grammar.Katydid.unapply_hedge_param_and_flip
+theorem Grammar.Katydid.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
   (fun ((pred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
@@ -45,21 +45,21 @@ lemma Grammar.Katydid.unapply_hedge_param_and_flip
   ) node := by
   rfl
 
-lemma Grammar.Katydid.derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
+theorem Grammar.Katydid.derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
   Grammar.Katydid.derive G Φ Regex.emptyset a = Regex.emptyset := by
   unfold Grammar.Katydid.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_emptystr (G: Grammar n φ) Φ (x: Node α):
+theorem Grammar.Katydid.derive_emptystr (G: Grammar n φ) Φ (x: Node α):
   Grammar.Katydid.derive G Φ Regex.emptystr x = Regex.emptyset := by
   unfold Grammar.Katydid.derive
   rw [unapply_hedge_param_and_flip]
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
+theorem Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   Grammar.Katydid.derive G Φ (Regex.symbol (pred, ref)) x
     = Regex.onlyif ((let ⟨label, children⟩ := x
         (List.foldl (Grammar.Katydid.derive  G Φ)
@@ -71,7 +71,7 @@ lemma Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
+theorem Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
   Grammar.Katydid.derive G Φ (Regex.or r1 r2) node = Regex.or
     (Grammar.Katydid.derive G Φ r1 node) (Grammar.Katydid.derive G Φ r2 node) := by
   unfold Grammar.Katydid.derive
@@ -79,7 +79,7 @@ lemma Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_concat (G: Grammar n φ) Φ r1 r2 (x: Node α):
+theorem Grammar.Katydid.derive_concat (G: Grammar n φ) Φ r1 r2 (x: Node α):
   Grammar.Katydid.derive G Φ (Regex.concat r1 r2) x
     = Regex.or
       (Regex.concat (Grammar.Katydid.derive G Φ r1 x) r2)
@@ -89,7 +89,7 @@ lemma Grammar.Katydid.derive_concat (G: Grammar n φ) Φ r1 r2 (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
+theorem Grammar.Katydid.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.star r1) a
   = Regex.concat (Grammar.Katydid.derive G Φ r1 a) (Regex.star r1) := by
   unfold Grammar.Katydid.derive
@@ -97,7 +97,7 @@ lemma Grammar.Katydid.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α �
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+theorem Grammar.Katydid.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.interleave r1 r2) a
   = Regex.or
     (Regex.interleave (Grammar.Katydid.derive G Φ r1 a) r2)
@@ -107,7 +107,7 @@ lemma Grammar.Katydid.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ →
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
+theorem Grammar.Katydid.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.and r1 r2) a
   = Regex.and (Grammar.Katydid.derive G Φ r1 a) (Grammar.Katydid.derive G Φ r2 a) := by
   unfold Grammar.Katydid.derive
@@ -115,7 +115,7 @@ lemma Grammar.Katydid.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α →
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
+theorem Grammar.Katydid.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.compliment r1) a
   = Regex.compliment (Grammar.Katydid.derive G Φ r1 a) := by
   unfold Grammar.Katydid.derive
@@ -123,7 +123,7 @@ lemma Grammar.Katydid.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ →
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
-lemma Grammar.Katydid.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
+theorem Grammar.Katydid.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
   generalize (G.lookup ref) = r
@@ -141,7 +141,7 @@ lemma Grammar.Katydid.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → 
       rw [derive_emptyset]
       rw [ih]
 
-lemma Grammar.Katydid.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
+theorem Grammar.Katydid.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (label: α) (children: Hedge α):
   Lang.derive
     (Rule.denote G Φ
       (Regex.symbol (pred, ref))

@@ -20,7 +20,7 @@ def Regex.IfExpr.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
 def Regex.IfExpr.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
   null (List.foldl (fun dr x => Regex.IfExpr.derive (flip Φ x) dr) r xs)
 
-lemma Regex.Katydid.derive_is_Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ):
+theorem Regex.Katydid.derive_is_Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ):
   Regex.IfExpr.derive Φ r = Regex.Katydid.derive Φ r := by
   unfold Regex.IfExpr.derive
   unfold Regex.Katydid.derive
@@ -28,7 +28,7 @@ lemma Regex.Katydid.derive_is_Regex.Katydid.derive (Φ: σ → Bool) (r: Regex �
   unfold Regex.enter
   rw [IfExpr.eval_is_map]
 
-lemma Regex.IfExpr.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
+theorem Regex.IfExpr.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.IfExpr.derive (flip Φ a) r = Regex.derive Φ r a := by
   simp only [Regex.IfExpr.derive, enter, leave, <- Vector.map_zip_is_zip_map, flip, IfExpr.eval_is_map]
   rw [<- Regex.extract_replace_is_map]

@@ -191,7 +191,7 @@ theorem extractAcc_replaceLE_is_id (r: Regex σ) (acc: Vector σ l):
   rw [<- replace]
   rw [<- extractAcc_replace_is_id]
 
-lemma extract_replace_is_id : ∀ (r: Regex σ),
+theorem extract_replace_is_id : ∀ (r: Regex σ),
   r = replace (extract r).1 (extract r).2 := by
   intro r
   simp only [extract]
@@ -374,7 +374,7 @@ theorem extractAcc_replaceLE_is_fmap (r: Regex α) (acc: Vector α l) (f: α →
   rw [<- replace]
   rw [<- extractAcc_replace_is_fmap]
 
-lemma extract_replace_is_map: ∀ (r: Regex α) (f: α → β),
+theorem extract_replace_is_map: ∀ (r: Regex α) (f: α → β),
   Regex.map r f = replace (extract r).1 (Vector.map f (extract r).2) := by
   intro r f
   simp only [extract]

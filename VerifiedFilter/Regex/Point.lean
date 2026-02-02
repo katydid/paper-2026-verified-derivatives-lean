@@ -66,7 +66,7 @@ theorem map_first (Φ: σ → Bool) (r: Regex σ):
     simp only [compliment.injEq]
     exact ih1
 
-lemma regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
+theorem regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
   Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
   intro Φ r a
   induction r with

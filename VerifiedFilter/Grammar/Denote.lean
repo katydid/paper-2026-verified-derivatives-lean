@@ -261,13 +261,24 @@ theorem denote_symbol {α: Type} {φ: Type} (G: Grammar n φ) (Φ: φ → α →
       simp only [List.cons.injEq, and_true, decide_eq_true_eq]
       cases x with
       | mk label children =>
-      simp only [Hedge.Node.mk.injEq, ↓existsAndEq, and_true, exists_eq_left']
-      simp only [Hedge.Node.getLabel]
-      simp_all only [eq_iff_iff, and_congr_right_iff]
-      intro a
-      obtain ⟨fst, snd⟩ := s
-      simp_all only
-      rfl
+      obtain ⟨labelPred, ref⟩ := s
+      simp only
+      simp only [eq_iff_iff]
+      apply Iff.intro
+      case mp =>
+        intro h
+        obtain ⟨h1, h2⟩ := h
+        exists label
+        exists children
+      case mpr =>
+        intro h
+        obtain ⟨label', children', h1, h2⟩ := h
+        simp only [Hedge.Node.mk.injEq] at h1
+        obtain ⟨h1a, h1b⟩ := h1
+        subst h1a
+        subst h1b
+        simp only [Hedge.Node.getLabel, Hedge.Node.getChildren]
+        exact h2
     | cons x' xs =>
       rw [Rule.denote]
       simp

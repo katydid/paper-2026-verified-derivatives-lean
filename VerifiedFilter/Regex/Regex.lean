@@ -1,5 +1,3 @@
-import Mathlib.Tactic.CongrM
-
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Vector
 
@@ -317,7 +315,7 @@ theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [Decidabl
     rw [<- ih1]
     rw [<- ih2]
     rw [denote_onlyif]
-    congrm (Lang.or (Lang.concat (denote Φ (derive (fun s a => Φ s a) r1 x)) (denote Φ r2)) ?_)
+    congr
     rw [null_commutes]
   | star r1 ih1 =>
     simp only [denote_star, denote_concat, derive]
@@ -325,9 +323,7 @@ theorem derive_commutes {σ: Type} {α: Type} (Φ: σ → α → Prop) [Decidabl
     guard_target =
       Lang.concat (denote Φ (derive (fun s a => Φ s a) r1 x)) (Lang.star (denote Φ r1))
       = Lang.concat (Lang.derive (denote Φ r1) x) (Lang.star (denote Φ r1))
-    congrm ((Lang.concat ?_ (Lang.star (denote Φ r1))))
-    guard_target = denote Φ (derive (fun s a => Φ s a) r1 x) = Lang.derive (denote Φ r1) x
-    exact ih1
+    congr
   | interleave r1 r2 ih1 ih2 =>
     simp only [denote_interleave, derive]
     simp only [Lang.derive_interleave]

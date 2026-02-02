@@ -31,7 +31,7 @@ def StateMemoize.Grammar.filter.run [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (xss: List (Hedge α)): List (Hedge α) :=
   StateMemoize.run state (Grammar.Memoize.filter G Φ xss)
 
-lemma StateMemoize.Grammar.derive.run_unfold {φ: Type} [DecidableEq φ] [Hashable φ]
+theorem StateMemoize.Grammar.derive.run_unfold {φ: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (node: Node α):
   (StateMemoize.Grammar.derive.run state G Φ r node) = StateMemoize.run state (Grammar.Memoize.derive G Φ r node) :=
   rfl
@@ -55,7 +55,7 @@ theorem StateMemoize.Grammar.derive_commutes [DecidableEq φ] [Hashable φ]
   rw [StateMemoize.Grammar.derive.run_is_sound]
   rw [<- Grammar.Katydid.derive_commutes]
 
-lemma StateMemoize.Grammar.validate.run_unfold [DecidableEq φ] [Hashable φ]
+theorem StateMemoize.Grammar.validate.run_unfold [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α):
   (StateMemoize.Grammar.validate.run state G Φ nodes) = StateMemoize.run state (Grammar.Memoize.validate G Φ nodes) :=
   rfl
@@ -75,7 +75,7 @@ theorem Regex.StateMemoize.validate_commutes {φ: Type} {α: Type} [DecidableEq 
   rw [StateMemoize.validate.run_is_sound]
   rw [<- Grammar.Katydid.validate_commutes]
 
-lemma StateMemoize.Grammar.filter.run_unfold {φ: Type} {α: Type} [DecidableEq φ] [Hashable φ]
+theorem StateMemoize.Grammar.filter.run_unfold {φ: Type} {α: Type} [DecidableEq φ] [Hashable φ]
   (state: memoizeState (φ × Ref n)) (G: Grammar n φ) (Φ: φ → α → Bool) (xss: List (Hedge α)):
   (StateMemoize.Grammar.filter.run state G Φ xss) = StateMemoize.run state (Grammar.Memoize.filter G Φ xss) :=
   rfl
@@ -100,7 +100,7 @@ abbrev symbols (r: Regex σ) := Regex.symbols r
 abbrev enter (r: Regex σ) := Regex.enter r
 abbrev leave (r: Regex σ) (param2: (Vector Bool (symbols r))) := Regex.leave r param2
 
-lemma StateM.StateT.run11 :
+theorem StateM.StateT.run11 :
   StateM.run' (StateT.run' f s1) s2 = (StateM.run (StateT.run f s1) s2).1.1 := by
   rfl
 

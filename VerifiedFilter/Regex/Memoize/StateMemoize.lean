@@ -56,7 +56,7 @@ def StateMemoize.Regex.filter.run [DecidableEq σ] [Hashable σ]
   (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
   StateMemoize.run state (Regex.Memoize.filter Φ r xss)
 
-lemma StateMemoize.Regex.derive.run_unfold [DecidableEq σ] [Hashable σ]
+theorem StateMemoize.Regex.derive.run_unfold [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (Φ: σ → Bool) (r: Regex σ):
   (StateMemoize.Regex.derive.run state Φ r) = StateMemoize.run state (Regex.Memoize.derive Φ r) :=
   rfl
@@ -77,7 +77,7 @@ theorem Regex.StateMemoize.derive_commutes {σ: Type} {α: Type} [DecidableEq σ
   rw [StateMemoize.Regex.derive.run_is_sound]
   rw [<- Regex.Katydid.derive_commutes]
 
-lemma StateMemoize.Regex.validate.run_unfold [DecidableEq σ] [Hashable σ]
+theorem StateMemoize.Regex.validate.run_unfold [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (Φ: σ → α → Bool) (r: Regex σ):
   (StateMemoize.Regex.validate.run state Φ r xs) = StateMemoize.run state (Regex.Memoize.validate Φ r xs) :=
   rfl
@@ -97,7 +97,7 @@ theorem Regex.StateMemoize.validate_commutes {σ: Type} {α: Type} [DecidableEq 
   rw [StateMemoize.validate.run_is_sound]
   rw [<- Regex.Katydid.validate_commutes]
 
-lemma StateMemoize.Regex.filter.run_unfold [DecidableEq σ] [Hashable σ]
+theorem StateMemoize.Regex.filter.run_unfold [DecidableEq σ] [Hashable σ]
   (state: memoizeState σ) (Φ: σ → α → Bool) (r: Regex σ):
   (StateMemoize.Regex.filter.run state Φ r xs) = StateMemoize.run state (Regex.Memoize.filter Φ r xs) :=
   rfl
