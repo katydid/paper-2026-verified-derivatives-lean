@@ -11,11 +11,11 @@ This algorithm allows us to filtering through millions of serialized data struct
 
 ## Outline
 
-* [Grammar](./Grammar): Regular Hedge Grammar's definitions and proofs.
-* [Regex](./Regex): Regular expression's definitions and proofs.
-* [Related](./Related): Experiments with Related work.
-* [Std](./Std): Definitions and proofs that we might expect to be in a standard library.
-* [Pred](./Pred): Example predicate types that is used by both `Grammar` and `Regex`.
+* [Grammar](./VerifiedFilter/Grammar): Regular Hedge Grammar's definitions and proofs.
+* [Regex](./VerifiedFilter/Regex): Regular expression's definitions and proofs.
+* [Related](./VerifiedFilter/Related): Experiments with Related work.
+* [Std](./VerifiedFilter/Std): Definitions and proofs that we might expect to be in a standard library.
+* [Pred](./VerifiedFilter/Pred): Example predicate types that is used by both `Grammar` and `Regex`.
 
 ## Setup
 
