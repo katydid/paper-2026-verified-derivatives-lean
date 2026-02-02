@@ -1,4 +1,3 @@
-import Mathlib.Tactic.SplitIfs
 import Mathlib.Tactic.CongrM
 
 import VerifiedFilter.Std.Decidable
@@ -61,16 +60,15 @@ theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dc
   unfold Lang.onlyif
   unfold onlyif
   funext xs
-  split_ifs
-  case pos hc =>
-    simp only [eq_iff_iff, iff_and_self]
-    intro d
+  split
+  case isTrue h =>
+    simp
+    intro h'
     assumption
-  case neg hc =>
-    simp only [eq_iff_iff]
-    rw [denote]
-    simp only [false_iff, not_and]
-    intro hc'
+  case isFalse h =>
+    simp
+    simp [denote]
+    intro h'
     contradiction
 
 end Regex

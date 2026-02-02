@@ -127,10 +127,10 @@ lemma Grammar.Katydid.and_start {α: Type} (G: Grammar n φ) (Φ: φ → α → 
   ((List.foldl (derive G (decideRel Φ)) (if decideRel Φ p label then G.lookup ref else Regex.emptyset) children).null = true)
   = (Φ p label /\ ((List.foldl (derive G (decideRel Φ)) (G.lookup ref) children).null = true)) := by
   generalize (G.lookup ref) = r
-  split_ifs
-  case pos h =>
+  split
+  case isTrue h =>
     simp_all [decideRel]
-  case neg h =>
+  case isFalse h =>
     simp_all only [decideRel, decide_eq_true_eq, eq_iff_iff, false_and, iff_false,
       Bool.not_eq_true]
     induction children with

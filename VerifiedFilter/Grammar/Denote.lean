@@ -231,16 +231,16 @@ theorem denote_onlyif {α: Type}
   unfold Lang.onlyif
   unfold Regex.onlyif
   funext xs
-  split_ifs
-  case pos hc =>
+  split
+  case isTrue h =>
     simp only [eq_iff_iff, iff_and_self]
-    intro d
+    intro h'
     assumption
-  case neg hc =>
+  case isFalse h =>
     simp only [eq_iff_iff]
     rw [Rule.denote]
     simp only [false_iff, not_and]
-    intro h
+    intro h'
     contradiction
 
 theorem denote_symbol {α: Type} {φ: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (s: (φ × Ref n)):
