@@ -61,7 +61,7 @@ theorem decreasing_symbol {α: Type} {σ: Type} [SizeOf σ] (r1 r2: Regex σ) (x
   cases x with
   | mk label children =>
   simp only [Hedge.Node.getChildren]
-  simp only [List.cons.sizeOf_spec, Hedge.Node.mk.sizeOf_spec, sizeOf_default, add_zero,
+  simp only [List.cons.sizeOf_spec, Hedge.Node.mk.sizeOf_spec, sizeOf_default, Nat.add_zero,
     List.nil.sizeOf_spec]
   omega
 
@@ -96,7 +96,7 @@ theorem denote_sizeOf_star_left {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ} 
     apply decreasing_star
   | inr h =>
     apply Prod.Lex.left
-    simp only [List.cons.sizeOf_spec, add_lt_add_iff_left]
+    simp only [List.cons.sizeOf_spec, Nat.add_lt_add_iff_left]
     assumption
 
 theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ} {x: Hedge.Node α} {xs: Hedge α}:
@@ -107,7 +107,8 @@ theorem denote_sizeOf_star_right {α: Type} {σ: Type} [SizeOf σ] {p: Regex σ}
   cases h with
   | inl h =>
     rw [h]
-    simp only [List.cons.sizeOf_spec, lt_add_iff_pos_left, add_pos_iff, zero_lt_one, true_or]
+    simp only [List.cons.sizeOf_spec, Nat.lt_add_left_iff_pos, gt_iff_lt]
+    omega
   | inr h =>
     simp only [List.cons.sizeOf_spec, gt_iff_lt]
     omega

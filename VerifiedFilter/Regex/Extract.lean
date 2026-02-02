@@ -67,7 +67,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [symbols, zero_add, List.append_assoc]
+    simp_all only [symbols, Nat.zero_add, List.append_assoc]
   | concat r1 r2 ih1 ih2 =>
     simp only [extractAcc]
     rw [Vector.cast_assoc]
@@ -84,7 +84,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [symbols, zero_add, List.append_assoc]
+    simp_all only [symbols, Nat.zero_add, List.append_assoc]
   | star r1 ih1 =>
     simp only [extractAcc]
     rw [ih1]
@@ -104,7 +104,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [symbols, zero_add, List.append_assoc]
+    simp_all only [symbols, Nat.zero_add, List.append_assoc]
   | and r1 r2 ih1 ih2 =>
     simp only [extractAcc]
     rw [Vector.cast_assoc]
@@ -121,7 +121,7 @@ theorem extractAcc_append_toList (acc: Vector σ n) (r: Regex σ):
     nth_rewrite 2 [ih2]
     rw [Vector.toList_append]
     -- aesop?
-    simp_all only [symbols, zero_add, List.append_assoc]
+    simp_all only [symbols, Nat.zero_add, List.append_assoc]
   | compliment r1 ih1 =>
     simp only [extractAcc]
     rw [ih1]

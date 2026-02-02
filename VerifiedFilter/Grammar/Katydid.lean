@@ -1,5 +1,3 @@
-import Mathlib.Tactic.SimpRw
-
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Hedge
 
@@ -262,7 +260,8 @@ theorem Grammar.Katydid.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bo
   = Lang.derive (Rule.denote G (fun s a => Φ s a) r) x := by
   have h1: (fun s a => Φ s a) = decideRel (fun s a => Φ s a) := by
     unfold decideRel
-    aesop
+    -- aesop?
+    simp_all only [Bool.decide_eq_true]
   have h2: (fun s a => Φ s a) = Φ := by
     rfl
   nth_rewrite 2 [<- h2]

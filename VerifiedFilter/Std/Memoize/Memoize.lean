@@ -1,7 +1,5 @@
 import Std
 
-import Mathlib.Tactic.Linarith
-
 import VerifiedFilter.Std.State
 import VerifiedFilter.Std.Vector
 
@@ -96,7 +94,11 @@ where
           obtain ⟨acc, hacc⟩ := acc
           simp only
           rw [hacc]
-          aesop
+          -- aesop?
+          subst h1 hacc
+          simp_all only [Nat.lt_irrefl, not_false_eq_true, Nat.min_eq_left, take_eq_extract, extract_size,
+            Nat.sub_zero, cast_rfl]
+          rfl
         ⟩
 
 def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List α)
@@ -110,7 +112,8 @@ def List.foldlMemoizeWithMembership [Monad m] (puref: β -> α -> β) (xs: List 
     let fxs <- List.foldlMemoizeWithMembership puref xs' (fun acc a => do
       let ⟨b, hb⟩ := a
       let a'': { a' // a' ∈ x :: xs' } := Subtype.mk b (by
-        aesop
+        -- aesop?
+        simp_all only [mem_cons, or_true]
       )
       let f': { res // res = puref acc a''.val } <- memf acc a''
       let f'': { res // res = puref acc b } := by
@@ -140,7 +143,8 @@ def List.foldlMemoize [Monad m] (puref: β -> α -> β)
     let fxs <- List.foldlMemoizeWithMembership puref xs' (fun acc a => do
       let ⟨b, hb⟩ := a
       let a'': { a' // a' ∈ x :: xs' } := Subtype.mk b (by
-        aesop
+        -- aesop?
+        simp_all only [mem_cons, or_true]
       )
       let f': { res // res = puref acc a''.val } <- memf acc a''
       let f'': { res // res = puref acc b } := by

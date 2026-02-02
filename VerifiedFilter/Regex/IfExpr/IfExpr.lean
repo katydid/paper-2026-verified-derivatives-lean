@@ -58,7 +58,7 @@ theorem Vector.tail_cons (x: α) (xs: List α) (hxs : (Array.mk (x :: xs)).size 
     exact hxs
   apply Vector.eq
   simp +arith only [Nat.add_one_sub_one, Vector.tail_eq_cast_extract, Vector.extract_mk,
-    List.extract_toArray, List.extract_eq_drop_take, add_tsub_cancel_right, List.drop_succ_cons,
+    List.extract_toArray, List.extract_eq_drop_take, List.drop_succ_cons,
     List.drop_zero, Vector.cast_mk, Vector.toList_mk]
   subst hlen
   exact List.take_length
@@ -132,6 +132,6 @@ theorem eval_is_map_list (xs: Vector σ n):
           rw [hfalse]
           apply IfExpr.mkAcc_eval_cons_list
 
-lemma eval_is_map (xs: Vector σ l): (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
+theorem eval_is_map (xs: Vector σ l): (IfExpr.mk xs).eval Φ = Vector.map Φ xs := by
   apply Vector.eq
   rw [IfExpr.eval_is_map_list]

@@ -1,7 +1,5 @@
 import Std
 
-import Mathlib.Tactic.Linarith
-
 import VerifiedFilter.Std.State
 import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.Memoize

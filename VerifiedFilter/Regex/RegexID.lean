@@ -50,7 +50,7 @@ theorem RegexID.castLE_id {h: n ≤ n}:
   (RegexID.castLE r h) = r := by
   simp only [RegexID.castLE]
   simp_all only [Fin.castLE_refl]
-  simp_all only [le_refl]
+  simp_all only [Nat.le_refl]
   rw [Regex.map_id]
 
 theorem RegexID.cast_add_zero:

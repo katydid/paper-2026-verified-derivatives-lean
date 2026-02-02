@@ -1,3 +1,6 @@
+import Mathlib.Tactic.SplitIfs
+import Mathlib.Tactic.CongrM
+
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Vector
 
