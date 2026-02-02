@@ -1,10 +1,11 @@
-import VerifiedFilter.Regex.Regex
-import VerifiedFilter.Regex.Map
-
 -- This file contains the Regex.Point.derive function.
 -- This is called point, for point in the plotted predicate graph.
 -- The Regex is generic on the pair of the input and output of the predicate function or point.
 
+import VerifiedFilter.Regex.Regex
+import VerifiedFilter.Regex.Map
+
+-- first returns a regular expression, where all symbols contain a tuple have been replaced with a symbol containing the first element of the tuple.
 def Regex.Point.first (r: Regex (α × β)): Regex α := Regex.map r (fun (s,_) => s)
 
 -- Point.derive is the same as Regex.derive, except the answer to the predicate is already included in a tuple with the original symbol.
@@ -24,8 +25,11 @@ def Regex.Point.derive: (r: Regex (σ × Bool)) → Regex σ
 
 namespace Regex.Point
 
-theorem map_first (Φ: σ → Bool) (r: Regex σ):
-  first (Regex.map r (fun s => (s, Φ s))) = r := by
+-- map_first proves that if you mapping over a regular expression to create a tuple,
+-- where the original symbol is the first element and then apply first,
+-- you get back the original regular expression.
+theorem map_first (f: σ → β) (r: Regex σ):
+  first (Regex.map r (fun s => (s, f s))) = r := by
   induction r with
   | emptyset =>
     simp only [Regex.map, first]
@@ -66,6 +70,8 @@ theorem map_first (Φ: σ → Bool) (r: Regex σ):
     simp only [compliment.injEq]
     exact ih1
 
+-- We prove that mapping a predicate and then taking the point derivative is
+-- the same as taking the derivative of a regular expression.
 theorem regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
   Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
   intro Φ r a

@@ -12,8 +12,6 @@ import VerifiedFilter.Regex.IfExpr.IfExpr
 
 namespace Regex.IfExpr
 
--- Katydid, since we enter and leave
--- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.IfExpr.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> IfExpr.eval Φ |> leave r
 

@@ -1,6 +1,5 @@
-import VerifiedFilter.Std.Vector
+-- symbols returns the number of symbols in a regular expression.
 
-import VerifiedFilter.Regex.Map
 import VerifiedFilter.Regex.Regex
 
 namespace Regex
@@ -13,11 +12,3 @@ def symbols: (r: Regex σ) → Nat
   | and r1 r2 => symbols r1 + symbols r2 | compliment r1 => symbols r1
 
 #guard symbols (or (symbol 'a') (star (symbol 'b'))) = 2
-
-end Regex
-
-def Vec.cast_or {r1 r2: Regex σ} (xs: Vector σ (n + Regex.symbols r1 + Regex.symbols r2)): Vector σ (n + Regex.symbols (Regex.or r1 r2)) :=
-  xs.cast_assoc
-
-def Vec.cast_concat (xs: Vector σ (n + Regex.symbols r1 + Regex.symbols r2)): Vector σ (n + Regex.symbols (Regex.concat r1 r2)) :=
-  xs.cast_assoc

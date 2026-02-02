@@ -3,19 +3,21 @@ import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Lang
 
--- A regular expression is defined over a generic symbol
+-- A symbolic regular expression defined over a generic symbol
 inductive Regex (σ: Type) where
   | emptyset | emptystr | symbol (s: σ) | or (r1 r2: Regex σ)
   | concat (r1 r2: Regex σ) | star (r1: Regex σ) | interleave (r1 r2: Regex σ)
   | and (r1 r2: Regex σ) | compliment (r1: Regex σ)
   deriving DecidableEq, Ord, Repr, Hashable
 
+-- null defines whether a regular expression matches the empty string.
 def Regex.null: (r: Regex σ) → Bool
   | emptyset => false | emptystr => true | symbol _ => false
   | or r1 r2 => (null r1 || null r2) | concat r1 r2 => (null r1 && null r2)
   | star _ => true | interleave r1 r2 => (null r1 && null r2)
   | and r1 r2 => (null r1 && null r2) | compliment r1 => ! (null r1)
 
+-- denote defines the semantics of a regular expression.
 def Regex.denote (Φ : σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
   match r with
   | emptyset => False
@@ -39,20 +41,27 @@ def Regex.denote (Φ : σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
 
 namespace Regex
 
+-- unescapable is true if a derivative will always result in the same regular expression that the input.
 def unescapable :(x: Regex σ) → Bool
-  | emptyset => true | _ => false
+  | emptyset => true | compliment emptyset => true | _ => false
 
+-- onlyif (scalar operator in https://doi.org/10.1145/3473583) is a helper function use to define derivatives of regular expressions.
 def onlyif (cond: Prop) [dcond: Decidable cond] (r: Regex σ): Regex σ :=
   if cond then r else emptyset
 
+-- oneOrMore is the `r+` operator for regular expressions.
 def oneOrMore (r: Regex σ) := concat r (star r)
 
+-- optional is the `r?` operator for regular expressions.
 def optional (r: Regex σ) := or r emptystr
 
+-- starAny is the `.*` operator for regular expressions.
 def starAny: Regex σ := compliment emptyset
 
+-- contains is the `.*r.*` operator for regular expressions.
 def contains (r: Regex σ) := concat starAny (concat r starAny)
 
+-- denote_onlyif proves the the onlyif function (or operator) is equivalent to the language semantics.
 theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dcond: Decidable condition] (r: Regex σ):
   denote Φ (onlyif condition r) = Lang.onlyif condition (denote Φ r) := by
   unfold Lang.onlyif
@@ -71,6 +80,7 @@ theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dc
 
 end Regex
 
+-- derive defines the derivative of a regular expression.
 def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ := match r with
   | emptyset => emptyset | emptystr => emptyset
   | symbol s => onlyif (Φ s a) emptystr
@@ -85,17 +95,15 @@ def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ := mat
   | and r1 r2 => and (derive Φ r1 a) (derive Φ r2 a)
   | compliment r1 => compliment (derive Φ r1 a)
 
+-- example derivative
+#guard Regex.derive (· == ·) (Regex.or (Regex.symbol 1) (Regex.symbol 2)) 1
+  = Regex.or Regex.emptystr Regex.emptyset
+
+-- validate returns whether a regular expression matches a string.
 def Regex.validate (Φ: σ → α → Bool) (r: Regex σ) (xs: List α): Bool :=
   null (List.foldl (derive Φ) r xs)
 
 namespace Regex
-
-#guard
-  derive (· == ·) (Regex.or (Regex.symbol 1) (Regex.symbol 2)) 1
-  = Regex.or Regex.emptystr Regex.emptyset
-
-def map_derive (Φ: σ → α → Bool) (rs: Vector (Regex σ) l) (a: α): Vector (Regex σ) l :=
-  Vector.map (fun r => derive Φ r a) rs
 
 -- derive theorems
 
@@ -379,9 +387,13 @@ theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] 
 def decidableDenote (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ): DecidablePred (denote Φ r) :=
   fun xs => decidable_of_decidable_of_eq (validate_commutes Φ r xs)
 
+-- filter
+
+-- filter filters a list of strings based on whether they match a regular expression.
 def filter (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
   List.filter (validate Φ r) xss
 
+-- mem_filter proves that the filter implementation matches the semantic definition.
 theorem mem_filter (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xss: List (List α)) :
   ∀ xs, (xs ∈ filter (decideRel Φ) r xss) ↔ (Lang.MemFilter (denote Φ r) xss xs) := by
   unfold filter

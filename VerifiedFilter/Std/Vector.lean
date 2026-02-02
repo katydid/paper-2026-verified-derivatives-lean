@@ -43,7 +43,7 @@ theorem cast_toList_nil {α: Type u} (h: 0 = n):
   (Vector.cast (α := α) h #v[]).toList = [] := by
   cases n with
   | zero =>
-    rw [cast_rfl]
+    rw [Vector.cast_rfl]
     simp only [toList_mk]
   | succ n =>
     contradiction
@@ -51,19 +51,19 @@ theorem cast_toList_nil {α: Type u} (h: 0 = n):
 theorem cast_toList {n: Nat} (xs: Vector α n) (h: n = n2):
   (Vector.cast h xs).toList = xs.toList := by
   subst h
-  rw [cast_rfl]
+  rw [Vector.cast_rfl]
 
 theorem cast_append (xs: Vector α n1) (ys: Vector α n2):
   Vector.append (Vector.cast h1 xs) ys = Vector.cast h2 (Vector.append xs ys) := by
   subst h1
-  rw [cast_rfl]
-  rw [cast_rfl]
+  rw [Vector.cast_rfl]
+  rw [Vector.cast_rfl]
 
 theorem append_cast_r {h: n2 = n3} (xs: Vector α n1) (ys: Vector α n2):
   xs ++ (Vector.cast h ys) = Vector.cast (by subst h; rfl) (xs ++ ys) := by
   subst h
-  rw [cast_rfl]
-  rw [cast_rfl]
+  rw [Vector.cast_rfl]
+  rw [Vector.cast_rfl]
 
 theorem get_cast (xs: Vector α n) (h: n = m):
   Vector.get (Vector.cast h xs) i = Vector.get xs ⟨i.val, by omega⟩ := by
@@ -139,7 +139,7 @@ theorem take_nil (i: Nat):
   induction i with
   | zero =>
     rw [take_zero]
-    simp only [cast_rfl]
+    simp only [Vector.cast_rfl]
   | succ i ih =>
     congr
 

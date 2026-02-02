@@ -1,3 +1,7 @@
+-- A regular expression derivative function over characters.
+-- This is simply here as a demonstration for the introduction of the paper.
+-- We prove this can be generalize to the symbolc regular expressions.
+
 import VerifiedFilter.Regex.Regex
 
 def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char := match r with

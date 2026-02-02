@@ -15,7 +15,7 @@ This algorithm allows us to filtering through millions of serialized data struct
 * [Regex](./VerifiedFilter/Regex): Regular expression's definitions and proofs.
 * [Related](./VerifiedFilter/Related): Experiments with Related work.
 * [Std](./VerifiedFilter/Std): Definitions and proofs that we might expect to be in a standard library.
-* [Pred](./VerifiedFilter/Pred): Example predicate types that is used by both `Grammar` and `Regex`.
+* [Pred](./VerifiedFilter/Pred): Example predicate types that are used by both `Grammar` and `Regex`.
 
 ## Setup
 

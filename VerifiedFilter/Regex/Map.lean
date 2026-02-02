@@ -1,3 +1,6 @@
+-- We define a map function for regular expression and using it to
+-- define instances of Functor and LawfulFunctor.
+
 import VerifiedFilter.Regex.Regex
 
 def Regex.map (r: Regex α) (f: α → β): Regex β := match r with

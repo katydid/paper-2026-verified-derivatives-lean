@@ -101,7 +101,7 @@ where
           have h'' : k = n := by
             omega
           subst h''
-          simp_all only [extract_size, Nat.sub_zero, cast_cast, cast_rfl]
+          simp_all only [extract_size, Nat.sub_zero, cast_cast, Vector.cast_rfl]
         ⟩
 
 -- List.foldlMemoizeWithMembership is List.foldlM, but also includes a subtype for memoization purposes and also another subtype on the input parameter of `memf`.

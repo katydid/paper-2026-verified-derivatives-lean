@@ -7,8 +7,6 @@ import VerifiedFilter.Regex.Leave
 import VerifiedFilter.Regex.Num
 import VerifiedFilter.Regex.Regex
 
--- Katydid, since we enter and leave
--- Also this a power in One Piece, which seems appropriate: https://onepiece.fandom.com/wiki/Ope_Ope_no_Mi
 def Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> Vector.map Φ |> leave r
 
