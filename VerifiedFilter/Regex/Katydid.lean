@@ -1,11 +1,27 @@
 import VerifiedFilter.Std.Vector
 
-import VerifiedFilter.Regex.Enter
-import VerifiedFilter.Regex.Drawer
+import VerifiedFilter.Regex.Extract
+import VerifiedFilter.Regex.ExtractReplace
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Leave
 import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.Point
 import VerifiedFilter.Regex.Regex
+import VerifiedFilter.Regex.Replace
+
+namespace Regex
+
+-- enter returns the symbols that were extracted from the regular expression.
+def enter (r: Regex σ): Vector σ (symbols r) := (extract r).2
+
+#guard enter (or (symbol 'a') (star (symbol 'b'))) = #v['a','b']
+
+-- leave uses the symbol predicate results to calculate the derivative of the regular expression.
+def leave (r: Regex σ) (bools: Vector Bool (symbols r)): Regex σ :=
+  let points: Vector (σ × Bool) r.symbols := Vector.zip (extract r).2 bools
+  let rpoint: Regex (σ × Bool) := replace (extract r).1 points
+  Regex.Point.derive rpoint
+
+end Regex
 
 def Regex.Katydid.derive (Φ: σ → Bool) (r: Regex σ): Regex σ :=
   enter r |> Vector.map Φ |> leave r

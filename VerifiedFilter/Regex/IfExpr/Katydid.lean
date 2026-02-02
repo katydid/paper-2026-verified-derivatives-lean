@@ -1,11 +1,10 @@
 import VerifiedFilter.Std.Vector
 
-import VerifiedFilter.Regex.Drawer
+import VerifiedFilter.Regex.ExtractReplace
+import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Leave
 import VerifiedFilter.Regex.Num
 import VerifiedFilter.Regex.Regex
-import VerifiedFilter.Regex.Katydid
 
 import VerifiedFilter.Regex.IfExpr.Enter
 import VerifiedFilter.Regex.IfExpr.IfExpr

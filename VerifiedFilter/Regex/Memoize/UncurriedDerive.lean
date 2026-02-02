@@ -1,6 +1,6 @@
 import VerifiedFilter.Std.Memoize.Memoize
 
-import VerifiedFilter.Regex.Enter
+import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Regex
 
 namespace Regex.Memoize

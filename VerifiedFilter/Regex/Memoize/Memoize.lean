@@ -1,9 +1,8 @@
 import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.Memoize
 
-import VerifiedFilter.Regex.Drawer
+import VerifiedFilter.Regex.ExtractReplace
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Leave
 import VerifiedFilter.Regex.Num
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.Katydid

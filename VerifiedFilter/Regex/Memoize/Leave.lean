@@ -2,8 +2,8 @@ import VerifiedFilter.Std.Hashable
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Memoize.Memoize
 
+import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Regex
-import VerifiedFilter.Regex.Leave
 
 namespace Regex.Memoize
 
