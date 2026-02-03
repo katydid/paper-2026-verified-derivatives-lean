@@ -461,7 +461,7 @@ private def example_grammar_library: Grammar 5 (Option String) :=
 
 -- modified example from Taxonomy of XML Section 6.5
 
-private def example_grammar_doc: Grammar 3 String :=
+private def example_grammar_doc65: Grammar 3 String :=
   Grammar.mk (start := Regex.symbol ("doc", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol ("para", 1)),
@@ -469,20 +469,48 @@ private def example_grammar_doc: Grammar 3 String :=
       Regex.emptystr,
     ])
 
-#guard validate example_grammar_doc (· == ·)
+#guard validate example_grammar_doc65 (· == ·)
   [node "doc" [node "para" [node "pcdata" []]]]
   = true
 
-#guard validate example_grammar_doc (· == ·)
+#guard validate example_grammar_doc65 (· == ·)
   [node "doc" [node "para" []]]
   = false
 
-#guard validate example_grammar_doc (· == ·)
+#guard validate example_grammar_doc65 (· == ·)
   [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
   = true
 
-#guard validate example_grammar_doc (· == ·)
+#guard validate example_grammar_doc65 (· == ·)
   [node "doc" [node "para" [node "pcdata" []], node "para" [node "pcdata" []], node "para" [node "pcdata" []]]]
+  = true
+
+-- even more modified version of example from Taxonomy of XML Section 6.5
+
+open Pred.AnyEq
+
+private def example_grammar_doc: Grammar 3 (Pred String) :=
+  Grammar.mk (start := Regex.symbol (Pred.eq "doc", 0))
+    (prods := #v[
+      Regex.oneOrMore (Regex.symbol (Pred.eq "p", 1)),
+      Regex.symbol (Pred.any, 2),
+      Regex.emptystr,
+    ])
+
+#guard validate example_grammar_doc Pred.evalb
+  [node "doc" [node "p" [node "pcdata" []]]]
+  = true
+
+#guard validate example_grammar_doc Pred.evalb
+  [node "doc" [node "p" []]]
+  = false
+
+#guard validate example_grammar_doc Pred.evalb
+  [node "doc" [node "p" [node "pcdata" []], node "p" [node "br" []]]]
+  = true
+
+#guard validate example_grammar_doc Pred.evalb
+  [node "doc" [node "p" [node "pcdata" []], node "p" [node "br" []], node "p" [node "pcdata" []]]]
   = true
 
 -- modified example from Taxonomy of XML Section 7.1
@@ -570,32 +598,30 @@ private def example_interleave: Grammar 5 String :=
 
 -- Benchmark tests
 
-open Pred.Compare
+def eq (v: α × Fin n) := symbol (Pred.Compare.Pred.eq v.1, v.2)
+def field (v: α × Fin n) := contains (symbol (Pred.Compare.Pred.eq v.1, v.2))
 
-def eq (v: α × Fin n) := symbol (Pred.eq v.1, v.2)
-def field (v: α × Fin n) := contains (symbol (Pred.eq v.1, v.2))
-
-def simple: Grammar 2 (Pred String) :=
+def simple: Grammar 2 (Pred.Compare.Pred String) :=
   mk (field ("Category", 1)) #v[emptystr, eq ("Computer Science", 0)]
 
-#guard validate simple Pred.evalb
+#guard validate simple Pred.Compare.Pred.evalb
   [node "Category" [node "Computer Science" []]]
 
-#guard validate simple Pred.evalb
+#guard validate simple Pred.Compare.Pred.evalb
   [node "Name" [node "ITP" []], node "Category" [node "Computer Science" []]]
 
-#guard validate simple Pred.evalb
+#guard validate simple Pred.Compare.Pred.evalb
   [node "Name" [node "ICFP" []], node "Category" [node "Functional Programming" []]]
   = false
 
-def complex : Grammar 7 (Pred String) :=
+def complex : Grammar 7 (Pred.Compare.Pred String) :=
   mk (interleave (eq ("Due", 1)) (interleave (eq ("Loc", 5)) starAny)) #v[emptystr,
     or (field ("Year", 2)) (and (field ("Year", 3)) (field ("Month", 4))),
-    eq ("2026", 0), eq ("2025", 0), symbol (Pred.ge "10", 0),
+    eq ("2026", 0), eq ("2025", 0), symbol (Pred.Compare.Pred.ge "10", 0),
     field ("Cont", 6), eq ("EU", 0),
   ]
 
-#guard validate complex Pred.evalb
+#guard validate complex Pred.Compare.Pred.evalb
   [
     node "Name" [node "ITP" []],
     node "Loc" [
@@ -609,7 +635,7 @@ def complex : Grammar 7 (Pred String) :=
     ],
   ]
 
-#guard validate complex Pred.evalb
+#guard validate complex Pred.Compare.Pred.evalb
   [
     node "Name" [node "ITP" []],
     node "Loc" [
@@ -623,7 +649,7 @@ def complex : Grammar 7 (Pred String) :=
     ],
   ]
 
-#guard validate complex Pred.evalb
+#guard validate complex Pred.Compare.Pred.evalb
   [
     node "Name" [node "ITP" []],
     node "Loc" [
@@ -637,7 +663,7 @@ def complex : Grammar 7 (Pred String) :=
   ]
   = false
 
-#guard validate complex Pred.evalb
+#guard validate complex Pred.Compare.Pred.evalb
   [
     node "Name" [node "ITP" []],
     node "Loc" [
