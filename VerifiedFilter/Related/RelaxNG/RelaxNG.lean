@@ -773,15 +773,14 @@ abbrev or (p1 p2: Pattern n): Pattern n :=
 abbrev emptystr : Pattern n := Pattern.Empty
 abbrev after (p1 p2: Pattern n): Pattern n :=
   Pattern.After p1 p2
-abbrev closeDiv: Pattern n := Pattern.Empty
 abbrev optional (p: Pattern n): Pattern n := Pattern.Choice p Pattern.Empty
 
 -- With every call to startTagOpenDeriv the number of After expression accumulate.
 def g := Grammar.mk (symbol ("<div>", 0)) #v[optional (symbol ("<div>", 0))]
 -- <div><div><div></div></div></div>
-#guard example_after_buildup_2.p1 = after (g.lookup 0) closeDiv -- <div><div></div></div></div>
-#guard example_after_buildup_3.p1 = after (g.lookup 0) (after closeDiv closeDiv) -- <div></div></div></div>
-#guard example_after_buildup_4.p1 = after (g.lookup 0) (after closeDiv (after closeDiv closeDiv)) -- </div></div></div>
+#guard example_after_buildup_2.p1 = after (g.lookup 0) emptystr -- <div><div></div></div></div>
+#guard example_after_buildup_3.p1 = after (g.lookup 0) (after emptystr emptystr) -- <div></div></div></div>
+#guard example_after_buildup_4.p1 = after (g.lookup 0) (after emptystr (after emptystr emptystr)) -- </div></div></div>
 
 namespace keep_uncles_and_aunts
 
