@@ -1,5 +1,6 @@
+-- Regex defines a regular expression types, denotation of semantics, derivative function and its commutative proof and also a filter function and proof.
+
 import VerifiedFilter.Std.Decidable
-import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Lang
 

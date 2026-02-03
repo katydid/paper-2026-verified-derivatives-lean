@@ -1,14 +1,20 @@
+-- extract extracts the symbols from a regular expression into a Vector and replaces them with indices into the Vector.
+-- It is used by enter and leave in Katydid.lean and ExtractReplace.lean.
+
+import VerifiedFilter.Std.Vector
+
 import VerifiedFilter.Regex.Num
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.RegexID
 
 namespace Regex
 
-theorem lt_add_symbol:
+private theorem lt_add_symbol:
   n < n + symbols (symbol s) := by
   simp only [symbols]
   omega
 
+-- extractAcc is a helper function for writing the extract function.
 def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vector σ (n + symbols r) :=
   match r with
   | emptyset => (emptyset, acc)
@@ -33,10 +39,12 @@ def extractAcc (r: Regex σ) (acc: Vector σ n): RegexID (n + symbols r) × Vect
     (and (rid1.cast_add (symbols r2)).cast_assoc rid2.cast_assoc, acc2.cast_assoc)
   | compliment r1 => let (rid1, acc1) := extractAcc r1 acc; (compliment rid1, acc1)
 
+-- extract extracts the symbols from a regular expression into a Vector and replaces them with indices into the Vector.
 def extract (r: Regex σ): Regex (Fin (symbols r)) × Vector σ (symbols r) :=
   let (rid, xs) := extractAcc r #v[]
   (RegexID.cast rid (by omega), Vector.cast (by omega) xs)
 
+-- example of using extract.
 #guard extract (or (symbol 'a') (star (symbol 'b')))
   = ((or (symbol 0) (star (symbol 1))), #v['a', 'b'])
 

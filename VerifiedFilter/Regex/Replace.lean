@@ -1,9 +1,15 @@
+-- replace replaces the symbols that were extracted from a regular expression with the symbols found at the indices in the Vector.
+-- It is used by leave in Katydid.lean and ExtractReplace.lean.
+
+import VerifiedFilter.Std.Vector
+
 import VerifiedFilter.Regex.Num
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.RegexID
 
 namespace Regex
 
+-- replaceLE is a helper function for defining the replace function.
 def replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
   match r with
   | emptyset => emptyset | emptystr => emptystr
@@ -15,9 +21,11 @@ def replaceLE (r: RegexID n) (xs: Vector σ l) (h: n <= l): Regex σ :=
   | and r1 r2 => and (replaceLE r1 xs h) (replaceLE r2 xs h)
   | compliment r1 => compliment (replaceLE r1 xs h)
 
+-- replace replaces the symbols that were extracted from a regular expression with the symbols found at the indices in the Vector.
 def replace (r: Regex (Fin n)) (xs: Vector σ n): Regex σ :=
   replaceLE r xs (Nat.le_refl n)
 
+-- example of using replace.
 #guard replace (or (symbol 0) (star (symbol 1))) #v['a', 'b']
   = (or (symbol 'a') (star (symbol 'b')))
 
