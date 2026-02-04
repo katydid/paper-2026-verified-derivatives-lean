@@ -1,3 +1,8 @@
+-- The Katydid algorithm is built for regular hedge grammars, but also works on regular expressions.
+-- We define enter, leave, derive, validate and filter
+-- We prove that this alternative definition is equivalent to derivative of a regular expression in theorem Regex.Katydid.derive_is_Regex_derive.
+-- We use this to prove correctness via theorem derives_commutes, theorem validate_commutes and theorem mem_filter.
+
 import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.Extract
@@ -36,39 +41,6 @@ theorem Regex.Katydid.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex 
   rw [Regex.Point.regex_derive_is_point_derive]
 
 namespace Regex.Katydid
-
-theorem derive_emptyset {α: Type} {σ: Type} (Φ: σ → α → Bool) (a: α):
-  Katydid.derive (flip Φ a) emptyset = emptyset := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_emptyset]
-
-theorem derive_emptystr {α: Type} {σ: Type} (Φ: σ → α → Bool) (a: α):
-  Katydid.derive (flip Φ a) emptystr = emptyset := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_emptystr]
-
-theorem derive_symbol {α: Type} {σ: Type} (Φ: σ → α → Bool) (s: σ) (a: α):
-  Katydid.derive (flip Φ a) (symbol s) = onlyif (Φ s a) emptystr := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_symbol]
-
-theorem derive_or {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1 r2: Regex σ) (a: α):
-  Katydid.derive (flip Φ a) (or r1 r2) = or (Katydid.derive (flip Φ a) r1) (Katydid.derive (flip Φ a) r2) := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_or]
-
-theorem derive_concat {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1 r2: Regex σ) (a: α):
-  Katydid.derive (flip Φ a) (concat r1 r2)
-    = or
-      (concat (Katydid.derive (flip Φ a) r1) r2)
-      (onlyif (null r1) (Katydid.derive (flip Φ a) r2)) := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_concat]
-
-theorem derive_star {α: Type} {σ: Type} (Φ: σ → α → Bool) (r1: Regex σ) (a: α):
-  Katydid.derive (flip Φ a) (star r1) = concat (Katydid.derive (flip Φ a) r1) (star r1) := by
-  repeat rw [Regex.Katydid.derive_is_Regex_derive]
-  rw [Regex.derive_star]
 
 theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.denote (fun s a => Φ s a) (Katydid.derive (flip Φ a) r)
