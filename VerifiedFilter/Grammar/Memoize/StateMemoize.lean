@@ -109,7 +109,7 @@ theorem StateM.StateT.run11 :
 theorem memoize_mem_filter [DecidableEq φ] [Hashable φ] (state: memoizeState (φ × Ref n))
   (G: Grammar n φ) Φ [DecidableRel Φ] (xs: List (Hedge α)):
   ∀ x, (x ∈ (flip StateM.run' state.leave (flip StateT.run' state.enter
-       (Grammar.Memoize.filter G (decideRel Φ) xs))).1)
+       (Grammar.Memoize.filter G (decideRel Φ) xs))).val)
     ↔ (x ∈ xs /\ Grammar.denote G Φ x) := by
   intro x
   simp only [flip]
