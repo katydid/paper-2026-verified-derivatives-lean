@@ -48,7 +48,6 @@ def MemTable.call
 
 -- Memoize is a class that allows a function to be called inside a monad, but still produce the same result inside the monad.
 -- A typical use case would be a state monad that memoizes the results of calling f for optimization purposes.
--- We can consider {β: α -> outParam Type} instead of {β: α -> Type} in future.
 class Memoize [DecidableEq α] [Hashable α] {β: α -> Type} (f: (a: α) → β a)
   (m: Type -> Type u) where call: (a: α) -> m { b: β a // b = f a }
 

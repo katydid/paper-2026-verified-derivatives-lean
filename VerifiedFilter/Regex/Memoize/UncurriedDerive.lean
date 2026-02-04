@@ -1,6 +1,8 @@
+-- Regex.derive2 shows how a normal derivative function can be uncurried and memoized.
+-- This is a claim made in the Introduction of the paper and we backup by defining the instance.
+
 import VerifiedFilter.Std.Memoize.Memoize
 
-import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Regex
 
 namespace Regex.Memoize

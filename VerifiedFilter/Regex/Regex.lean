@@ -1,4 +1,7 @@
 -- Regex defines a regular expression types, denotation of semantics, derivative function and its commutative proof and also a filter function and proof.
+-- We define: Regex, null, denote, derive, validate and filter.
+-- We prove: null_commutes, derive_commutes, validate_commutes, mem_filter.
+-- We also show that validate is decidable.
 
 import VerifiedFilter.Std.Decidable
 

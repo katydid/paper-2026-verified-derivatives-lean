@@ -1,3 +1,5 @@
+-- The memoized Katydid algorithm defined our regular expressions.
+
 import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.StateMemoize
 

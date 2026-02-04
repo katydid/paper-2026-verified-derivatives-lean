@@ -1,3 +1,6 @@
+-- We define MemTable.leave memoizes the uncurried leave function.
+-- We also prove soundness of this function using the State monad.
+
 import VerifiedFilter.Std.Hashable
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Memoize.Memoize
@@ -19,7 +22,7 @@ def MemTable.leave {σ: Type} [DecidableEq σ] [Hashable σ] [Monad m] [monadSta
   (param: leaveParam σ): m { res // res = Regex.Memoize.leave param } :=
   MemTable.call Regex.Memoize.leave param
 
-private theorem MemTable.leaveM_is_correct [DecidableEq σ] [Hashable σ] (param: leaveParam σ) (table: leaveMemTable σ):
+private theorem MemTable.leave_is_correct [DecidableEq σ] [Hashable σ] (param: leaveParam σ) (table: leaveMemTable σ):
   Regex.Memoize.leave param = (StateM.run (s := table) (MemTable.leave param)).1 := by
   generalize (StateM.run (leave param) table) = x
   obtain ⟨⟨res, hres⟩, table'⟩ := x
@@ -32,7 +35,7 @@ instance {σ: Type} [DecidableEq σ] [Hashable σ] [Monad m] [MonadState (leaveM
 
 abbrev MemoizedLeave (σ: Type) [DecidableEq σ] [Hashable σ] := Memoize (@Regex.Memoize.leave σ) (StateM (leaveMemTable σ))
 
-private theorem Memoize.StateM.leaveM_is_correct
+private theorem Memoize.StateM.leave_is_correct
   [DecidableEq σ] [Hashable σ] [memleave: MemoizedLeave σ]
   (param: leaveParam σ) (table: leaveMemTable σ):
   Regex.Memoize.leave param = (memleave.call param table).1 := by
