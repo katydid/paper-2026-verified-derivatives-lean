@@ -1,187 +1,59 @@
+-- We define a language, without depending on a regular expression, but for a regular expression.
+
 import VerifiedFilter.Std.List
 
+-- The denotation of a Regex or Grammar defines its meaning or semantics via the Language, Lang.
+-- A Regex is defined as the set of strings it matches, while a Grammar is defined as the set of hedges it matches,
+-- both of which can be represented as \Lang with a different generic parameter.
 def Lang (α: Type): Type := List α → Prop
 
-def Lang.MemFilter {α: Type} (R: Lang α) (xs: List (List α)): Lang α :=
-  fun x => x ∈ xs /\ R x
+-- Whether a language matches the empty string
+def Lang.null (R: Lang α): Prop := R []
+
+-- The derivative of a language is the language consisting of all strings remaining after the input element has been matched.
+def Lang.derive (R: Lang α) (x: α): Lang α := fun (xs: List α) => R (x :: xs)
 
 def Lang.emptyset: Lang α := fun _ => False
+
 def Lang.emptystr: Lang α := fun xs => xs = []
+
 def Lang.symbol (Φ: σ → α → Prop) (s: σ): Lang α :=
   fun xs => ∃ x, xs = [x] /\ Φ s x
+
 def Lang.onlyif (cond : Prop) (P : Lang α): Lang α := fun xs => cond /\ P xs
+
 def Lang.or (P : Lang α) (Q : Lang α): Lang α := fun xs => P xs \/ Q xs
+
 def Lang.concat (P : Lang α) (Q : Lang α): Lang α := fun (xs : List α) =>
   ∃ n: Fin (xs.length + 1), P (List.take n xs) /\ Q (List.drop n xs)
+
 def Lang.star (R: Lang α) (xs: List α): Prop :=
   match xs with
   | [] => True
   | (x::xs') => ∃ (n: Fin xs.length),
       R (x::List.take n xs') /\ Lang.star R (List.drop n xs')
   termination_by xs.length
+
 def Lang.and {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
   fun xs => P xs /\ Q xs
+
 def Lang.compliment {α: Type} (R: Lang α): Lang α :=
   fun xs => (Not (R xs))
-
-def Lang.derive (R: Lang α) (x: α): Lang α := fun (xs: List α) => R (x :: xs)
-
-def Lang.null (R: Lang α): Prop := R []
 
 def Lang.interleave (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   ∃ (i: Fin (List.interleaves xs).length),
     P (List.get (List.interleaves xs) i).1
     /\ Q (List.get (List.interleaves xs) i).2
 
+-- Verifying the correctness of a filtering function, requires proving that the filtered elements are
+-- exactly those that both occur in the original list and belong to the language.
+def Lang.MemFilter {α: Type} (R: Lang α) (xs: List (List α)): Lang α :=
+  fun x => x ∈ xs /\ R x
+
 namespace Lang
 
-open List (
-  append_assoc
-  append_eq_nil_iff
-  append_nil
-  cons
-  cons_append
-  cons.injEq
-  foldl_nil
-  nil
-  nil_append
-  nil_eq
-  singleton_append
-)
-
--- attribute [simp] allows these definitions to be unfolded when using the simp tactic.
-attribute [simp] emptyset emptystr onlyif or and
-
-example: Lang α := emptystr
-example: Lang α := emptyset
-example: Lang α := (star emptyset)
-
-def derives {α: Type} (R: Lang α) (xs: List α): Lang α :=
-  λ ys => R (xs ++ ys)
-
-def derive' {α: Type} (R: Lang α) (x: α): Lang α :=
-  derives R [x]
-
-attribute [simp] null derive derives derive'
-
-theorem derive_is_derive' {α: Type}:
-  @derive α = derive' :=
-  rfl
-
-theorem derives_empty_list {α: Type} (R: Lang α):
-  derives R [] = R :=
-  rfl
-
-theorem derives_strings {α: Type} (R: Lang α) (xs ys: List α):
-  derives R (xs ++ ys) = derives (derives R xs) ys :=
-  match xs with
-  | [] => rfl
-  | (x :: xs) => derives_strings (derive R x) xs ys
-
-theorem derives_step {α: Type} (R: Lang α) (x: α) (xs: List α):
-  derives R (x :: xs) = derives (derive R x) xs := by
-  rw [derive_is_derive']
-  simp only [derive']
-  rw [<- derives_strings]
-  congr
-
-theorem null_derives {α: Type} (R: Lang α) (xs: List α):
-  (null ∘ derives R) xs = R xs := by
-  unfold derives
-  unfold null
-  simp only [Function.comp_apply]
-  simp only [append_nil]
-
-theorem validate {α: Type} (R: Lang α) (xs: List α):
-  null (derives R xs) = R xs := by
-  unfold derives
-  unfold null
-  simp only [append_nil]
-
-theorem derives_foldl (R: Lang α) (xs: List α):
-  (derives R) xs = (List.foldl derive R) xs := by
-  revert R
-  induction xs with
-  | nil =>
-    unfold derives
-    simp only [nil_append, foldl_nil, implies_true]
-  | cons x xs ih =>
-    rw [derive_is_derive']
-    simp only [List.foldl_cons, derive']
-    intro R
-    rw [derives_step]
-    rw [ih (derive R x)]
-    rw [derive_is_derive']
-    simp only [derive']
-
--- Theorems: null
-
-theorem null_emptyset {α: Type}:
-  @null α emptyset = False :=
-  rfl
-
-theorem null_iff_emptyset {α: Type}:
-  @null α emptyset <-> False := by
-  rw [null_emptyset]
-
-theorem not_null_if_emptyset {α: Type}:
-  @null α emptyset → False :=
-  null_iff_emptyset.mp
-
-theorem null_iff_emptystr {α: Type}:
-  @null α emptystr <-> True :=
-  Iff.intro
-    (fun _ => True.intro)
-    (fun _ => rfl)
-
-theorem null_if_emptystr {α: Type}:
-  @null α emptystr :=
-  rfl
-
-theorem null_emptystr {α: Type}:
-  @null α emptystr = True := by
-  rw [null_iff_emptystr]
-
-theorem null_iff_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
-  null (symbol Φ s) <-> False :=
-  Iff.intro nofun nofun
-
-theorem not_null_if_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
-  null (symbol Φ s) → False :=
-  nofun
-
-theorem null_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
-  null (symbol Φ s) = False := by
-  rw [null_iff_symbol]
-
-theorem null_or {α: Type} {P Q: Lang α}:
-  null (or P Q) = ((null P) \/ (null Q)) :=
-  rfl
-
-theorem null_iff_or {α: Type} {P Q: Lang α}:
-  null (or P Q) <-> ((null P) \/ (null Q)) := by
-  rw [null_or]
-
-theorem null_iff_concat {α: Type} {P Q: Lang α}:
-  null (concat P Q) <-> ((null P) /\ (null Q)) := by
-  refine Iff.intro ?toFun ?invFun
-  case toFun =>
-    intro ⟨⟨n, hn⟩, hp, hq⟩
-    simp at hn
-    subst hn
-    simp only [List.take] at hp
-    simp only [List.drop] at hq
-    exact And.intro hp hq
-  case invFun =>
-    intro ⟨hp, hq⟩
-    unfold concat
-    simp only [null, List.length_nil, Nat.reduceAdd, Fin.val_eq_zero, List.take_nil, List.drop_nil,
-      exists_const]
-    exact And.intro hp hq
-
-theorem null_concat {α: Type} {P Q: Lang α}:
-  null (concat P Q) = ((null P) /\ (null Q)) := by
-  rw [null_iff_concat]
+-- Alternative definitions of interleave interleave_mem and interleave_derive.
+-- Theorems proving equivalence to alternative definitions of interleave.
 
 def interleave_mem (P : Lang α) (Q : Lang α) (xs: List α): Prop :=
   ∃ interleave ∈ List.interleaves xs, P interleave.1 ∧ Q interleave.2
@@ -288,6 +160,335 @@ theorem interleave_derive_is_interleave (P Q : Lang α) :
   funext xs
   exact propext (interleave_derive_iff_interleave P Q xs)
 
+-- Alternative definitions of concat: concat_append.
+-- Theorems proving equivalence to alternative definitions of concat.
+
+def concat_append {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
+  fun (xs : List α) =>
+    ∃ (xs1 : List α) (xs2 : List α), P xs1 /\ Q xs2 /\ xs = (xs1 ++ xs2)
+
+theorem concat_iff_concat_append:
+  concat P Q xs <-> concat_append P Q xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    cases h with
+    | intro n h =>
+    cases h with
+    | intro hx hy =>
+    exists (List.take n xs)
+    exists (List.drop n xs)
+    apply And.intro hx
+    apply And.intro hy
+    simp only [List.take_append_drop]
+  case mpr =>
+    intro h
+    cases h with
+    | intro xs h =>
+    cases h with
+    | intro ys h =>
+    cases h with
+    | intro hx h =>
+    cases h with
+    | intro hy hxsys =>
+    rw [hxsys]
+    unfold concat
+    exists (Fin.mk (List.length xs) (by
+      simp only [List.length_append]
+      omega
+    ))
+    simp only [List.take_left', List.drop_left']
+    apply And.intro hx hy
+
+theorem concat_is_concat_append:
+  concat P Q = concat_append P Q := by
+  funext xs
+  rw [concat_iff_concat_append]
+
+-- Alternative definitions of star: star_append, star_flatten and star_append_empty.
+-- Theorems proving equivalence to alternative definitions of star.
+
+inductive star_append {α: Type} (R: Lang α): Lang α where
+  | zero: star_append R []
+  | more: ∀ (x: α) (xs1 xs2 xs: List α),
+    xs = (x::xs1) ++ xs2
+    -> R (x::xs1)
+    -> star_append R xs2
+    -> star_append R xs
+
+theorem star_is_star_append:
+  star P xs <-> star_append P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    unfold star at h
+    cases xs with
+    | nil =>
+      apply star_append.zero
+    | cons x xs =>
+      simp at h
+      obtain ⟨⟨n, hn⟩, ⟨hp, hq⟩⟩ := h
+      simp at hp hq
+      apply star_append.more x (List.take n xs) (List.drop n xs)
+      · rw [List.cons_append]
+        simp
+      · assumption
+      · apply star_is_star_append.mp hq
+  case mpr =>
+    intro h
+    cases xs with
+    | nil =>
+      unfold star
+      simp
+    | cons x xs =>
+      unfold star
+      cases h with
+      | more x xs1 xs2 _ hxs hp hq =>
+        simp at hxs
+        obtain ⟨hx, hxs⟩ := hxs
+        subst_vars
+        exists (Fin.mk xs1.length (by
+          simp
+          omega
+        ))
+        simp
+        apply And.intro hp
+        apply star_is_star_append.mpr hq
+  termination_by xs.length
+
+inductive All {α: Type} (P : α -> Prop) : (List α -> Prop) where
+  | nil : All P []
+  | cons : ∀ {x xs} (_px : P x) (_pxs : All P xs), All P (x :: xs)
+
+def star_flatten {α: Type} (P : Lang α) : Lang α :=
+  fun (w : List α) =>
+    ∃ (ws : List (List α)), (All P ws) /\ w = (List.flatten ws)
+
+inductive star_append_empty {α: Type} (R: Lang α): Lang α where
+  | zero: star_append_empty R []
+  | more: ∀ (xs1 xs2 xs: List α),
+    xs = xs1 ++ xs2
+    -> R xs1
+    -> star_append_empty R xs2
+    -> star_append_empty R xs
+
+theorem star_append_empty_is_star_append {xs: List α}:
+  star_append_empty P xs <-> star_append P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    induction h with
+    | zero =>
+      apply star_append.zero
+    | more xs1 xs2 xs3 hxs3 hxs hone ih =>
+      rw [hxs3]
+      cases xs1 with
+      | nil =>
+        simp
+        exact ih
+      | cons x1 xs1' =>
+        apply star_append.more x1 xs1' xs2
+        · rfl
+        · exact hxs
+        · exact ih
+  case mpr =>
+    intro h
+    induction h with
+    | zero =>
+      apply star_append_empty.zero
+    | more xs1 xs2 xs xs' hxs hone hmore ih =>
+      apply star_append_empty.more (xs1::xs2) xs
+      · exact hxs
+      · exact hone
+      · exact ih
+
+theorem star_append_empty_is_star_flatten {xs: List α}:
+  star_append_empty P xs <-> star_flatten P xs := by
+  apply Iff.intro
+  case mp =>
+    intro h
+    have h' := star_append_empty_is_star_append.mp h
+    clear h
+    induction h' with
+    | zero =>
+      unfold star_flatten
+      exists []
+      apply And.intro
+      · apply All.nil
+      · simp only [List.flatten_nil]
+    | more x xs1 xs2 xs3 hxs hone hmore ih =>
+      unfold star_flatten
+      unfold star_flatten at ih
+      obtain ⟨ws, ih1, ih2⟩ := ih
+      subst hxs
+      subst ih2
+      exists [x :: xs1] ++ ws
+      apply And.intro
+      · apply All.cons hone
+        simp
+        exact ih1
+      · simp
+  case mpr =>
+    intro h
+    unfold star_flatten at h
+    obtain ⟨ws, h1, h2⟩ := h
+    induction ws generalizing xs with
+    | nil =>
+      simp at h2
+      rw [h2]
+      apply star_append_empty.zero
+    | cons w ws ih =>
+      cases h1 with
+      | cons h1 h1s =>
+      have ih' := @ih ws.flatten h1s rfl
+      simp at h2
+      apply star_append_empty.more w ws.flatten
+      · exact h2
+      · exact h1
+      · exact ih'
+
+theorem star_append_is_star_flatten {xs: List α}:
+  star_append P xs <-> star_flatten P xs := by
+  rw [<- star_append_empty_is_star_append]
+  exact star_append_empty_is_star_flatten
+
+theorem star_is_star_flatten {xs: List α}:
+  star P xs <-> star_flatten P xs := by
+  rw [<- star_append_is_star_flatten]
+  exact star_is_star_append
+
+theorem star_is_star_append_empty {xs: List α}:
+  star P xs <-> star_append_empty P xs := by
+  rw [star_append_empty_is_star_append]
+  exact star_is_star_append
+
+-- basic derive theorems
+
+def derives {α: Type} (R: Lang α) (xs: List α): Lang α :=
+  λ ys => R (xs ++ ys)
+
+def derive' {α: Type} (R: Lang α) (x: α): Lang α :=
+  derives R [x]
+
+theorem derive_is_derive' {α: Type}:
+  @derive α = derive' :=
+  rfl
+
+theorem derives_empty_list {α: Type} (R: Lang α):
+  derives R [] = R :=
+  rfl
+
+theorem derives_strings {α: Type} (R: Lang α) (xs ys: List α):
+  derives R (xs ++ ys) = derives (derives R xs) ys :=
+  match xs with
+  | [] => rfl
+  | (x :: xs) => derives_strings (derive R x) xs ys
+
+theorem derives_step {α: Type} (R: Lang α) (x: α) (xs: List α):
+  derives R (x :: xs) = derives (derive R x) xs := by
+  rw [derive_is_derive']
+  simp only [derive']
+  rw [<- derives_strings]
+  congr
+
+theorem null_derives {α: Type} (R: Lang α) (xs: List α):
+  (null ∘ derives R) xs = R xs := by
+  unfold derives
+  unfold null
+  simp only [Function.comp_apply]
+  simp only [List.append_nil]
+
+theorem validate {α: Type} (R: Lang α) (xs: List α):
+  null (derives R xs) = R xs := by
+  unfold derives
+  unfold null
+  simp only [List.append_nil]
+
+theorem derives_foldl (R: Lang α) (xs: List α):
+  (derives R) xs = (List.foldl derive R) xs := by
+  revert R
+  induction xs with
+  | nil =>
+    unfold derives
+    simp only [List.nil_append, List.foldl_nil, implies_true]
+  | cons x xs ih =>
+    rw [derive_is_derive']
+    simp only [List.foldl_cons, derive']
+    intro R
+    rw [derives_step]
+    rw [ih (derive R x)]
+    rw [derive_is_derive']
+    simp only [derive']
+
+-- null theorems
+
+theorem null_emptyset {α: Type}:
+  @null α emptyset = False :=
+  rfl
+
+theorem null_iff_emptyset {α: Type}:
+  @null α emptyset <-> False := by
+  rw [null_emptyset]
+
+theorem not_null_if_emptyset {α: Type}:
+  @null α emptyset → False :=
+  null_iff_emptyset.mp
+
+theorem null_iff_emptystr {α: Type}:
+  @null α emptystr <-> True :=
+  Iff.intro
+    (fun _ => True.intro)
+    (fun _ => rfl)
+
+theorem null_if_emptystr {α: Type}:
+  @null α emptystr :=
+  rfl
+
+theorem null_emptystr {α: Type}:
+  @null α emptystr = True := by
+  rw [null_iff_emptystr]
+
+theorem null_iff_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
+  null (symbol Φ s) <-> False :=
+  Iff.intro nofun nofun
+
+theorem not_null_if_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
+  null (symbol Φ s) → False :=
+  nofun
+
+theorem null_symbol {σ: Type} {α: Type} {Φ: σ → α → Prop} {s: σ}:
+  null (symbol Φ s) = False := by
+  rw [null_iff_symbol]
+
+theorem null_or {α: Type} {P Q: Lang α}:
+  null (or P Q) = ((null P) \/ (null Q)) :=
+  rfl
+
+theorem null_iff_or {α: Type} {P Q: Lang α}:
+  null (or P Q) <-> ((null P) \/ (null Q)) := by
+  rw [null_or]
+
+theorem null_iff_concat {α: Type} {P Q: Lang α}:
+  null (concat P Q) <-> ((null P) /\ (null Q)) := by
+  refine Iff.intro ?toFun ?invFun
+  case toFun =>
+    intro ⟨⟨n, hn⟩, hp, hq⟩
+    simp at hn
+    subst hn
+    simp only [List.take] at hp
+    simp only [List.drop] at hq
+    exact And.intro hp hq
+  case invFun =>
+    intro ⟨hp, hq⟩
+    unfold concat
+    simp only [null, List.length_nil, Nat.reduceAdd, Fin.val_eq_zero, List.take_nil, List.drop_nil,
+      exists_const]
+    exact And.intro hp hq
+
+theorem null_concat {α: Type} {P Q: Lang α}:
+  null (concat P Q) = ((null P) /\ (null Q)) := by
+  rw [null_iff_concat]
+
 theorem null_iff_interleave_idx {α: Type} {P Q: Lang α}:
   null (interleave P Q) <-> ((null P) /\ (null Q)) := by
   rw [<- Lang.interleave_derive_is_interleave]
@@ -336,14 +537,14 @@ theorem derive_emptystr {α: Type} {a: α}:
 theorem derive_iff_symbol {α: Type} {Φ: σ → α → Prop} {x: α} {xs: List α}:
   (derive (symbol Φ s) x) xs <-> (onlyif (Φ s x) emptystr) xs := by
   rw [derive_is_derive']
-  simp only [derive', derives, singleton_append]
+  simp only [derive', derives, List.singleton_append]
   simp only [onlyif, emptystr]
   refine Iff.intro ?toFun ?invFun
   case toFun =>
     intro D
     match D with
     | Exists.intro x' D =>
-    simp only [cons.injEq] at D
+    simp only [List.cons.injEq] at D
     match D with
     | And.intro (And.intro hxx' hxs) hpx =>
     rw [<- hxx'] at hpx
@@ -352,7 +553,7 @@ theorem derive_iff_symbol {α: Type} {Φ: σ → α → Prop} {x: α} {xs: List 
     intro ⟨ hpx , hxs  ⟩
     unfold symbol
     exists x
-    simp only [cons.injEq, true_and]
+    simp only [List.cons.injEq, true_and]
     exact And.intro hxs hpx
 
 theorem derive_symbol {α: Type} {Φ: σ → α → Prop} {x: α}:
@@ -376,7 +577,7 @@ theorem derive_iff_star {α: Type} {x: α} {R: Lang α} {xs: List α}:
     intro h
     unfold derive' at h
     unfold derives at h
-    simp only [cons_append, nil_append] at h
+    simp only [List.cons_append, List.nil_append] at h
     simp only [star] at h
     unfold concat
     obtain ⟨n, h⟩ := h
@@ -386,10 +587,10 @@ theorem derive_iff_star {α: Type} {x: α} {R: Lang α} {xs: List α}:
     intro h
     unfold concat at h
     obtain ⟨n, h⟩ := h
-    simp only [derive', derives, cons_append, nil_append] at h
+    simp only [derive', derives, List.cons_append, List.nil_append] at h
     unfold derive'
     unfold derives
-    simp only [cons_append, nil_append]
+    simp only [List.cons_append, List.nil_append]
     simp only [star]
     exists n
 
@@ -426,7 +627,7 @@ theorem derive_iff_concat {α: Type} {x: α} {P Q: Lang α} {xs: List α}:
     intro h
     obtain ⟨n, hp, hq⟩ := h
     simp only [Lang.or, Lang.concat, derive', derives, null, onlyif]
-    simp only [cons_append, nil_append, List.length_cons] at n
+    simp only [List.cons_append, List.nil_append, List.length_cons] at n
     obtain ⟨n, hn⟩ := n
     simp_all only
     cases n with
@@ -454,6 +655,8 @@ theorem derive_concat {α: Type} {x: α} {P Q: Lang α}:
     (or (concat (derive P x) Q) (onlyif (null P) (derive Q x))) := by
   funext
   rw [derive_iff_concat]
+
+-- simplification rules
 
 theorem simp_or_emptyset_l_is_r (r: Lang α):
   or emptyset r = r := by
@@ -557,59 +760,6 @@ theorem simp_or_assoc (r s t: Lang α):
         right
         exact h
 
--- class Associative found in Init/Core.lean in namespace Std
--- It is used by the ac_rfl tactic.
-instance IsAssociative_or {α: Type}: Std.Associative (@or α) :=
-  { assoc := @simp_or_assoc α }
-
--- class Commutative found in Init/Core.lean in namespace Std
--- It is used by the ac_rfl tactic.
-instance IsCommutative_or {α: Type}: Std.Commutative (@or α) :=
-  { comm := @simp_or_comm α }
-
--- class IdempotentOp found in Init/Core.lean in namespace Std
--- It is used by the ac_rfl tactic.
-instance IsIdempotentOp_or {α: Type}: Std.IdempotentOp (@or α) :=
-  { idempotent := simp_or_idemp }
-
-instance IsLawfulCommIdentity_or {α: Type} : Std.LawfulCommIdentity (@or α) (@emptyset α) where
-  right_id r := simp_or_emptyset_r_is_l r
-
--- Test that ac_rfl uses the instance of Std.LawfulCommIdentity
-example (r: Lang α):
-  or r emptyset = r := by
-  ac_rfl
-
--- Test that ac_rfl uses the instance of Std.Commutative
-example (r s: Lang α):
-  or r s = or s r := by
-  ac_rfl
-
--- Test that ac_rfl uses the instance of Std.Associative
-example (r s t: Lang α):
-  or (or r s) t = or r (or s t) := by
-  ac_rfl
-
--- Test that ac_rfl uses the instance of Std.IdempotentOp
-example (r: Lang α):
-  or (or r r) r = r := by
-  ac_rfl
-
--- Test that ac_rfl uses both the instances of Std.Associative and Std.Commutative
-example (a b c d : Lang α):
-  (or a (or b (or c d))) = (or d (or (or b c) a)) := by ac_rfl
-
--- Test that ac_rfl uses both the instances of Std.Associative and Std.Commutative and Std.IdempotentOp
-example (a b c d : Lang α):
-  (or a (or b (or c d))) = (or a (or d (or (or b c) a))) := by ac_rfl
-
--- Test ac_nf tactic
-example (r s: Lang α) (H: s = r):
-  or emptyset (or r s) = (or r r) := by
-  ac_nf
-  rw [H]
-  ac_rfl
-
 theorem not_not_intro' {p : Prop} (h : p) : ¬ ¬ p :=
   fun hn : (p → False) => hn h
 
@@ -646,197 +796,3 @@ theorem simp_onlyif_and {α: Type} (cond1 cond2 : Prop) (P : Lang α):
     simp_all only [and_self]
   · intro a
     simp_all only [and_self]
-
--- Alternative definitions
-
-def concat_append {α: Type} (P : Lang α) (Q : Lang α) : Lang α :=
-  fun (xs : List α) =>
-    ∃ (xs1 : List α) (xs2 : List α), P xs1 /\ Q xs2 /\ xs = (xs1 ++ xs2)
-
-theorem concat_iff_concat_append:
-  concat P Q xs <-> concat_append P Q xs := by
-  apply Iff.intro
-  case mp =>
-    intro h
-    cases h with
-    | intro n h =>
-    cases h with
-    | intro hx hy =>
-    exists (List.take n xs)
-    exists (List.drop n xs)
-    apply And.intro hx
-    apply And.intro hy
-    simp only [List.take_append_drop]
-  case mpr =>
-    intro h
-    cases h with
-    | intro xs h =>
-    cases h with
-    | intro ys h =>
-    cases h with
-    | intro hx h =>
-    cases h with
-    | intro hy hxsys =>
-    rw [hxsys]
-    unfold concat
-    exists (Fin.mk (List.length xs) (by
-      simp only [List.length_append]
-      omega
-    ))
-    simp only [List.take_left', List.drop_left']
-    apply And.intro hx hy
-
-theorem concat_is_concat_append:
-  concat P Q = concat_append P Q := by
-  funext xs
-  rw [concat_iff_concat_append]
-
-inductive star_append {α: Type} (R: Lang α): Lang α where
-  | zero: star_append R []
-  | more: ∀ (x: α) (xs1 xs2 xs: List α),
-    xs = (x::xs1) ++ xs2
-    -> R (x::xs1)
-    -> star_append R xs2
-    -> star_append R xs
-
-theorem star_append_is_star:
-  star P xs <-> star_append P xs := by
-  apply Iff.intro
-  case mp =>
-    intro h
-    unfold star at h
-    cases xs with
-    | nil =>
-      apply star_append.zero
-    | cons x xs =>
-      simp at h
-      obtain ⟨⟨n, hn⟩, ⟨hp, hq⟩⟩ := h
-      simp at hp hq
-      apply star_append.more x (List.take n xs) (List.drop n xs)
-      · rw [cons_append]
-        simp
-      · assumption
-      · apply star_append_is_star.mp hq
-  case mpr =>
-    intro h
-    cases xs with
-    | nil =>
-      unfold star
-      simp
-    | cons x xs =>
-      unfold star
-      cases h with
-      | more x xs1 xs2 _ hxs hp hq =>
-        simp at hxs
-        obtain ⟨hx, hxs⟩ := hxs
-        subst_vars
-        exists (Fin.mk xs1.length (by
-          simp
-          omega
-        ))
-        simp
-        apply And.intro hp
-        apply star_append_is_star.mpr hq
-  termination_by xs.length
-
-inductive All {α: Type} (P : α -> Prop) : (List α -> Prop) where
-  | nil : All P []
-  | cons : ∀ {x xs} (_px : P x) (_pxs : All P xs), All P (x :: xs)
-
-def star_flatten {α: Type} (P : Lang α) : Lang α :=
-  fun (w : List α) =>
-    ∃ (ws : List (List α)), (All P ws) /\ w = (List.flatten ws)
-
-inductive star_append_empty {α: Type} (R: Lang α): Lang α where
-  | zero: star_append_empty R []
-  | more: ∀ (xs1 xs2 xs: List α),
-    xs = xs1 ++ xs2
-    -> R xs1
-    -> star_append_empty R xs2
-    -> star_append_empty R xs
-
-theorem star_append_empty_is_star_append {xs: List α}:
-  star_append_empty P xs <-> star_append P xs := by
-  apply Iff.intro
-  case mp =>
-    intro h
-    induction h with
-    | zero =>
-      apply star_append.zero
-    | more xs1 xs2 xs3 hxs3 hxs hone ih =>
-      rw [hxs3]
-      cases xs1 with
-      | nil =>
-        simp
-        exact ih
-      | cons x1 xs1' =>
-        apply star_append.more x1 xs1' xs2
-        · rfl
-        · exact hxs
-        · exact ih
-  case mpr =>
-    intro h
-    induction h with
-    | zero =>
-      apply star_append_empty.zero
-    | more xs1 xs2 xs xs' hxs hone hmore ih =>
-      apply star_append_empty.more (xs1::xs2) xs
-      · exact hxs
-      · exact hone
-      · exact ih
-
-theorem star_append_empty_is_star_flatten {xs: List α}:
-  star_append_empty P xs <-> star_flatten P xs := by
-  apply Iff.intro
-  case mp =>
-    intro h
-    have h' := star_append_empty_is_star_append.mp h
-    clear h
-    induction h' with
-    | zero =>
-      unfold star_flatten
-      exists []
-      apply And.intro
-      · apply All.nil
-      · simp only [List.flatten_nil]
-    | more x xs1 xs2 xs3 hxs hone hmore ih =>
-      unfold star_flatten
-      unfold star_flatten at ih
-      obtain ⟨ws, ih1, ih2⟩ := ih
-      subst hxs
-      subst ih2
-      exists [x :: xs1] ++ ws
-      apply And.intro
-      · apply All.cons hone
-        simp
-        exact ih1
-      · simp
-  case mpr =>
-    intro h
-    unfold star_flatten at h
-    obtain ⟨ws, h1, h2⟩ := h
-    induction ws generalizing xs with
-    | nil =>
-      simp at h2
-      rw [h2]
-      apply star_append_empty.zero
-    | cons w ws ih =>
-      cases h1 with
-      | cons h1 h1s =>
-      have ih' := @ih ws.flatten h1s rfl
-      simp at h2
-      apply star_append_empty.more w ws.flatten
-      · exact h2
-      · exact h1
-      · exact ih'
-
-
-theorem star_append_is_star_flatten {xs: List α}:
-  star_append P xs <-> star_flatten P xs := by
-  rw [<- star_append_empty_is_star_append]
-  exact star_append_empty_is_star_flatten
-
-theorem star_is_star_flatten {xs: List α}:
-  star P xs <-> star_flatten P xs := by
-  rw [<- star_append_is_star_flatten]
-  exact star_append_is_star

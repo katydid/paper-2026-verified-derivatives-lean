@@ -1,37 +1,14 @@
-import VerifiedFilter.Regex.Extract
-import VerifiedFilter.Regex.Replace
-
--- In Map.lean we have defined a map function over a regular expression:
-
--- inductive Regex (σ: Type) where
---   | emptyset
---   | emptystr
---   | symbol (s: σ)
---   | or (p q: Regex σ)
---   | concat (p q: Regex σ)
---   | star (p: Regex σ)
---   deriving DecidableEq, Ord, Repr, Hashable
-
--- def Regex.map (r: Regex σ) (f: σ → σ'): Regex σ' :=
---   match r with
---   | emptyset => emptyset
---   | emptystr => emptystr
---   | symbol s => symbol (f s)
---   | or r1 r2 => or (r1.map f) (r2.map f)
---   | concat r1 r2 => concat (r1.map f) (r2.map f)
---   | star r1 => star (r1.map f)
-
--- In this file we prove that if we split function application of the functor up into three steps:
+-- In this file we prove that if we split function application of the map function over a regular expression can be broken up into three steps:
 -- 1. extract
 -- 2. apply function
 -- 3. replace
--- it is the same as Regex.map
 
--- We have proved functor properties:
--- * r = replace (extract r).1 (extract r).2
--- * Regex.map r f = replace (extract r).1 (Vec.map (extract r).2 f)
--- * rs = replacesFrom (extracts rs acc).1 (extracts rs acc).2
--- * Regex.maps rs f = replacesFrom (extractsFrom rs).1 (Vec.map (extractsFrom rs).2 f)
+-- We prove the following properties:
+-- * theorem extract_replace_is_id: r = replace (extract r).1 (extract r).2
+-- * theorem extract_replace_is_map: Regex.map r f = replace (extract r).1 (Vector.map f (extract r).2)
+
+import VerifiedFilter.Regex.Extract
+import VerifiedFilter.Regex.Replace
 
 namespace Regex
 
