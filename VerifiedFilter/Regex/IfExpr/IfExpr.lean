@@ -1,3 +1,10 @@
+-- IfExpr represents a nested if expression where each symbol represents a condition and each leaf represents the a combination of booleans.
+-- The booleans represent wheher a predicate matched or did not match a symbol on the path to the leaf.
+-- This way all possible boolean Vectors are precomputed and heap allocations are avoided outside of the memoized IfExpr.enter.
+-- Unfortunately this results in a exponential blowup in memory usage.
+-- We provide examples: `example of an IfExpr for two symbols` and `example of evaluating an IfExpr for two symbols`.
+-- We prove that evaluating the IfExpr is the same as mapping the predicate over the vector in theorem eval_is_map: (IfExpr.mk xs).eval Φ = Vector.map Φ xs
+
 import VerifiedFilter.Std.Vector
 
 namespace Regex
@@ -36,6 +43,7 @@ def mkAcc (xs: Vector σ k) (acc: Vector Bool l): IfExpr σ (l + k) :=
 def mk (xs: Vector σ n): IfExpr σ n :=
   IfExpr.cast (IfExpr.mkAcc xs #v[]) (by omega)
 
+-- example of an IfExpr for two symbols:
 #guard IfExpr.mk #v['a','b']
   = IfExpr.expr 'a'
       (IfExpr.expr 'b'
@@ -45,6 +53,10 @@ def mk (xs: Vector σ n): IfExpr σ n :=
         'b'
         (IfExpr.res  #v[false, true])
         (IfExpr.res  #v[false, false]))
+
+-- example of evaluating an IfExpr for two symbols:
+#guard (IfExpr.mk #v['a','b']).eval (· == 'a')
+  = #v[true, false]
 
 theorem lift_cast_eval (x: IfExpr σ k) (h: k = l):
   (x.cast h).eval Φ = Vector.cast h (x.eval Φ) := by

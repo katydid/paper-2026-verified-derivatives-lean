@@ -1,3 +1,6 @@
+-- The Katydid algorithm over regular expressions, but using the alternative implementation IfExpr.enter.
+-- We prove that theorem derive_commutes and theorem validate_commutes for this alternative implementation.
+
 import VerifiedFilter.Std.Vector
 
 import VerifiedFilter.Regex.ExtractReplace
