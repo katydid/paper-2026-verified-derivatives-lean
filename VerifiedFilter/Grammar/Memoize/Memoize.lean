@@ -1,3 +1,6 @@
+-- The optimized Katydid algorithm with memoization.
+-- We define derive, validate and filter.
+
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Hedge
 import VerifiedFilter.Std.Vector

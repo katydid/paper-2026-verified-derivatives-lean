@@ -1,3 +1,6 @@
+-- Proofs of correctness for the optimized Katydid algorith with memoization via the state monad.
+-- Here we prove derive_commutes, validate_commutes and the ultimate proof of the paper: memoize_mem_filter.
+
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Hedge
 import VerifiedFilter.Std.Vector

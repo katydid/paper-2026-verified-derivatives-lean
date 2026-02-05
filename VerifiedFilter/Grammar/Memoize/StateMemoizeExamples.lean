@@ -1,3 +1,5 @@
+-- Examples of using the optimized Katydid algorithm with memoization to validate and filter.
+
 import VerifiedFilter.Std.Hedge
 
 import VerifiedFilter.Regex.Memoize.StateMemoize
