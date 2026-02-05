@@ -85,7 +85,8 @@ theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dc
 end Regex
 
 -- derive defines the derivative of a regular expression.
-def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ := match r with
+def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ :=
+  match r with
   | emptyset => emptyset | emptystr => emptyset
   | symbol s => onlyif (Φ s a) emptystr
   | or r1 r2 => or (derive Φ r1 a) (derive Φ r2 a)
@@ -391,11 +392,15 @@ theorem validate_commutes {α: Type} (Φ: σ → α → Prop) [DecidableRel Φ] 
 def decidableDenote (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ): DecidablePred (denote Φ r) :=
   fun xs => decidable_of_decidable_of_eq (validate_commutes Φ r xs)
 
+end Regex
+
 -- filter
 
 -- filter filters a list of strings based on whether they match a regular expression.
-def filter (Φ: σ → α → Bool) (r: Regex σ) (xss: List (List α)): List (List α) :=
-  List.filter (validate Φ r) xss
+def Regex.filter (Φ: σ → α → Bool) (r: Regex σ) (xs: List (List α)): List (List α) :=
+  List.filter (validate Φ r) xs
+
+namespace Regex
 
 -- mem_filter proves that the filter implementation matches the semantic definition.
 theorem mem_filter (Φ: σ → α → Prop) [DecidableRel Φ] (r: Regex σ) (xss: List (List α)) :

@@ -162,7 +162,7 @@ private def example_grammar_doc65: Grammar 3 String :=
 
 open Pred.AnyEq
 
-private def example_grammar_doc: Grammar 3 (Pred String) :=
+def example_grammar_doc: Grammar 3 (Pred String) :=
   Grammar.mk (start := Regex.symbol (Pred.eq "doc", 0))
     (prods := #v[
       Regex.oneOrMore (Regex.symbol (Pred.eq "p", 1)),

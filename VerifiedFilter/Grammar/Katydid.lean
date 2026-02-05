@@ -15,12 +15,12 @@ open Hedge
 
 def Grammar.Katydid.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  let nodePred: (param: φ × Ref n) → Bool := (fun ((labelPred, ref): (φ × Ref n)) =>
+  let nodePred := (fun ((labelPred, ref): (φ × Ref n)) =>
     let ⟨label, children⟩ := node
     let childr := if Φ labelPred label then G.lookup ref else Regex.emptyset
     Regex.null (List.foldl (Grammar.Katydid.derive G Φ) childr children)
   )
-  Regex.Katydid.derive nodePred r
+  Regex.Katydid.derive nodePred r -- enter r |> Vector.map nodePred |> leave r
 
 namespace Grammar.Katydid
 

@@ -4,7 +4,8 @@
 
 import VerifiedFilter.Regex.Regex
 
-def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char := match r with
+def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char :=
+  match r with
   | emptyset => emptyset | emptystr => emptyset
   | symbol s => onlyif (s == a) emptystr
   | or r1 r2 => or (derive r1 a) (derive r2 a)
@@ -18,8 +19,7 @@ def Regex.Char.derive (r: Regex Char) (a: Char): Regex Char := match r with
   | and r1 r2 => and (derive r1 a) (derive r2 a)
   | compliment r1 => compliment (derive r1 a)
 
-theorem gen_derive:
-  Regex.Char.derive r a = Regex.derive (fun s a => s == a) r a := by
+theorem gen_derive: Regex.Char.derive r a = Regex.derive (fun s a => s == a) r a := by
   induction r with
   | emptyset => rfl
   | emptystr => rfl
