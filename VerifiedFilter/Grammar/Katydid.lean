@@ -1,3 +1,6 @@
+-- The optimized Katydid algorithm without memoization.
+-- We define and proof correctness of derive, validate and filter, see theorem derive_commutes, validate_commutes and mem_filter.
+
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.Hedge
 
@@ -23,10 +26,15 @@ namespace Grammar.Katydid
 
 def validate (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
   Regex.null (List.foldl (derive G Φ) G.start nodes)
+
 def filter (G: Grammar n φ) (Φ: φ → α → Bool)
   (hedges: List (Hedge α)): List (Hedge α) := List.filter (validate G Φ) hedges
+
 end Grammar.Katydid
 
+-- A helper lemma to prove derive_emptyset, derive_emptystr, etc.
+-- We needed to partially apply the node, to avoid the need for another termination proof.
+-- This theorem undoes the partial application, so that we can reuse regular expression theorems that have not been partially applied.
 theorem Grammar.Katydid.unapply_hedge_param_and_flip
   (G: Grammar n φ) (Φ: φ → α → Bool) (node: Node α):
   (fun ((pred, ref): (φ × Ref n)) =>
@@ -42,6 +50,8 @@ theorem Grammar.Katydid.unapply_hedge_param_and_flip
   ) node := by
   rfl
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the emptyset operator.
 theorem Grammar.Katydid.derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (a: Node α):
   Grammar.Katydid.derive G Φ Regex.emptyset a = Regex.emptyset := by
   unfold Grammar.Katydid.derive
@@ -49,6 +59,8 @@ theorem Grammar.Katydid.derive_emptyset {α: Type} (G: Grammar n φ) (Φ: φ →
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the emptystr operator.
 theorem Grammar.Katydid.derive_emptystr (G: Grammar n φ) Φ (x: Node α):
   Grammar.Katydid.derive G Φ Regex.emptystr x = Regex.emptyset := by
   unfold Grammar.Katydid.derive
@@ -56,6 +68,8 @@ theorem Grammar.Katydid.derive_emptystr (G: Grammar n φ) Φ (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the symbol operator.
 theorem Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   Grammar.Katydid.derive G Φ (Regex.symbol (pred, ref)) x
     = Regex.onlyif ((let ⟨label, children⟩ := x
@@ -68,6 +82,8 @@ theorem Grammar.Katydid.derive_symbol (G: Grammar n φ) Φ (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the or operator.
 theorem Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
   Grammar.Katydid.derive G Φ (Regex.or r1 r2) node = Regex.or
     (Grammar.Katydid.derive G Φ r1 node) (Grammar.Katydid.derive G Φ r2 node) := by
@@ -76,6 +92,8 @@ theorem Grammar.Katydid.derive_or (G: Grammar n φ) Φ r1 r2 (node: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the concat operator.
 theorem Grammar.Katydid.derive_concat (G: Grammar n φ) Φ r1 r2 (x: Node α):
   Grammar.Katydid.derive G Φ (Regex.concat r1 r2) x
     = Regex.or
@@ -86,6 +104,8 @@ theorem Grammar.Katydid.derive_concat (G: Grammar n φ) Φ r1 r2 (x: Node α):
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the star operator.
 theorem Grammar.Katydid.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.star r1) a
   = Regex.concat (Grammar.Katydid.derive G Φ r1 a) (Regex.star r1) := by
@@ -94,6 +114,8 @@ theorem Grammar.Katydid.derive_star {α: Type} (G: Grammar n φ) (Φ: φ → α 
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the interleave operator.
 theorem Grammar.Katydid.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.interleave r1 r2) a
   = Regex.or
@@ -104,6 +126,8 @@ theorem Grammar.Katydid.derive_interleave {α: Type} (G: Grammar n φ) (Φ: φ �
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the and operator.
 theorem Grammar.Katydid.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1 r2: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.and r1 r2) a
   = Regex.and (Grammar.Katydid.derive G Φ r1 a) (Grammar.Katydid.derive G Φ r2 a) := by
@@ -112,6 +136,8 @@ theorem Grammar.Katydid.derive_and {α: Type} (G: Grammar n φ) (Φ: φ → α �
   repeat rw [Regex.Katydid.derive_is_Regex_derive]
   simp only [Regex.derive]
 
+-- A helper lemma for derive_commutes.
+-- We undo the partial application and rewrite to the point derivative to a normal derivative for the compliment operator.
 theorem Grammar.Katydid.derive_compliment {α: Type} (G: Grammar n φ) (Φ: φ → α → Bool) (r1: Regex (φ × Ref n)) (a: Node α):
   Grammar.Katydid.derive G Φ (Regex.compliment r1) a
   = Regex.compliment (Grammar.Katydid.derive G Φ r1 a) := by
@@ -154,6 +180,10 @@ theorem Grammar.Katydid.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n 
   rw [Lang.derive_iff_node]
   simp only [decide_eq_true_eq]
 
+-- For each operator except symbol, we complete the proof by induction on the regular expression,
+-- undoing the partial application of the node, permuting the parameters,
+-- and applying theorem Regex.Katydid.derive_is_Regex_derive.
+-- The symbol case needs extra work.
 theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
   (r: Regex (φ × Ref n)) (node: Node α):
   Rule.denote G Φ (Grammar.Katydid.derive G (decideRel Φ) r node)
@@ -183,8 +213,10 @@ theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
     congr
 
     generalize G.lookup ref = r
+    -- We cannot apply functional induction to a recursive closure, so we have create induction via well-founded induction.
     have ihr := fun r' x (hx: x ∈ children) =>
       derive_commutes G Φ r' x
+    -- The proof proceeds by induction on the children.
     induction children generalizing r with
     | nil =>
       simp only [List.foldl_nil]
@@ -192,6 +224,7 @@ theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
     | cons x2 xs ihxs =>
       simp only [List.foldl]
       rw [ihxs]
+      -- followed by a well-founded induction by recursing on derive_commutes.
       · rw [ihr]
         · rfl
         · simp only [List.mem_cons, true_or]
@@ -280,6 +313,7 @@ theorem Grammar.Katydid.derives_commutes (G: Grammar n φ) (Φ: φ → α → Pr
     rw [h] at ih'
     exact ih'
 
+-- Using theorem derive_commutes we can prove validate_commutes.
 theorem Grammar.Katydid.validate_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
   (Grammar.Katydid.validate G (decideRel Φ) nodes = true)
   = Grammar.denote G Φ nodes := by
@@ -306,6 +340,7 @@ def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: List (Hedge α)):
 
 end Grammar.Katydid.Paper
 
+-- Using validate_commutes we can prove mem_filter.
 theorem mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :
   ∀ xs, (xs ∈ Grammar.Katydid.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
   unfold Grammar.Katydid.filter

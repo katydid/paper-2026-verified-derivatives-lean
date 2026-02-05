@@ -1,3 +1,5 @@
+-- Examples of using the JSONSchema algorithm without memoization to validate.
+
 import VerifiedFilter.Std.Hedge
 
 import VerifiedFilter.Grammar.Grammar
@@ -5,9 +7,6 @@ import VerifiedFilter.Grammar.JSONSchema
 
 import VerifiedFilter.Pred.AnyEq
 import VerifiedFilter.Pred.Compare
-
-
--- Tests
 
 namespace Grammar.JSONSchema
 
@@ -18,7 +17,7 @@ def run [DecidableEq α] (G: Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool 
   validate G AnyEq.Pred.evalb nodes
 
 #guard run
-  (Grammar.singleton Regex.emptyset)
+  (Grammar.mk Regex.emptyset #v[])
   [node "a" [node "b" [], node "c" [node "d" []]]] =
   false
 

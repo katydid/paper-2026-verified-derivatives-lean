@@ -1,3 +1,6 @@
+-- The easy to understand symbolic regular hedge grammar derivative algorithm that has been appied to JSONSchema.
+-- We define and proof correctness of derive, validate and filter, see theorem derive_commutes, validate_commutes and mem_filter.
+
 import VerifiedFilter.Std.Decidable
 import VerifiedFilter.Std.List
 import VerifiedFilter.Std.Hedge
@@ -140,7 +143,7 @@ def Grammar.JSONSchema.derive (G: Grammar n φ) (Φ: φ → α → Bool)
   -- so we have to tell it how the arguments decrease in size.
   -- The arguments decrease in the node case first
   -- (which only happens in the Regex.symbol case)
-  -- and in the expression, r, second (which is all other cases).
+  -- In the other operators, node does not decrease, but r does.
   -- This means if the node is not destructed, then the expression is destructed.
   termination_by (node, r)
   -- Once we tell Lean how the function terminates we have to prove that
@@ -165,15 +168,16 @@ def Grammar.JSONSchema.derive (G: Grammar n φ) (Φ: φ → α → Bool)
 
 namespace Grammar.JSONSchema
 
-def validate (G: Grammar n φ) (Φ: φ → α → Bool)
-  (nodes: Hedge α): Bool :=
-    Regex.null (List.foldl (derive G Φ) G.start nodes)
+def validate (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
+  Regex.null (List.foldl (derive G Φ) G.start nodes)
+
 def filter (G: Grammar n φ) (Φ: φ → α → Bool)
-  (hedges: List (Hedge α)): List (Hedge α) :=
-    List.filter (validate G Φ) hedges
+  (hedges: List (Hedge α)): List (Hedge α) := List.filter (validate G Φ) hedges
 
 end Grammar.JSONSchema
 
+-- The proof begins with functional induction on Grammar.JSONSchema.derive,
+-- producing an inductive hypothesis applicable to the symbol case.
 theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
   (r: Regex (φ × Ref n)) (node: Node α):
   Rule.denote G Φ (Grammar.JSONSchema.derive G (decideRel Φ) r node)
@@ -187,6 +191,7 @@ theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ
     rw [Grammar.denote_emptystr]
     rw [Lang.derive_emptystr]
   | case3 p childRef label children ih =>
+    -- All cases are trivial except for the symbol case.
     rw [Grammar.denote_symbol]
     rw [Lang.derive_node]
     rw [Grammar.denote_onlyif]
@@ -202,8 +207,10 @@ theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ
       rfl
     | cons c cs ih' =>
       simp only [List.foldl]
+      -- we additionally perform induction on the children.
       rw [ih']
       · cases c
+        -- and then apply the functional inductive hypothesis.
         rw [ih]
         simp only [Lang.derive]
         rw [List.mem_cons]
@@ -273,6 +280,7 @@ theorem Grammar.JSONSchema.derives_commutes (G: Grammar n φ) (Φ: φ → α →
     rw [h] at ih'
     exact ih'
 
+-- Using theorem derive_commutes we can prove validate_commutes.
 theorem Grammar.JSONSchema.validate_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
   (validate G (decideRel Φ) nodes = true) = (Grammar.denote G Φ) nodes := by
   unfold Grammar.denote
@@ -280,3 +288,22 @@ theorem Grammar.JSONSchema.validate_commutes (G: Grammar n φ) (Φ: φ → α �
   unfold validate
   rw [<- derives_commutes]
   rw [<- Grammar.null_commutes]
+
+-- Using validate_commutes we can prove mem_filter.
+theorem Grammar.JSONSchema.mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :
+  ∀ xs, (xs ∈ Grammar.JSONSchema.filter G (decideRel Φ) xss) ↔ (Lang.MemFilter (Grammar.denote G Φ) xss xs) := by
+  unfold Grammar.JSONSchema.filter
+  intro xs
+  rw [List.mem_filter]
+  unfold Lang.MemFilter
+  apply Iff.intro
+  case mp =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [<- Grammar.JSONSchema.validate_commutes]
+    assumption
+  case mpr =>
+    intro ⟨hxs, hd⟩
+    apply And.intro hxs
+    rw [Grammar.JSONSchema.validate_commutes]
+    assumption

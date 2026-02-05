@@ -1,3 +1,5 @@
+-- Examples of using the Katydid algorithm without memoization to validate.
+
 import VerifiedFilter.Std.Hedge
 
 import VerifiedFilter.Grammar.Grammar
@@ -8,26 +10,16 @@ import VerifiedFilter.Pred.Compare
 
 open Hedge
 
--- Tests
-
 namespace Grammar.Katydid
 
 open Pred
+open Regex
 
 def run [DecidableEq α] (G: Grammar n (AnyEq.Pred α)) (nodes: Hedge α): Bool :=
   validate G AnyEq.Pred.evalb nodes
 
-abbrev contains (r: Regex σ) := Regex.contains r
-abbrev symbol (s: σ) := Regex.symbol s
-abbrev emptystr : Regex σ := Regex.emptystr
-abbrev interleave (r1 r2: Regex σ) := Regex.interleave r1 r2
-abbrev or (r1 r2: Regex σ) := Regex.or r1 r2
-abbrev and (r1 r2: Regex σ) := Regex.and r1 r2
-abbrev optional (r: Regex σ) := Regex.optional r
-abbrev starAny: Regex σ := Regex.starAny
-
 #guard run
-  (Grammar.singleton Regex.emptyset)
+  (Grammar.mk Regex.emptyset #v[])
   [node "a" [node "b" [], node "c" [node "d" []]]] =
   false
 

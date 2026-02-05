@@ -21,12 +21,3 @@ namespace Grammar
 
 def lookup (G: Grammar n φ) (ref: Ref n): Regex (φ × Ref n) :=
   Vector.get G.prods ref
-
-def singleton (x: Regex (φ × Ref 0)): Grammar 0 φ  :=
-  Grammar.mk x #v[]
-
-def emptyset: Grammar 0 φ :=
-  singleton Regex.emptyset
-
-def emptystr: Grammar 0 φ :=
-  singleton Regex.emptystr

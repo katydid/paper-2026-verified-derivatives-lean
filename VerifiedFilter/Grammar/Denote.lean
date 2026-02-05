@@ -1,3 +1,7 @@
+-- The mapping between the definition of symbolic regular hedge grammars and the semantics, via the Rule.denote and Grammar.denote functions.
+-- Rule.denote does require a termination proof, that is why the file starts with a lot of decreasing theorems.
+-- We also prove theorem null_commutes: ((Regex.null r) = true) = Lang.null (Rule.denote G Φ r)
+
 import VerifiedFilter.Std.List
 
 import VerifiedFilter.Regex.Lang
@@ -454,5 +458,6 @@ theorem denote_nil_is_null (Φ: φ → α → Prop) [DecidableRel Φ]:
 
 end Grammar
 
+-- We specify the semantics of a Grammar as the denotation of the start rule.
 def Grammar.denote (G: Grammar n φ) (Φ: φ → α → Prop) (nodes: Hedge α): Prop :=
   Rule.denote G Φ G.start nodes

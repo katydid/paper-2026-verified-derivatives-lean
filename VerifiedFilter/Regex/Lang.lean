@@ -1,4 +1,8 @@
 -- We define a language, without depending on a regular expression, but for a regular expression.
+-- We define semantics for all the operators.
+-- We also define alternative semantic defintions and prove their equivalence to the versions we end up using, for extra surity.
+-- The operators with extra defintions include: concat, star and interleave.
+-- We also prove a few simplifcation rules.
 
 import VerifiedFilter.Std.List
 

@@ -1,3 +1,5 @@
+-- We extend the semantics of regular expressions in VerifiedFilter.Regex.Lang to also include hedge nodes.
+
 import VerifiedFilter.Std.Hedge
 
 import VerifiedFilter.Regex.Lang
@@ -78,7 +80,6 @@ theorem derive_iff_node {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node
     simp only [true_and]
     exact hif
 
--- Hedge.Lang.derive (Hedge.Lang.node p.eval (Denote.denote children)) a
 theorem derive_node {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α}:
   (Lang.derive (node p childlang) (Hedge.Node.mk label children)) =
   (Lang.onlyif (p label /\ childlang children) Lang.emptystr) := by

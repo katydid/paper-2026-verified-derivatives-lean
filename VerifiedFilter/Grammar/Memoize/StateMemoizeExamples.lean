@@ -11,20 +11,13 @@ import VerifiedFilter.Pred.Compare
 open Hedge
 open Regex.Memoize
 open Pred
+open Regex
 
 def validate [DecidableEq φ] [Hashable φ] (G: Grammar n φ) (Φ: φ -> α -> Bool) (nodes: Hedge α): Bool :=
   StateMemoize.Grammar.validate.run memoizeState.init G Φ nodes
 
 def filter [DecidableEq φ] [Hashable φ] (G: Grammar n φ) (Φ: φ -> α -> Bool) (hedges: List (Hedge α)): List (Hedge α) :=
   StateMemoize.Grammar.filter.run memoizeState.init G Φ hedges
-
-abbrev contains (r: Regex σ) := Regex.contains r
-abbrev symbol (s: σ) := Regex.symbol s
-abbrev emptystr : Regex σ := Regex.emptystr
-abbrev interleave (r1 r2: Regex σ) := Regex.interleave r1 r2
-abbrev or (r1 r2: Regex σ) := Regex.or r1 r2
-abbrev and (r1 r2: Regex σ) := Regex.and r1 r2
-abbrev starAny: Regex σ := Regex.starAny
 
 def eq (v: α × Fin n) := symbol (Pred.Compare.Pred.eq v.1, v.2)
 def field (v: α × Fin n) := contains (symbol (Pred.Compare.Pred.eq v.1, v.2))

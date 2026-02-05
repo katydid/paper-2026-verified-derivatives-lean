@@ -1,4 +1,4 @@
--- examples of a symbolic regular hedge grammar using Pred.
+-- Examples of a symbolic regular hedge grammars using the predicate type AnyPred.
 
 import VerifiedFilter.Std.Hedge
 import VerifiedFilter.Std.List
