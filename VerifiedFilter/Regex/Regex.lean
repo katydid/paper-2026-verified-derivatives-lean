@@ -22,7 +22,7 @@ def Regex.null: (r: Regex σ) → Bool
   | and r1 r2 => (null r1 && null r2) | compliment r1 => ! (null r1)
 
 -- denote defines the semantics of a regular expression.
-def Regex.denote (Φ : σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
+def Regex.denote (Φ: σ → α → Prop) (r: Regex σ) (xs: List α): Prop :=
   match r with
   | emptyset => False
   | emptystr => xs = []

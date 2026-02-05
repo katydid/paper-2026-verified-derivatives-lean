@@ -26,8 +26,8 @@ namespace Grammar.Katydid
 def validate (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: Hedge α): Bool :=
   Regex.null (List.foldl (derive G Φ) G.start nodes)
 
-def filter (G: Grammar n φ) (Φ: φ → α → Bool)
-  (hedges: List (Hedge α)): List (Hedge α) := List.filter (validate G Φ) hedges
+def filter (G: Grammar n φ) (Φ: φ → α → Bool) (hedges: List (Hedge α)) :=
+  List.filter (validate G Φ) hedges
 
 end Grammar.Katydid
 
