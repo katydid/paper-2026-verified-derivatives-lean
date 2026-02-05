@@ -180,13 +180,15 @@ theorem Grammar.Katydid.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n 
   rw [Lang.derive_iff_node]
   simp only [decide_eq_true_eq]
 
+namespace Grammar.Katydid
+
 -- For each operator except symbol, we complete the proof by induction on the regular expression,
 -- undoing the partial application of the node, permuting the parameters,
 -- and applying theorem Regex.Katydid.derive_is_Regex_derive.
 -- The symbol case needs extra work.
-theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
+theorem derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
   (r: Regex (φ × Ref n)) (node: Node α):
-  Rule.denote G Φ (Grammar.Katydid.derive G (decideRel Φ) r node)
+  Rule.denote G Φ (derive G (decideRel Φ) r node)
   = Lang.derive (Rule.denote G Φ r) node := by
   induction r with
   | emptyset =>
@@ -285,8 +287,8 @@ theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
   decreasing_by
     apply Node.sizeOf_children hx
 
-theorem Grammar.Katydid.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (x: Node α):
-  Rule.denote G (fun s a => Φ s a) (Grammar.Katydid.derive G Φ r x)
+theorem derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bool) (r: Regex (φ × Ref n)) (x: Node α):
+  Rule.denote G (fun s a => Φ s a) (derive G Φ r x)
   = Lang.derive (Rule.denote G (fun s a => Φ s a) r) x := by
   have h1: (fun s a => Φ s a) = decideRel (fun s a => Φ s a) := by
     unfold decideRel
@@ -300,8 +302,8 @@ theorem Grammar.Katydid.derive_commutesb (G: Grammar n φ) (Φ: φ → α → Bo
   rw [h1]
   rw [derive_commutes]
 
-theorem Grammar.Katydid.derives_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
-  Grammar.Rule.denote G Φ (List.foldl (Grammar.Katydid.derive G (decideRel Φ)) r nodes) = Lang.derives (Grammar.Rule.denote G Φ r) nodes := by
+theorem derives_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (r: Regex (φ × Ref n)) (nodes: Hedge α):
+  Grammar.Rule.denote G Φ (List.foldl (derive G (decideRel Φ)) r nodes) = Lang.derives (Grammar.Rule.denote G Φ r) nodes := by
   rw [Lang.derives_foldl]
   induction nodes generalizing r with
   | nil =>
@@ -314,31 +316,13 @@ theorem Grammar.Katydid.derives_commutes (G: Grammar n φ) (Φ: φ → α → Pr
     exact ih'
 
 -- Using theorem derive_commutes we can prove validate_commutes.
-theorem Grammar.Katydid.validate_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (nodes: Hedge α):
-  (Grammar.Katydid.validate G (decideRel Φ) nodes = true)
-  = Grammar.denote G Φ nodes := by
+theorem validate_commutes (G: Grammar n φ) Φ [DecidableRel Φ] (nodes: Hedge α):
+  (validate G (decideRel Φ) nodes = true) = Grammar.denote G Φ nodes := by
   unfold Grammar.denote
   rw [<- Lang.validate (Grammar.Rule.denote G Φ G.start) nodes]
   unfold validate
   rw [<- derives_commutes]
   rw [<- Grammar.null_commutes]
-
-namespace Grammar.Katydid.Paper
-
-theorem derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
-  (r: Regex (φ × Ref n)) (node: Node α):
-  Rule.denote G Φ (derive G (decideRel Φ) r node)
-  = Lang.derive (Rule.denote G Φ r) node := by
-  apply Grammar.Katydid.derive_commutes
-
-theorem validate_commutes (G: Grammar n φ) Φ [DecidableRel Φ] (nodes: Hedge α):
-  (validate G (decideRel Φ) nodes = true) = Grammar.denote G Φ nodes := by
-  apply Grammar.Katydid.validate_commutes
-
-def filter  (G: Grammar n φ) (Φ: φ → α → Bool) (nodes: List (Hedge α)): List (Hedge α) :=
-  List.filter (validate G Φ) nodes
-
-end Grammar.Katydid.Paper
 
 -- Using validate_commutes we can prove mem_filter.
 theorem mem_filter (Φ: φ → α → Prop) [DecidableRel Φ] (G: Grammar n φ) (xss: List (Hedge α)) :

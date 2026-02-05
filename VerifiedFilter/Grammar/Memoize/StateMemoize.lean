@@ -97,10 +97,9 @@ theorem Grammar.StateMemoize.mem_filter [DecidableEq φ] [Hashable φ]
   unfold Lang.MemFilter
   rw [Katydid.validate_commutes]
 
-namespace Paper
+namespace Grammar.StateMemoize
+open Regex
 
-abbrev symbols (r: Regex σ) := Regex.symbols r
-abbrev enter (r: Regex σ) := Regex.enter r
 abbrev leave (r: Regex σ) (param2: (Vector Bool (symbols r))) := Regex.leave r param2
 
 theorem StateM.StateT.run11 :
