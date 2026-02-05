@@ -85,8 +85,7 @@ theorem denote_onlyif {α: Type} (Φ : σ → α → Prop) (condition: Prop) [dc
 end Regex
 
 -- derive defines the derivative of a regular expression.
-def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ :=
-  match r with
+def Regex.derive (Φ: σ → α → Bool) (r: Regex σ) (a: α): Regex σ := match r with
   | emptyset => emptyset | emptystr => emptyset
   | symbol s => onlyif (Φ s a) emptystr
   | or r1 r2 => or (derive Φ r1 a) (derive Φ r2 a)

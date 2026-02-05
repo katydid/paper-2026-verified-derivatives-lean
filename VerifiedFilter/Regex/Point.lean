@@ -72,9 +72,8 @@ theorem map_first (f: σ → β) (r: Regex σ):
 
 -- We prove that mapping a predicate and then taking the point derivative is
 -- the same as taking the derivative of a regular expression.
-theorem regex_derive_is_point_derive: ∀ (Φ: σ → α → Bool) (r: Regex σ) (a: α),
+theorem regex_derive_is_point_derive (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.derive Φ r a = Regex.Point.derive (r.map (fun s => (s, Φ s a))) := by
-  intro Φ r a
   induction r with
   | emptyset =>
     simp only [Regex.derive, Regex.map, derive]
