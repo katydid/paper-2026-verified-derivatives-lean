@@ -5,6 +5,7 @@ import VerifiedFilter.Std.Vector
 import VerifiedFilter.Regex.Lang
 import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Memoize.Memoize
+import VerifiedFilter.Regex.Memoize.StateMemoize
 import VerifiedFilter.Regex.Num
 
 import VerifiedFilter.Grammar.Denote

@@ -1,16 +1,9 @@
-<!--
- Copyright 2026 Walter Schulze
- 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
- 
-     https://www.apache.org/licenses/LICENSE-2.0
- 
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
--->
+# Grammar
 
+In this folder we define a [symbolic regular hedge grammar](./Grammar.lean) and [examples](./GrammarExamples.lean).
+We extend regular expression semantics to include [semantics for hedge nodes](./Lang.lean) and define the mapping between regular expression and semantics in [Denote](./Denote.lean).
+
+We implement three algorithms for filtering hedges using symbolic regular hedge grammars:
+* [JSONSchema](./JSONSchema.lean): an algorithm based on [an algorithm applied to JSONSchema](https://www.balisage.net/Proceedings/vol23/html/Holstege01/BalisageVol23-Holstege01.html), that is easy to understand. This includes proofs of correctness for derive and validate. We also provide [examples](./JSONSchemaExamples.lean).
+* [Katydid](./Katydid.lean): the optimized Katydid algorithm without memoization including proofs of correctness for derive, validate and filter. We also provide [examples](./KatydidExamples.lean).
+* [Memoize](./Memoize/Readme.md): the optimized Katydid algorithm with memoization including proofs of correctness for derive, validate and filter.

@@ -1,7 +1,9 @@
 import VerifiedFilter.Grammar.Denote
 import VerifiedFilter.Grammar.Grammar
+import VerifiedFilter.Grammar.GrammarExamples
 import VerifiedFilter.Grammar.Katydid
+import VerifiedFilter.Grammar.KatydidExamples
 import VerifiedFilter.Grammar.Lang
 import VerifiedFilter.Grammar.Memoize
 import VerifiedFilter.Grammar.JSONSchema
-import VerifiedFilter.Grammar.Types
+import VerifiedFilter.Grammar.JSONSchemaExamples
