@@ -10,7 +10,7 @@ import VerifiedFilter.Regex.Regex
 
 namespace Regex.Memoize
 
-abbrev leaveParam (σ: Type) := Σ (r: Regex σ), (Vector Bool (symbols r))
+abbrev leaveParam (σ: Type) := Σ (r: Regex σ), (Vector Bool (symcount r))
 abbrev leaveResult {σ: Type} (_: leaveParam σ) := Regex σ
 
 abbrev leave {σ: Type}: (a: leaveParam σ) → leaveResult a

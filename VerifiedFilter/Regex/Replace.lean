@@ -3,7 +3,7 @@
 
 import VerifiedFilter.Std.Vector
 
-import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.SymCount
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.RegexID
 
@@ -35,7 +35,7 @@ theorem replaceLE_cast_both (r: RegexID n) (xs: Vector σ n) (h: n = l):
   simp only [Vector.cast_rfl]
   rfl
 
-theorem replaceLE_cast_symbols (r: RegexID n) (xs: Vector σ n) (h: n = l):
+theorem replaceLE_cast_symcount (r: RegexID n) (xs: Vector σ n) (h: n = l):
   replaceLE r xs (by omega) = replaceLE r (Vector.cast h xs) (by omega) := by
   subst h
   simp only [Vector.cast_rfl]

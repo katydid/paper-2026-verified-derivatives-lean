@@ -18,4 +18,4 @@ The Katydid algorithm is built on top of some foundational functions and theorem
 * [Replace](./Replace.lean) shows how we can replace symbols back into regular expressions.
 * [ExtractReplace](./ExtractReplace.lean) shows how we can use extract and replace to apply a function and that it is equivalent to mapping over a regular expression as a functor.
 * [RegexID](./RegexID.lean) is an abbrevation for `Regex (Fin n)` used for a regular expression containing symbol indexes.
-* [Num](./Num.lean) defines a function that returns the number of symbols.
+* [SymCount](./SymCount.lean) defines a function that returns the number of symbols.

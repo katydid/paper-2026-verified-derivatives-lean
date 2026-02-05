@@ -9,7 +9,7 @@ import VerifiedFilter.Regex.Lang
 import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Memoize.Memoize
 import VerifiedFilter.Regex.Memoize.StateMemoize
-import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.SymCount
 
 import VerifiedFilter.Grammar.Denote
 import VerifiedFilter.Grammar.Grammar
@@ -99,7 +99,7 @@ theorem Grammar.StateMemoize.mem_filter [DecidableEq φ] [Hashable φ]
 
 open Regex
 
-abbrev leave (r: Regex σ) (param2: (Vector Bool (symbols r))) := Regex.leave r param2
+abbrev leave (r: Regex σ) (param2: (Vector Bool (symcount r))) := Regex.leave r param2
 
 theorem StateM.StateT.run11 :
   StateM.run' (StateT.run' f s1) s2 = (StateM.run (StateT.run f s1) s2).1.1 := by

@@ -6,7 +6,7 @@ import VerifiedFilter.Std.Vector
 import VerifiedFilter.Regex.ExtractReplace
 import VerifiedFilter.Regex.Katydid
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.SymCount
 import VerifiedFilter.Regex.Regex
 
 import VerifiedFilter.Regex.IfExpr.Enter

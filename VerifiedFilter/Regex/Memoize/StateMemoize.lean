@@ -7,7 +7,7 @@ import VerifiedFilter.Std.Memoize.StateMemoize
 
 import VerifiedFilter.Regex.ExtractReplace
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.SymCount
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.Katydid
 

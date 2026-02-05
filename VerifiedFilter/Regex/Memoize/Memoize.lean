@@ -8,7 +8,7 @@ import VerifiedFilter.Std.Memoize.Memoize
 
 import VerifiedFilter.Regex.ExtractReplace
 import VerifiedFilter.Regex.Lang
-import VerifiedFilter.Regex.Num
+import VerifiedFilter.Regex.SymCount
 import VerifiedFilter.Regex.Regex
 import VerifiedFilter.Regex.Katydid
 
@@ -18,8 +18,8 @@ import VerifiedFilter.Regex.Memoize.Leave
 namespace Regex.Memoize
 
 class MemoizeKatydid (m: Type → Type u) σ [DecidableEq σ] [Hashable σ] where
-  enterM : (r: Regex σ) → m { res: Vector σ (symbols r) // res = enter r }
-  leaveM : (param: Σ (r: Regex σ), (Vector Bool (symbols r)))
+  enterM : (r: Regex σ) → m { res: Vector σ (symcount r) // res = enter r }
+  leaveM : (param: Σ (r: Regex σ), (Vector Bool (symcount r)))
              → m { res: Regex σ // res = Regex.leave param.1 param.2 }
 
 instance (m: Type → Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
