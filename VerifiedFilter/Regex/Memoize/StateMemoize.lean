@@ -1,4 +1,6 @@
--- The memoized Katydid algorithm defined our regular expressions.
+-- The memoized Katydid algorithm defined over regular expressions with an instance of the state monad.
+-- This shows that memoization can be proven correct, when an instance of Memoize for enter and leave is provided, see StateMemoize.
+-- see theorems StateMemoize.Regex.derive.run_is_sound, StateMemoize.validate.run_is_sound and theorem Regex.StateMemoize.mem_filter.
 
 import VerifiedFilter.Std.Vector
 import VerifiedFilter.Std.Memoize.StateMemoize
