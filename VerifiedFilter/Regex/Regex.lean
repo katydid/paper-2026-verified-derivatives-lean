@@ -396,7 +396,7 @@ end Regex
 -- filter
 
 -- filter filters a list of strings based on whether they match a regular expression.
-def Regex.filter (Φ: σ → α → Bool) (r: Regex σ) (xs: List (List α)): List (List α) :=
+def Regex.filter (Φ: σ → α → Bool) (r: Regex σ) (xs: List (List α)) :=
   List.filter (validate Φ r) xs
 
 namespace Regex

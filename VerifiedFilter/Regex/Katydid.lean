@@ -22,7 +22,7 @@ def enter (r: Regex σ): Vector σ (symcount r) := (extract r).2
 
 -- leave uses the symbol predicate results to calculate the derivative of the regular expression.
 def leave (r: Regex σ) (bools: Vector Bool (symcount r)): Regex σ :=
-  let points: Vector (σ × Bool) r.symcount := Vector.zip (extract r).2 bools
+  let points: Vector (σ × Bool) (symcount r) := Vector.zip (extract r).2 bools
   let rpoint: Regex (σ × Bool) := replace (extract r).1 points
   Regex.Point.derive rpoint
 
