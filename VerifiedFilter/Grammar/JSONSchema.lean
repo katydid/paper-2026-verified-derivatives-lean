@@ -141,15 +141,15 @@ def Grammar.JSONSchema.derive (G: Grammar n φ) (Φ: φ → α → Bool)
     Regex.compliment (derive G Φ r1 node)
   -- Lean cannot guess how the recursive function terminates,
   -- so we have to tell it how the arguments decrease in size.
-  -- The arguments decrease in the tree case first
+  -- The arguments decrease in the node case first
   -- (which only happens in the Regex.symbol case)
   -- and in the expression, r, second (which is all other cases).
-  -- This means if the tree is not destructed, then the expression is destructed.
+  -- This means if the node is not destructed, then the expression is destructed.
   termination_by (node, r)
   -- Once we tell Lean how the function terminates we have to prove that
   -- the size of the arguments decrease on every call.
-  -- Prod.Lex.left represents the case where the tree argument decreases.
-  -- Prod.Lex.right represents the case where the tree argument does not decrease
+  -- Prod.Lex.left represents the case where the node argument decreases.
+  -- Prod.Lex.right represents the case where the node argument does not decrease
   -- and the expression r does decrease.
   decreasing_by
     · apply decreasing_symbol (h := by assumption)

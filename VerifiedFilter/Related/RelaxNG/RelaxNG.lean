@@ -527,7 +527,7 @@ partial def childrenDeriv (cx: Context) (g: Grammar n) (p: Pattern n) (children:
 -- it is a pattern that matches any sequence that when appended to x will match p.
 -- If we can compute derivatives, then we can determine whether a pattern matches a node:
 -- a pattern matches a node if the derivative of the pattern with respect to the node is nullable.
--- It is desirable to be able to compute the derivative of a node in a streaming fashion, making a single pass over the tree.
+-- It is desirable to be able to compute the derivative of a node in a streaming fashion, making a single pass over the node.
 -- In order to do this, we break down an element into a sequence of components:
 --     a start-tag open containing a QName
 --     a sequence of zero or more attributes

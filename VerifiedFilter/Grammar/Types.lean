@@ -1,3 +1,5 @@
+-- Grammar defines a symbolic regular hedge grammar.
+
 import VerifiedFilter.Regex.Regex
 
 -- ## Definition 3.2.3: Regular Hedge Grammar
@@ -6,12 +8,11 @@ import VerifiedFilter.Regex.Regex
 --   𝑇 a finite set of terminals
 --   𝑆 the start symbol of a regular hedge grammar is a regular expression comprising pairs of nonterminals and terminals (a regular expression over N × T)
 --   𝑃 a set of production rules of a regular hedge grammar are of the form X → r such that r is a regular expression over N × T.
-abbrev Ref (n: Nat) := Fin n
 
 -- Ref is a non-terminal, where n represents the number of non-terminals
+abbrev Ref (n: Nat) := Fin n
 
+-- symbolic regular hedge grammar
 structure Grammar (n: Nat) (φ: Type) where
   start: Regex (φ × Ref n)
   prods: Vector (Regex (φ × Ref n)) n
-
-instance [Repr φ]: Repr (Regex (φ × Ref n)) := inferInstance

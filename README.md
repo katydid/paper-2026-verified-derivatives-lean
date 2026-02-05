@@ -4,18 +4,9 @@ Proofs written in [Lean4](https://leanprover.github.io/) of the core [katydid](h
 
 ![Check Proofs](https://github.com/katydid/paper-2026-verified-filter/workflows/Check%20Proofs/badge.svg)
 
-## Goal
-
-The goal is to formalize the core [katydid](http://katydid.org.za/) filtering algorithm.
+Here we formalize the core of the [Katydid](http://katydid.org.za/) filtering algorithm.
 This algorithm allows us to filtering through millions of serialized data structures per second on a single core.
-
-## Outline
-
-* [Grammar](./VerifiedFilter/Grammar): Regular Hedge Grammar's definitions and proofs.
-* [Regex](./VerifiedFilter/Regex): Regular expression's definitions and proofs.
-* [Related](./VerifiedFilter/Related): Experiments with Related work.
-* [Std](./VerifiedFilter/Std): Definitions and proofs that we might expect to be in a standard library.
-* [Pred](./VerifiedFilter/Pred): Example predicate types that are used by both `Grammar` and `Regex`.
+We recommend following the [Readme](./VerifiedFilter/Readme.md) documents, to get an overview of each folder.
 
 ## Setup
 
