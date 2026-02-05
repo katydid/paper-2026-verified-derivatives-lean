@@ -42,6 +42,16 @@ theorem Regex.Katydid.derive_is_Regex_derive (Φ: σ → α → Bool) (r: Regex 
 
 namespace Regex.Katydid
 
+theorem derive_unfolds_to_map (Φ: σ → α → Bool) (r: Regex σ) (a: α):
+  Katydid.derive (flip Φ a) r = Point.derive
+    (replace (extract r).1 (Vector.map (fun s => (s, Φ s a)) (extract r).2)) := by
+  unfold Katydid.derive
+  unfold leave
+  unfold enter
+  unfold flip
+  simp
+  rw [Vector.map_zip_is_zip_map]
+
 theorem derive_commutesb {σ: Type} {α: Type} (Φ: σ → α → Bool) (r: Regex σ) (a: α):
   Regex.denote (fun s a => Φ s a) (Katydid.derive (flip Φ a) r)
   = Lang.derive (Regex.denote (fun s a => Φ s a) r) a := by
