@@ -191,7 +191,7 @@ theorem Grammar.JSONSchema.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ
     rw [Lang.derive_emptystr]
   | case3 p childRef label children ih =>
     rw [Grammar.denote_symbol]
-    rw [Lang.derive_tree]
+    rw [Lang.derive_node]
     rw [Grammar.denote_onlyif]
     rw [Grammar.denote_emptystr]
     apply (congrArg fun x => Lang.onlyif x Lang.emptystr)

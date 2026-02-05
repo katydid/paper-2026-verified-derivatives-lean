@@ -4,36 +4,24 @@ import VerifiedFilter.Regex.Lang
 
 namespace Lang
 
-open List (
-  append_assoc
-  append_eq_nil_iff
-  append_nil
-  cons
-  cons_append
-  cons.injEq
-  foldl_nil
-  nil
-  nil_append
-  nil_eq
-  singleton_append
-)
-
--- Definitions
-
-def tree {α: Type} (φ: α → Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
-  fun xs => ∃ label children, xs = [Hedge.Node.mk label children] /\ φ label /\ R children
-
-def tree_match {α: Type} (φ: α → Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
+-- The denotation of node used in Grammar.Denote
+def node_match {α: Type} (φ: α → Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
   fun xs =>
     match xs with
     | [Hedge.Node.mk label children] =>
       φ label /\ R children
     | _ => False
 
-theorem tree_exists_is_tree_match:
-  tree φ R = tree_match φ R := by
-  unfold tree
-  unfold tree_match
+-- The denotation of node that we would have liked to use, if match was not required for termination proof purposes.
+-- Luckily we still get to use this definition in a lot of proofs.
+def node {α: Type} (φ: α → Bool) (R: Lang (Hedge.Node α)): Lang (Hedge.Node α) :=
+  fun xs => ∃ label children, xs = [Hedge.Node.mk label children] /\ φ label /\ R children
+
+-- We show that the two definitions of denotation of node is equivalent.
+theorem node_is_node_match:
+  node φ R = node_match φ R := by
+  unfold node
+  unfold node_match
   funext xs
   cases xs with
   | nil =>
@@ -41,7 +29,7 @@ theorem tree_exists_is_tree_match:
   | cons x xs =>
     cases xs with
     | nil =>
-      simp only [cons.injEq, and_true, eq_iff_iff]
+      simp only [List.cons.injEq, and_true, eq_iff_iff]
       cases x with
       | mk label children =>
       simp only [Hedge.Node.mk.injEq]
@@ -56,43 +44,43 @@ theorem tree_exists_is_tree_match:
         exists label
         exists children
     | cons x' xs =>
-      simp only [cons.injEq, reduceCtorEq, and_false, false_and, exists_const, exists_false]
+      simp only [List.cons.injEq, reduceCtorEq, and_false, false_and, exists_const, exists_false]
 
-example: Lang (Hedge.Node Nat) := (tree (fun x => x = 1) (Lang.or (tree (fun x => x = 1) Lang.emptystr) Lang.emptyset))
+example: Lang (Hedge.Node Nat) := (node (fun x => x = 1) (Lang.or (node (fun x => x = 1) Lang.emptystr) Lang.emptyset))
 
-theorem null_iff_tree {α: Type} {p: α → Bool} {children: Lang (Hedge.Node α)}:
-  Lang.null (tree p children) <-> False :=
+theorem null_iff_node {α: Type} {p: α → Bool} {children: Lang (Hedge.Node α)}:
+  Lang.null (node p children) <-> False :=
   Iff.intro nofun nofun
 
-theorem null_tree {α: Type} {p: α → Bool} {children: Lang (Hedge.Node α)}:
-  Lang.null (tree p children) = False := by
-  rw [null_iff_tree]
+theorem null_node {α: Type} {p: α → Bool} {children: Lang (Hedge.Node α)}:
+  Lang.null (node p children) = False := by
+  rw [null_iff_node]
 
-theorem derive_iff_tree {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α} {xs: Hedge α}:
-  (Lang.derive (tree p childlang) (Hedge.Node.mk label children)) xs <->
+theorem derive_iff_node {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α} {xs: Hedge α}:
+  (Lang.derive (node p childlang) (Hedge.Node.mk label children)) xs <->
   (Lang.onlyif (p label /\ childlang children) Lang.emptystr) xs := by
   simp only [Lang.derive]
   simp only [Lang.onlyif, Lang.emptystr]
   refine Iff.intro ?toFun ?invFun
   case toFun =>
-    unfold tree
-    simp only [cons.injEq, Hedge.Node.mk.injEq]
+    unfold node
+    simp only [List.cons.injEq, Hedge.Node.mk.injEq]
     intro ⟨ label', children', ⟨ ⟨ hlabel', hchildren' ⟩, hxs ⟩ , hif ⟩
     subst_vars
     simp only [and_true]
     exact hif
   case invFun =>
     intro ⟨ hif , hxs  ⟩
-    unfold tree
+    unfold node
     exists label
     exists children
     rw [hxs]
     simp only [true_and]
     exact hif
 
--- Hedge.Lang.derive (Hedge.Lang.tree p.eval (Denote.denote children)) a
-theorem derive_tree {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α}:
-  (Lang.derive (tree p childlang) (Hedge.Node.mk label children)) =
+-- Hedge.Lang.derive (Hedge.Lang.node p.eval (Denote.denote children)) a
+theorem derive_node {α: Type} {p: α → Bool} {childlang: Lang (Hedge.Node α)} {label: α} {children: Hedge α}:
+  (Lang.derive (node p childlang) (Hedge.Node.mk label children)) =
   (Lang.onlyif (p label /\ childlang children) Lang.emptystr) := by
   funext
-  rw [derive_iff_tree]
+  rw [derive_iff_node]

@@ -154,7 +154,7 @@ theorem Grammar.Katydid.derive_denote_symbol_is_onlyif {α: Type} (G: Grammar n 
   := by
   funext xs
   rw [Grammar.denote_symbol]
-  rw [Lang.derive_iff_tree]
+  rw [Lang.derive_iff_node]
   simp only [decide_eq_true_eq]
 
 theorem Grammar.Katydid.derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]

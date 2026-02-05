@@ -244,8 +244,8 @@ theorem denote_onlyif {α: Type}
     contradiction
 
 theorem denote_symbol {α: Type} {φ: Type} (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel Φ] (s: (φ × Ref n)):
-  Rule.denote G Φ (Regex.symbol s) = Lang.tree (fun a => Φ s.1 a) (Rule.denote G Φ (G.lookup s.2)) := by
-  unfold Lang.tree
+  Rule.denote G Φ (Regex.symbol s) = Lang.node (fun a => Φ s.1 a) (Rule.denote G Φ (G.lookup s.2)) := by
+  unfold Lang.node
   funext xs
   simp only
   cases xs with
@@ -378,7 +378,7 @@ theorem null_commutes (G: Grammar n φ) (Φ: φ → α → Prop) [DecidableRel �
   | symbol s =>
     obtain ⟨p, children⟩ := s
     rw [denote_symbol]
-    rw [Lang.null_tree]
+    rw [Lang.null_node]
     unfold Regex.null
     apply Bool.false_eq_true
   | or r1 r2 ih1 ih2 =>
