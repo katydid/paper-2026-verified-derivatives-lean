@@ -114,12 +114,10 @@ theorem Grammar.JSONSchema.decreasing_compliment {α: Type} {σ: Type} [SizeOf �
   simp +arith only [Regex.compliment.sizeOf_spec]
 
 def Grammar.JSONSchema.derive (G: Grammar n φ) (Φ: φ → α → Bool)
-  (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) :=
-  match r with
+  (r: Regex (φ × Ref n)) (node: Node α): Regex (φ × Ref n) := match r with
   | Regex.emptyset => Regex.emptyset
   | Regex.emptystr => Regex.emptyset
-  | Regex.symbol (pred, ref) =>
-    let ⟨label, children⟩ := node
+  | Regex.symbol (pred, ref) => let ⟨label, children⟩ := node
     Regex.onlyif (Φ pred label
       /\ Regex.null (List.foldl (derive G Φ) (G.lookup ref) children)
     ) Regex.emptystr

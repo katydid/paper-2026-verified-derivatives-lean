@@ -216,8 +216,7 @@ theorem derive_commutes (G: Grammar n φ) Φ [DecidableRel Φ]
 
     generalize G.lookup ref = r
     -- We cannot apply functional induction to a recursive closure, so we have create induction via well-founded induction.
-    have ihr := fun r' x (hx: x ∈ children) =>
-      derive_commutes G Φ r' x
+    have ihr := fun r' x (hx: x ∈ children) => derive_commutes G Φ r' x
     -- The proof proceeds by induction on the children.
     induction children generalizing r with
     | nil =>

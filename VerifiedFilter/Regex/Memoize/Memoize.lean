@@ -17,12 +17,12 @@ import VerifiedFilter.Regex.Memoize.Leave
 
 namespace Regex.Memoize
 
-class MemoizeKatydid (m: Type -> Type u) σ [DecidableEq σ] [Hashable σ] where
-  enterM : (r: Regex σ) -> m { res: Vector σ (symbols r) // res = enter r }
+class MemoizeKatydid (m: Type → Type u) σ [DecidableEq σ] [Hashable σ] where
+  enterM : (r: Regex σ) → m { res: Vector σ (symbols r) // res = enter r }
   leaveM : (param: Σ (r: Regex σ), (Vector Bool (symbols r)))
-             -> m { res: Regex σ // res = Regex.leave param.1 param.2 }
+             → m { res: Regex σ // res = Regex.leave param.1 param.2 }
 
-instance (m: Type -> Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
+instance (m: Type → Type u) (σ: Type) [DecidableEq σ] [Hashable σ] [Monad m]
   [Memoize (α := enterParam σ) (β := enterResult) enter m]
   [enterState: MonadState (enterMemTable σ) m]
   [Memoize (α := leaveParam σ) (β := leaveResult) leave m]
